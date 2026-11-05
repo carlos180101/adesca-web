@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADESCA - Laboratorio Clínico</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div onclick="switchView('patient')" class="cursor-pointer flex items-center gap-3">
+        <img src="./logo-adesca.png" alt="ADESCA" class="h-12 w-auto object-contain" onerror="this.style.display='none'" />
+        <div>
+          <span class="text-xl font-black tracking-wider text-[#163a70] block leading-none">ADESCA</span>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Laboratorio Clínico</span>
+        </div>
+      </div>
+
+      <div>
+        <button id="btn-to-staff" onclick="switchView('staff')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-[#163a70] hover:bg-slate-100 flex items-center gap-1.5 border border-transparent hover:border-slate-200">
+          🔒 Acceso Licenciados
+          <span id="badge-requested" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">0</span>
+        </button>
+        <button id="btn-to-patient" onclick="switchView('patient')" class="hidden px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200">
+          ← Volver a Consulta de Pacientes
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- VISTA 1: PACIENTES -->
+  <main id="view-patient" class="flex-1 max-w-3xl w-full mx-auto px-4 py-10">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-[#163a70] px-3.5 py-1.5 rounded-full text-xs font-bold mb-4">
+        ✨ Consulta Digital de Estado de Exámenes
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-[#163a70] tracking-tight mb-3">
+        ¿Ya está listo su examen?
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-base max-w-xl mx-auto">
+        Ingrese su <strong>nombre y apellido</strong> o su <strong>código de orden</strong> para verificar si sus resultados ya están listos para entrega.
+      </p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200/80 p-6 sm:p-8 mb-8">
+      <form onsubmit="handlePatientSearch(event)" class="space-y-4">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">
+          Nombre del Paciente o Código de Orden
+        </label>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input
+            id="patient-search-input"
+            type="text"
+            required
+            minlength="4"
+            placeholder="Escriba al menos 4 letras de su nombre..."
+            class="flex-1 px-4 py-3.5 rounded-xl border border-slate-300 focus:border-[#163a70] focus:ring-4 focus:ring-blue-500/15 outline-none text-base font-medium"
+          />
+          <button
+            id="btn-search"
+            type="submit"
+            class="bg-[#163a70] hover:bg-[#102a52] text-white font-bold px-7 py-3.5 rounded-xl transition-all shadow-md"
+          >
+            Consultar Estado
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-400">
+          🛡️ Búsqueda confidencial: ingrese al menos 4 letras para consultar únicamente su resultado.
+        </p>
+      </form>
+    </div>
+
+    <div id="patient-results" class="space-y-4"></div>
+  </main>
+
+  <!-- VISTA 2: LICENCIADOS -->
+  <main id="view-staff" class="hidden flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+    <!-- LOGIN -->
+    <div id="staff-login-box" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-8 mt-6">
+      <div class="text-center mb-6">
+        <h2 class="text-xl font-extrabold text-[#163a70]">Acceso Exclusivo Licenciados</h2>
+        <p class="text-xs text-slate-500 mt-1">Ingrese con su usuario autorizado</p>
+      </div>
+
+      <div id="login-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold"></div>
+
+      <form onsubmit="handleStaffLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Correo Electrónico</label>
+          <input id="staff-email" type="email" required placeholder="licenciado@adesca.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm outline-none focus:border-[#163a70]" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Contraseña</label>
+          <input id="staff-password" type="password" required placeholder="••••••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm outline-none focus:border-[#163a70]" />
+        </div>
+        <button id="btn-login" type="submit" class="w-full bg-[#163a70] hover:bg-[#102a52] text-white font-bold py-3.5 rounded-xl shadow-md">
+          Iniciar Sesión Segura
+        </button>
+      </form>
+    </div>
+
+    <!-- PANEL DE CONTROL -->
+    <div id="staff-dashboard" class="hidden space-y-6">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <span id="staff-user-email" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md"></span>
+        <div class="flex items-center gap-2">
+          <button onclick="handleCleanDelivered()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs px-3.5 py-2 rounded-xl">
+            🧹 Cerrar Día y Limpiar Entregados (<span id="count-delivered">0</span>)
+          </button>
+          <button onclick="handleLogout()" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl">
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+
+      <!-- ALERTA ROJA VENTANILLA -->
+      <div id="window-alert" class="hidden bg-rose-600 text-white rounded-2xl p-4 shadow-lg flex items-center justify-between">
+        <div>
+          <h4 class="font-extrabold text-sm">🔔 ¡Paciente esperando su examen en ventanilla!</h4>
+          <p class="text-xs text-rose-100">Presione "Marcar Entregado" cuando se lo entregue en mano.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- SUBIR PACIENTE -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <h3 class="font-extrabold text-[#163a70] text-base mb-4">+ Registrar Examen</h3>
+            <form onsubmit="handleAddRecord(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nombre del Paciente</label>
+                <input id="new-patient-name" type="text" required placeholder="Ej. María Fernanda López" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tipo de Examen</label>
+                <input id="new-exam-type" type="text" required value="Hematología Completa" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm mb-2" />
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" onclick="setExamPreset('Hematología Completa')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Hematología</button>
+                  <button type="button" onclick="setExamPreset('Química Sanguínea')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Química</button>
+                  <button type="button" onclick="setExamPreset('Examen General de Orina (EGO)')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Orina (EGO)</button>
+                  <button type="button" onclick="setExamPreset('Examen General de Heces (EGH)')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Heces (EGH)</button>
+                  <button type="button" onclick="setExamPreset('Perfil Lipídico')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Perfil Lipídico</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Estado Inicial</label>
+                <select id="new-initial-status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-emerald-700">
+                  <option value="ready">✅ EXAMEN LISTO (Verde)</option>
+                  <option value="processing">⏳ EN PROCESO (Amarillo)</option>
+                </select>
+              </div>
+              <button type="submit" class="w-full bg-[#163a70] hover:bg-[#102a52] text-white font-bold py-3 rounded-xl shadow-md text-sm">
+                Guardar Paciente
+              </button>
+            </form>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <h4 class="font-bold text-xs uppercase text-slate-500 mb-3">Historial Compacto de Cierres</h4>
+            <div id="summaries-list" class="space-y-2 text-xs"></div>
+          </div>
+        </div>
+
+        <!-- LISTA DE EXÁMENES -->
+        <div class="lg:col-span-8">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+              <h3 class="font-bold text-sm text-[#163a70]">Pacientes Activos del Día</h3>
+              <button onclick="fetchStaffData()" class="text-xs font-bold text-[#163a70] hover:underline">↻ Actualizar</button>
+            </div>
+            <div id="staff-records-list" class="divide-y divide-slate-100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // TUS LLAVES REALES DE SUPABASE YA CONECTADAS
+    const SUPABASE_URL = "https://cdacldhkhfmlmwbizinu.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_VaaLx_zZuGOlgFwwdN2voQ_6QyGAVR5";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentSession = null;
+    let allRecords = [];
+
+    function getCurrentTime() {
+      return new Date().toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function switchView(view) {
+      document.getElementById('view-patient').classList.toggle('hidden', view !== 'patient');
+      document.getElementById('view-staff').classList.toggle('hidden', view !== 'staff');
+      document.getElementById('btn-to-staff').classList.toggle('hidden', view === 'staff');
+      document.getElementById('btn-to-patient').classList.toggle('hidden', view === 'patient');
+    }
+
+    function setExamPreset(val) {
+      document.getElementById('new-exam-type').value = val;
+    }
+
+    // --- PACIENTES ---
+    async function handlePatientSearch(e) {
+      e.preventDefault();
+      const raw = document.getElementById('patient-search-input').value;
+      const clean = raw.replace(/[<>"'`;()]/g, '').trim();
+      if (clean.length < 4) return;
+
+      const btn = document.getElementById('btn-search');
+      btn.textContent = 'Buscando...';
+      btn.disabled = true;
+
+      const { data, error } = await supabaseClient.rpc('buscar_examen_paciente', { termino: clean });
+      btn.textContent = 'Consultar Estado';
+      btn.disabled = false;
+
+      const container = document.getElementById('patient-results');
+      if (error || !data || data.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+            <h3 class="text-lg font-bold text-slate-800 mb-1">No se encontraron registros</h3>
+            <p class="text-sm text-slate-500">Verifique que su nombre esté bien escrito o consulte en recepción.</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = data.map(exam => {
+        const isReady = exam.status === 'ready' || exam.status === 'requested';
+        let badge = '';
+        if (isReady) {
+          badge = `<div class="inline-flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full font-extrabold text-sm shadow-md">✅ EXAMEN LISTO</div>`;
+        } else if (exam.status === 'processing') {
+          badge = `<div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 border border-amber-300 px-4 py-2 rounded-full font-bold text-sm">⏳ EN PROCESO DE ANÁLISIS</div>`;
+        } else {
+          badge = `<div class="inline-flex items-center gap-2 bg-slate-200 text-slate-700 px-4 py-2 rounded-full font-bold text-sm">✔️ ENTREGADO (${exam.delivered_at || ''})</div>`;
+        }
+
+        let actionBox = '';
+        if (exam.status === 'ready') {
+          actionBox = `
+            <div class="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-emerald-50/60 -mx-6 -mb-6 p-6 rounded-b-2xl">
+              <p class="text-xs text-emerald-800 font-medium">Presione el botón para avisar en ventanilla que usted ya está aquí para retirar su examen.</p>
+              <button onclick="requestExam('${exam.id}')" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-md shrink-0">
+                🔔 Solicitar mi Examen Ahora
+              </button>
+            </div>`;
+        } else if (exam.status === 'requested') {
+          actionBox = `
+            <div class="mt-5 pt-4 border-t border-emerald-200 bg-emerald-100/80 -mx-6 -mb-6 p-5 rounded-b-2xl text-emerald-950 text-xs font-bold">
+              ✅ ¡Solicitud recibida! Los licenciados ya tienen su aviso en pantalla. Acérquese a ventanilla.
+            </div>`;
+        }
+
+        return `
+          <div class="bg-white rounded-2xl border-2 p-6 shadow-md ${isReady ? 'border-emerald-500' : 'border-slate-200'}">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span class="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">Orden: ${exam.code}</span>
+                <h3 class="text-xl font-extrabold text-slate-900 mt-2">${exam.patient_name}</h3>
+                <p class="text-sm font-medium text-slate-600">Estudio: ${exam.exam_type}</p>
+              </div>
+              <div>${badge}</div>
+            </div>
+            ${actionBox}
+          </div>`;
+      }).join('');
+    }
+
+    async function requestExam(id) {
+      await supabaseClient.rpc('solicitar_examen_ventanilla', {
+        examen_id: id,
+        hora_actual: getCurrentTime()
+      });
+      handlePatientSearch(new Event('submit'));
+    }
+
+    // --- LICENCIADOS AUTH ---
+    async function handleStaffLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('staff-email').value.trim();
+      const password = document.getElementById('staff-password').value;
+      const errBox = document.getElementById('login-error');
+      errBox.classList.add('hidden');
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        errBox.textContent = 'Correo o contraseña incorrectos.';
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+      switchView('patient');
+    }
+
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      currentSession = session;
+      document.getElementById('staff-login-box').classList.toggle('hidden', !!session);
+      document.getElementById('staff-dashboard').classList.toggle('hidden', !session);
+      if (session) {
+        document.getElementById('staff-user-email').textContent = 'Sesión Activa: ' + session.user.email;
+        fetchStaffData();
+      }
+    });
+
+    // --- PANEL LICENCIADOS ---
+    async function fetchStaffData() {
+      if (!currentSession) return;
+      const { data: exams } = await supabaseClient.from('examenes_adesca').select('*').order('created_at', { ascending: false });
+      allRecords = exams || [];
+      renderStaffRecords();
+
+      const { data: summaries } = await supabaseClient.from('cierres_adesca').select('*').order('created_at', { ascending: false }).limit(8);
+      const sumContainer = document.getElementById('summaries-list');
+      sumContainer.innerHTML = (summaries || []).map(s => `
+        <div class="flex justify-between bg-slate-50 p-2.5 rounded-lg border">
+          <span class="font-bold">${s.fecha}</span>
+          <span class="text-emerald-700 font-bold">${s.total_entregados} entregados</span>
+        </div>`).join('');
+    }
+
+    function renderStaffRecords() {
+      const requestedCount = allRecords.filter(r => r.status === 'requested').length;
+      const deliveredCount = allRecords.filter(r => r.status === 'delivered').length;
+
+      document.getElementById('count-delivered').textContent = deliveredCount;
+      document.getElementById('window-alert').classList.toggle('hidden', requestedCount === 0);
+
+      const badge = document.getElementById('badge-requested');
+      badge.textContent = requestedCount;
+      badge.classList.toggle('hidden', requestedCount === 0);
+
+      const list = document.getElementById('staff-records-list');
+      if (allRecords.length === 0) {
+        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No hay pacientes registrados hoy.</div>`;
+        return;
+      }
+
+      list.innerHTML = allRecords.map(item => {
+        let statusTag = '';
+        if (item.status === 'ready') statusTag = `<span class="text-[11px] font-extrabold bg-emerald-500 text-white px-2.5 py-0.5 rounded-full">EXAMEN LISTO</span>`;
+        if (item.status === 'requested') statusTag = `<span class="text-[11px] font-extrabold bg-rose-600 text-white px-2.5 py-0.5 rounded-full animate-pulse">SOLICITADO EN VENTANILLA</span>`;
+        if (item.status === 'processing') statusTag = `<span class="text-[11px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">EN PROCESO</span>`;
+        if (item.status === 'delivered') statusTag = `<span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">ENTREGADO (${item.delivered_at || ''})</span>`;
+
+        let actionBtns = '';
+        if (item.status === 'processing') {
+          actionBtns = `<button onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl">Poner Listo (Verde)</button>`;
+        } else if (item.status === 'ready' || item.status === 'requested') {
+          actionBtns = `<button onclick="updateStatus('${item.id}', 'delivered')" class="bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-3.5 py-2 rounded-xl">Marcar Entregado</button>`;
+        }
+
+        return `
+          <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span>
+                ${statusTag}
+              </div>
+              <h4 class="font-bold text-slate-900 mt-1">${item.patient_name}</h4>
+              <p class="text-xs text-slate-500">${item.exam_type}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              ${actionBtns}
+              <button onclick="deleteRecord('${item.id}')" class="px-2.5 py-2 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️ Borrar</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function handleAddRecord(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById('new-patient-name');
+      const examInput = document.getElementById('new-exam-type');
+      const statusInput = document.getElementById('new-initial-status');
+
+      const cleanName = nameInput.value.replace(/[<>"'`;]/g, '').trim();
+      const cleanExam = examInput.value.replace(/[<>"'`;]/g, '').trim();
+      if (!cleanName) return;
+
+      const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
+      await supabaseClient.from('examenes_adesca').insert([{
+        code: randomCode,
+        patient_name: cleanName,
+        exam_type: cleanExam,
+        status: statusInput.value,
+        updated_at: getCurrentTime()
+      }]);
+
+      nameInput.value = '';
+      fetchStaffData();
+    }
+
+    async function updateStatus(id, newStatus) {
+      const payload = { status: newStatus, updated_at: getCurrentTime() };
+      if (newStatus === 'delivered') payload.delivered_at = getCurrentTime();
+      await supabaseClient.from('examenes_adesca').update(payload).eq('id', id);
+      fetchStaffData();
+    }
+
+    async function deleteRecord(id) {
+      await supabaseClient.from('examenes_adesca').delete().eq('id', id);
+      fetchStaffData();
+    }
+
+    async function handleCleanDelivered() {
+      const delivered = allRecords.filter(r => r.status === 'delivered');
+      if (delivered.length === 0) return;
+
+      const todayStr = new Date().toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
+      await supabaseClient.from('cierres_adesca').insert([{
+        fecha: todayStr,
+        total_entregados: delivered.length,
+        cerrado_por: currentSession.user.email
+      }]);
+
+      await supabaseClient.from('examenes_adesca').delete().eq('status', 'delivered');
+      fetchStaffData();
+    }
+
+    // Escuchar cambios en tiempo real
+    supabaseClient.channel('realtime-adesca')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'examenes_adesca' }, () => {
+        if (currentSession) fetchStaffData();
+      })
+      .subscribe();
+  </script>
+</body>
+</html>
