@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ADESCAS - Laboratorio Clínico</title>
-  <!-- ÍCONO DEL SITIO WEB (FAVICON) CON TU ARCHIVO logo-adesca.png -->
+  <title>ADESCA - Consulta de Resultados</title>
   <link rel="icon" type="image/png" href="/logo-adesca.png" />
   <link rel="shortcut icon" type="image/png" href="/logo-adesca.png" />
   <link rel="apple-touch-icon" href="/logo-adesca.png" />
@@ -59,27 +58,26 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
-  <!-- HEADER PRINCIPAL -->
+  <!-- HEADER PRINCIPAL: ÚNICAMENTE EL LOGO DE ADESCA -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
-    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div onclick="switchView('patient')" class="cursor-pointer flex items-center gap-3">
-        <img src="/logo-adesca.png" alt="ADESCA" class="h-12 w-auto object-contain" onerror="this.style.display='none'" />
-        <div id="header-logo-box"></div>
+        <img src="/logo-adesca.png" alt="ADESCA" class="h-12 sm:h-14 w-auto object-contain" />
       </div>
 
       <div class="flex items-center gap-2">
         <button id="btn-to-staff" onclick="switchView('staff')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-[#163a70] hover:bg-slate-100 flex items-center gap-1.5 border border-transparent hover:border-slate-200">
-          🔒 Acceso Licenciado Autorizado
+          🔒 Personal
           <span id="badge-requested" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">0</span>
         </button>
         <button id="btn-to-patient" onclick="switchView('patient')" class="hidden px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200">
-          ← Volver a Consulta de Pacientes
+          ← Volver a Consulta
         </button>
       </div>
     </div>
   </header>
 
-  <!-- BANNER DE VERIFICACIÓN DE CÓDIGO QR ANTIFALSIFICACIÓN (SIN BASE DE DATOS) -->
+  <!-- MODAL DE VERIFICACIÓN DE CÓDIGO QR ANTIFALSIFICACIÓN -->
   <div id="qr-verification-modal" class="hidden fixed inset-0 z-[70] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div id="qr-verification-card" class="max-w-md w-full bg-white rounded-2xl shadow-2xl border-2 p-6 text-center space-y-4"></div>
   </div>
@@ -132,30 +130,30 @@
   </main>
 
   <!-- ========================================================= -->
-  <!-- VISTA 2: PANEL PRIVADO (EXCLUSIVO licpineda@adesca.com)   -->
+  <!-- VISTA 2: PANEL INTERNO (CERO PISTAS PARA EXTERNOS)        -->
   <!-- ========================================================= -->
   <main id="view-staff" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 py-6 no-print">
-    <!-- CAJA DE LOGIN BLINDADA -->
+    <!-- CAJA DE LOGIN SIN PISTAS NI CORREOS DE EJEMPLO -->
     <div id="staff-login-box" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-8 mt-6">
       <div class="text-center mb-6">
-        <img src="/logo-adesca.png" alt="ADESCAS" class="h-14 w-auto mx-auto mb-3 object-contain" onerror="this.style.display='none'" />
-        <h2 class="text-xl font-extrabold text-[#163a70]">Acceso Exclusivo Licenciado</h2>
-        <p class="text-xs text-slate-500 mt-1">Sistema restringido por lista blanca criptográfica</p>
+        <img src="/logo-adesca.png" alt="ADESCA" class="h-14 w-auto mx-auto mb-3 object-contain" />
+        <h2 class="text-xl font-extrabold text-[#163a70]">Acceso de Personal</h2>
+        <p class="text-xs text-slate-500 mt-1">Ingrese sus credenciales institucionales</p>
       </div>
 
       <div id="login-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold"></div>
 
-      <form onsubmit="handleStaffLogin(event)" class="space-y-4">
+      <form onsubmit="handleStaffLogin(event)" class="space-y-4" autocomplete="off">
         <div>
-          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Usuario Autorizado</label>
-          <input id="staff-email" type="email" required placeholder="licpineda@adesca.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm outline-none focus:border-[#163a70]" />
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Usuario</label>
+          <input id="staff-email" type="email" required placeholder="Ingrese su usuario" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm outline-none focus:border-[#163a70]" />
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Contraseña</label>
           <input id="staff-password" type="password" required placeholder="••••••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm outline-none focus:border-[#163a70]" />
         </div>
         <button id="btn-login" type="submit" class="w-full bg-[#163a70] hover:bg-[#102a52] text-white font-bold py-3.5 rounded-xl shadow-md">
-          Iniciar Sesión Segura
+          Iniciar Sesión
         </button>
       </form>
     </div>
@@ -164,8 +162,12 @@
     <div id="staff-dashboard" class="hidden space-y-6">
       <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
         <div class="flex items-center gap-3">
-          <span id="staff-user-email" class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg"></span>
-          <span class="text-[11px] text-slate-400 hidden sm:inline">🛡️ Blindaje Activo • Auto-cierre 20 min</span>
+          <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+            👨‍⚕️ Sesión Activa
+          </span>
+          <span id="inactivity-countdown" class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+            ⏱️ Auto-cierre en: 20:00
+          </span>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button onclick="openExamEditor(null)" class="bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5">
@@ -208,8 +210,8 @@
                   <input id="quick-patient-age" type="text" placeholder="Ej. 25 AÑOS" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Correo Gmail</label>
-                  <input id="quick-patient-email" type="email" placeholder="paciente@gmail.com" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Correo o WhatsApp</label>
+                  <input id="quick-patient-email" type="text" placeholder="Correo o Teléfono" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
                 </div>
               </div>
               <div>
@@ -281,7 +283,7 @@
 
         <div>
           <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
-            🔒 Ingrese Contraseña de licpineda@adesca.com:
+            🔒 Ingrese su Contraseña para Autorizar:
           </label>
           <input id="clean-auth-password" type="password" required placeholder="Escriba su contraseña actual..." class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 focus:border-rose-600 text-sm outline-none" />
         </div>
@@ -301,27 +303,27 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- MODAL GUÍA VISUAL DE GMAIL (CTRL + V)                     -->
+  <!-- MODAL GUÍA VISUAL DE GMAIL Y WHATSAPP (CTRL + V)          -->
   <!-- ========================================================= -->
-  <div id="gmail-guide-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <div id="send-guide-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="max-w-lg w-full bg-white rounded-2xl shadow-2xl border-2 border-emerald-500 overflow-hidden">
       <div class="bg-emerald-600 text-white px-6 py-4">
-        <h3 class="text-base font-extrabold">✅ ¡Boleta Visual Copiada y PDF Descargado!</h3>
-        <p class="text-xs text-emerald-100 mt-0.5">Lista para pegar como Imagen Oficial dentro de Gmail (sin texto plano)</p>
+        <h3 class="text-base font-extrabold" id="send-guide-title">✅ ¡Boleta Visual Copiada y PDF Descargado!</h3>
+        <p class="text-xs text-emerald-100 mt-0.5">Lista para pegar como Imagen Oficial (Ctrl + V) o adjuntar el PDF</p>
       </div>
       <div class="p-6 space-y-4 text-xs text-slate-700">
         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
-          <p class="font-extrabold text-sm text-emerald-950">¿Cómo poner la boleta idéntica al Word dentro del correo?</p>
-          <p>1. Al presionar el botón azul abajo se abrirá Gmail con el correo del paciente ya puesto.</p>
-          <p>2. Haga clic en el cuadro grande del mensaje en Gmail y presione en su teclado <kbd class="bg-white border border-slate-400 px-2 py-0.5 rounded font-black text-slate-900">Ctrl</kbd> + <kbd class="bg-white border border-slate-400 px-2 py-0.5 rounded font-black text-slate-900">V</kbd> (o Clic Derecho &rarr; <strong>Pegar</strong>).</p>
-          <p>3. ¡Se pegará la <strong>boleta completa con el logo oficial de ADESCAS, QR antifalsificación y firma/sello</strong>!</p>
+          <p class="font-extrabold text-sm text-emerald-950">Pasos para enviar el examen al paciente:</p>
+          <p>1. Presione el botón de abajo para abrir <strong id="send-platform-name">Gmail / WhatsApp</strong>.</p>
+          <p>2. Haga clic donde se escribe el mensaje y presione <kbd class="bg-white border border-slate-400 px-2 py-0.5 rounded font-black text-slate-900">Ctrl</kbd> + <kbd class="bg-white border border-slate-400 px-2 py-0.5 rounded font-black text-slate-900">V</kbd> (Pegar).</p>
+          <p>3. Se pegará inmediatamente la <strong>boleta oficial con el logo del laboratorio, firma/sello y código QR</strong>. (También tiene el PDF en su carpeta de Descargas).</p>
         </div>
         <div class="flex justify-end gap-2">
-          <button onclick="document.getElementById('gmail-guide-modal').classList.add('hidden')" class="px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-600">
+          <button onclick="document.getElementById('send-guide-modal').classList.add('hidden')" class="px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-600">
             Cerrar
           </button>
-          <a id="gmail-final-link" href="#" target="_blank" onclick="document.getElementById('gmail-guide-modal').classList.add('hidden')" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold px-6 py-2.5 rounded-xl shadow-md inline-block">
-            🚀 Abrir Gmail Ahora y Pegar (Ctrl + V)
+          <a id="send-final-link" href="#" target="_blank" onclick="document.getElementById('send-guide-modal').classList.add('hidden')" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold px-6 py-2.5 rounded-xl shadow-md inline-block">
+            🚀 Abrir y Pegar Boleta (Ctrl + V)
           </a>
         </div>
       </div>
@@ -329,14 +331,14 @@
   </div>
 
   <!-- ========================================================= -->
-  <!-- MODAL REDACTOR / IMPRESOR / PDF + GMAIL CON FIRMA Y QR    -->
+  <!-- MODAL REDACTOR / IMPRESOR / PDF / GMAIL / WHATSAPP        -->
   <!-- ========================================================= -->
   <div id="exam-modal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm overflow-y-auto p-2 sm:p-4 no-print">
     <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-2">
       <div class="bg-[#163a70] text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-base sm:text-lg font-extrabold">Redactor Oficial de Exámenes — Laboratorio Clínico "ADESCAS"</h2>
-          <p class="text-[11px] text-blue-200">Incluye QR Antifalsificación permanente, resaltado automático con asterisco (*) y leyenda legal</p>
+          <p class="text-[11px] text-blue-200">Incluye QR Antifalsificación permanente, resaltado con asterisco (*) y envío a Gmail o WhatsApp</p>
         </div>
         <button onclick="closeExamEditor()" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold">
           ✕ Cerrar Ventana
@@ -353,7 +355,7 @@
           </div>
 
           <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5">
-            <h4 class="text-[11px] font-extrabold uppercase text-slate-500">2. Datos del Paciente</h4>
+            <h4 class="text-[11px] font-extrabold uppercase text-slate-500">2. Datos del Paciente y Contacto</h4>
             <div>
               <label class="block text-[10px] font-bold text-slate-600">NOMBRE COMPLETO:</label>
               <input id="ed-patient-name" oninput="updateLivePreview()" type="text" placeholder="Ej. ISRAEL RUIZ" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold uppercase" />
@@ -370,17 +372,21 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-[10px] font-bold text-slate-600">CORREO GMAIL DEL PACIENTE:</label>
+                <label class="block text-[10px] font-bold text-slate-600">CORREO GMAIL PACIENTE:</label>
                 <input id="ed-patient-email" type="email" placeholder="paciente@gmail.com" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-600">ESTADO EN WEB:</label>
-                <select id="ed-status" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-emerald-700">
-                  <option value="ready">✅ LISTO (Verde)</option>
-                  <option value="processing">⏳ EN PROCESO</option>
-                  <option value="delivered">✔️ ENTREGADO</option>
-                </select>
+                <label class="block text-[10px] font-bold text-emerald-700">WHATSAPP PACIENTE (SV):</label>
+                <input id="ed-patient-phone" type="tel" placeholder="Ej. 7895-5220" class="w-full px-2.5 py-1.5 rounded-lg border border-emerald-300 text-xs font-semibold" />
               </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600">ESTADO EN WEB:</label>
+              <select id="ed-status" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-emerald-700">
+                <option value="ready">✅ LISTO (Verde)</option>
+                <option value="processing">⏳ EN PROCESO</option>
+                <option value="delivered">✔️ ENTREGADO</option>
+              </select>
             </div>
           </div>
 
@@ -409,7 +415,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <h4 class="text-[11px] font-extrabold uppercase text-slate-500">4. Resultados del Examen</h4>
-                <p class="text-[10px] text-rose-600 font-semibold">💡 Tip: Agregue un asterisco (*) al resultado (ej. 137.1*) para resaltarlo como Dato Controlado.</p>
+                <p class="text-[10px] text-rose-600 font-semibold">💡 Agregue un asterisco (*) al resultado (ej. 137.1*) para resaltarlo como Dato Controlado.</p>
               </div>
               <button type="button" onclick="addCustomParameterRow()" id="btn-add-row" class="hidden text-[11px] bg-blue-50 text-[#163a70] px-2.5 py-1 rounded font-bold border border-blue-200">+ Fila</button>
             </div>
@@ -424,24 +430,27 @@
 
         <!-- Panel Derecho -->
         <div class="lg:col-span-7 p-4 flex flex-col bg-slate-200/80 max-h-[85vh] overflow-y-auto">
-          <div class="bg-white p-3 rounded-xl border border-slate-200 mb-3 flex flex-wrap items-center justify-between gap-2 shadow-sm">
-            <button onclick="saveCompressedExam()" id="btn-save-exam" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow">
+          <div class="bg-white p-3 rounded-xl border border-slate-200 mb-3 flex flex-wrap items-center justify-between gap-1.5 shadow-sm">
+            <button onclick="saveCompressedExam()" id="btn-save-exam" class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
               💾 1. Guardar
             </button>
             <div class="flex flex-wrap items-center gap-1.5">
-              <button onclick="printPhysicalExam()" class="bg-slate-800 hover:bg-slate-950 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow">
-                🖨️ 2. Imprimir en Papel
+              <button onclick="printPhysicalExam()" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
+                🖨️ 2. Imprimir
               </button>
-              <button onclick="downloadOnlyPDF()" id="btn-dl-pdf" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow">
-                📄 3. Descargar PDF Oficial
+              <button onclick="downloadOnlyPDF()" id="btn-dl-pdf" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
+                📄 3. PDF
               </button>
-              <button onclick="sendVisualSheetByGmail()" id="btn-gmail-visual" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow">
-                📧 4. Enviar Boleta Visual por Gmail
+              <button onclick="sendVisualSheetByGmail()" id="btn-gmail-visual" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
+                📧 4. Enviar Gmail
+              </button>
+              <button onclick="sendVisualSheetByWhatsApp()" id="btn-wa-visual" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow">
+                💬 5. Enviar WhatsApp
               </button>
             </div>
           </div>
 
-          <!-- HOJA DE IMPRESIÓN OFICIAL -->
+          <!-- HOJA DE IMPRESIÓN OFICIAL (Con el Logo del Microscopio ADESCAS exclusivo para exámenes) -->
           <div id="preview-wrapper" class="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-slate-300 text-slate-900 mx-auto w-full max-w-[210mm]">
             <div id="live-sheet-content"></div>
           </div>
@@ -455,11 +464,21 @@
 
   <script>
     // ============================================================================
-    // CONFIGURACIÓN DE SEGURIDAD ESTRICTA: ÚNICO CORREO AUTORIZADO
+    // VALIDACIÓN CRIPTOGRÁFICA SHA-256 DEL USUARIO AUTORIZADO
+    // El correo no está escrito en el código fuente: se verifica por su hash SHA-256
     // ============================================================================
-    const ALLOWED_STAFF_EMAIL = "licpineda@adesca.com";
+    const AUTHORIZED_EMAIL_SHA256 = "e64785b1b26b712b83a4760a8021a70d692a17f53c48554909f5e6f84989a707";
 
-    // LOGO OFICIAL DEL WORD "ADESCAS Laboratorio Clínico" (Microscopio Azul)
+    async function verifyEmailHash(emailStr) {
+      const clean = (emailStr || '').trim().toLowerCase();
+      const msgBuffer = new TextEncoder().encode(clean);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex === AUTHORIZED_EMAIL_SHA256;
+    }
+
+    // LOGO DEL MICROSCOPIO "ADESCAS Laboratorio Clínico" (Exclusivo para las boletas de examen)
     const OFFICIAL_ADESCAS_LOGO_SVG = `
       <svg viewBox="0 0 430 175" class="h-14 w-auto select-none" xmlns="http://www.w3.org/2000/svg">
         <path d="M 65,138 A 48,48 0 0,1 65,45" fill="none" stroke="#1b3b6f" stroke-width="24" stroke-linecap="round"/>
@@ -479,15 +498,11 @@
         <text x="136" y="156" font-family="'Inter', 'Arial', sans-serif" font-weight="700" font-size="35" fill="#5b87c6" textLength="245" lengthAdjust="spacingAndGlyphs">Laboratorio Clínico</text>
       </svg>`;
 
-    document.getElementById('header-logo-box').innerHTML = OFFICIAL_ADESCAS_LOGO_SVG;
-
     // ============================================================================
     // FIRMA CRIPTOGRÁFICA MATEMÁTICA SIN BASE DE DATOS (PARA EL QR PERMANENTE)
-    // Aunque se borren los exámenes cada día, el QR valida matemáticamente que
-    // la boleta fue emitida por ADESCAS sin ocupar ni 1 byte en Supabase.
     // ============================================================================
     function generateAdescasSeal(patientName, examTitle, examDate) {
-      const secretSalt = "ADESCAS_AHUACHAPAN_SV_2026_LICPINEDA_KEY";
+      const secretSalt = "ADESCAS_AHUACHAPAN_SV_2026_AUTH_SEAL";
       const raw = `${(patientName || '').trim().toUpperCase()}|${(examTitle || '').trim().toUpperCase()}|${(examDate || '').trim().toUpperCase()}|${secretSalt}`;
       let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
       for (let i = 0, ch; i < raw.length; i++) {
@@ -517,14 +532,13 @@
           card.innerHTML = `
             <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">✓</div>
             <h3 class="text-lg font-black text-emerald-800 uppercase">Documento Oficial Auténtico</h3>
-            <p class="text-xs text-slate-600">Certificado criptográficamente por <strong>Laboratorio Clínico "ADESCAS" (Ahuachapán)</strong>.</p>
+            <p class="text-xs text-slate-600">Certificado por <strong>Laboratorio Clínico "ADESCAS" (Ahuachapán)</strong>.</p>
             <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-left text-xs space-y-1.5">
               <p><strong>PACIENTE:</strong> ${decoded.p}</p>
               <p><strong>ESTUDIO:</strong> ${decoded.e}</p>
               <p><strong>FECHA EMISIÓN:</strong> ${decoded.f}</p>
               <p><strong>SELLO DIGITAL:</strong> <span class="font-mono font-bold text-emerald-700">${decoded.s}</span></p>
             </div>
-            <p class="text-[10px] text-slate-400">Verificación matemática permanente sin almacenamiento de datos sensibles.</p>
             <button onclick="window.history.replaceState({}, '', window.location.pathname); document.getElementById('qr-verification-modal').classList.add('hidden');" class="w-full bg-[#163a70] text-white font-bold py-2.5 rounded-xl text-xs">
               Cerrar Verificador
             </button>`;
@@ -536,13 +550,12 @@
       card.innerHTML = `
         <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">✕</div>
         <h3 class="text-lg font-black text-rose-700 uppercase">Alerta: Documento No Válido o Alterado</h3>
-        <p class="text-xs text-slate-600">El sello criptográfico no coincide con los registros de emisión de Laboratorio Clínico "ADESCAS".</p>
+        <p class="text-xs text-slate-600">El sello no coincide con los registros oficiales de emisión de Laboratorio Clínico "ADESCAS".</p>
         <button onclick="window.history.replaceState({}, '', window.location.pathname); document.getElementById('qr-verification-modal').classList.add('hidden');" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs">
           Cerrar
         </button>`;
     }
 
-    // RESALTADO AUTOMÁTICO DE VALORES CON ASTERISCO (*) (Opción 5)
     function formatResultValue(val) {
       const str = String(val || '');
       if (str.includes('*')) {
@@ -552,7 +565,7 @@
     }
 
     // ============================================================================
-    // CONEXIÓN A SUPABASE
+    // CONEXIÓN A SUPABASE Y AUTO-CIERRE REAL DE 20 MINUTOS (CON TIMESTAMP)
     // ============================================================================
     const SUPABASE_URL = "https://cdacldhkhfmlmwbizinu.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VaaLx_zZuGOlgFwwdN2voQ_6QyGAVR5";
@@ -563,7 +576,42 @@
     let editingRecordId = null;
     let currentTemplateKey = 'ego';
     let currentFormState = {};
-    let inactivityTimer = null;
+
+    const LAST_ACTIVITY_KEY = 'adesca_last_active_ts';
+    const INACTIVITY_LIMIT_MS = 20 * 60 * 1000; // 20 minutos exactos
+
+    function registerUserActivity() {
+      if (currentSession) {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      }
+    }
+
+    async function enforceInactivityLogout() {
+      if (!currentSession) return;
+      const lastTs = Number(localStorage.getItem(LAST_ACTIVITY_KEY) || Date.now());
+      const elapsed = Date.now() - lastTs;
+      const remaining = Math.max(0, INACTIVITY_LIMIT_MS - elapsed);
+
+      const mins = String(Math.floor(remaining / 60000)).padStart(2, '0');
+      const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
+      const badge = document.getElementById('inactivity-countdown');
+      if (badge) badge.textContent = `⏱️ Auto-cierre en: ${mins}:${secs}`;
+
+      if (elapsed >= INACTIVITY_LIMIT_MS) {
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+        closeExamEditor();
+        closeCleanDayModal();
+        await handleLogout();
+      }
+    }
+
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+      window.addEventListener(evt, registerUserActivity, { passive: true });
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) enforceInactivityLogout();
+    });
+    setInterval(enforceInactivityLogout, 1000);
 
     const STAMP_STORAGE_KEY = 'adescas_licenciado_stamp_v1';
 
@@ -1066,15 +1114,6 @@
       document.getElementById('btn-to-patient').classList.toggle('hidden', view === 'patient');
     }
 
-    function resetInactivityTimer() {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      if (currentSession) {
-        inactivityTimer = setTimeout(() => { handleLogout(); }, 20 * 60 * 1000);
-      }
-    }
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-
     // ============================================================================
     // PACIENTES
     // ============================================================================
@@ -1125,7 +1164,7 @@
         } else if (exam.status === 'requested') {
           actionBox = `
             <div class="mt-5 pt-4 border-t border-emerald-200 bg-emerald-100/80 -mx-6 -mb-6 p-5 rounded-b-2xl text-emerald-950 text-xs font-bold">
-              ✅ ¡Solicitud recibida! Los licenciados ya tienen su aviso en pantalla. Acérquese a ventanilla.
+              ✅ ¡Solicitud recibida! El personal ya tiene su aviso en pantalla. Acérquese a ventanilla.
             </div>`;
         }
 
@@ -1153,7 +1192,7 @@
     }
 
     // ============================================================================
-    // LICENCIADO AUTH BLINDADO: SOLO licpineda@adesca.com
+    // LOGIN BLINDADO POR HASH SHA-256 (CERO EXPOSICIÓN DE CORREO)
     // ============================================================================
     async function handleStaffLogin(e) {
       e.preventDefault();
@@ -1162,36 +1201,45 @@
       const errBox = document.getElementById('login-error');
       errBox.classList.add('hidden');
 
-      if (email !== ALLOWED_STAFF_EMAIL) {
-        errBox.textContent = '⛔ Acceso denegado: Este correo no está autorizado en la lista blanca del laboratorio.';
+      const isAuthorized = await verifyEmailHash(email);
+      if (!isAuthorized) {
+        errBox.textContent = 'Credenciales inválidas.';
         errBox.classList.remove('hidden');
         return;
       }
 
       const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
-        errBox.textContent = 'Contraseña o credenciales inválidas.';
+        errBox.textContent = 'Credenciales inválidas.';
         errBox.classList.remove('hidden');
+      } else {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+        document.getElementById('staff-password').value = '';
       }
     }
 
     async function handleLogout() {
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
       await supabaseClient.auth.signOut();
       switchView('patient');
     }
 
     supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      if (session && session.user.email.toLowerCase() !== ALLOWED_STAFF_EMAIL) {
-        await supabaseClient.auth.signOut();
-        currentSession = null;
-        return;
+      if (session) {
+        const ok = await verifyEmailHash(session.user.email);
+        if (!ok) {
+          await supabaseClient.auth.signOut();
+          currentSession = null;
+          return;
+        }
+        if (!localStorage.getItem(LAST_ACTIVITY_KEY)) {
+          localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+        }
       }
       currentSession = session;
-      resetInactivityTimer();
       document.getElementById('staff-login-box').classList.toggle('hidden', !!session);
       document.getElementById('staff-dashboard').classList.toggle('hidden', !session);
       if (session) {
-        document.getElementById('staff-user-email').textContent = '👨‍⚕️ Licenciado Autorizado: ' + session.user.email;
         fetchStaffData();
       }
     });
@@ -1282,11 +1330,11 @@
                 ${hasFullReport ? '<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 Boleta Lista</span>' : ''}
               </div>
               <h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4>
-              <p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ✉️ ${item.patient_email}` : ''}</p>
+              <p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ${item.patient_email}` : ''}</p>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
               <button onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">
-                ${hasFullReport ? '🖨️ Imprimir / PDF / Gmail' : '📝 Redactar Examen'}
+                ${hasFullReport ? '🖨️ Imprimir / Gmail / WhatsApp' : '📝 Redactar Examen'}
               </button>
               ${actionBtns}
               <button onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>
@@ -1343,7 +1391,7 @@
         codigo: r.code,
         paciente: r.patient_name,
         edad: r.patient_age || '',
-        correo: r.patient_email || '',
+        contacto: r.patient_email || '',
         examen: r.exam_type,
         estado: r.status,
         resultados: decompressExamData(r.exam_data_compressed)
@@ -1397,7 +1445,7 @@
       const deliveredList = allRecords.filter(r => r.status === 'delivered');
 
       if (mode === 'delivered' && deliveredList.length === 0) {
-        errBox.textContent = 'No hay exámenes marcados como ENTREGADOS. Seleccione la segunda opción ("TODOS los exámenes actuales del día") o marque primero los exámenes como Entregados.';
+        errBox.textContent = 'No hay exámenes marcados como ENTREGADOS. Seleccione la segunda opción ("TODOS los exámenes actuales del día").';
         errBox.classList.remove('hidden');
         return;
       }
@@ -1407,12 +1455,12 @@
       btn.disabled = true;
 
       const { error: authErr } = await supabaseClient.auth.signInWithPassword({
-        email: ALLOWED_STAFF_EMAIL,
+        email: currentSession.user.email,
         password: password
       });
 
       if (authErr) {
-        errBox.textContent = '❌ Contraseña incorrecta. No se autorizó el borrado de la base de datos.';
+        errBox.textContent = '❌ Contraseña incorrecta. No se autorizó el borrado.';
         errBox.classList.remove('hidden');
         btn.textContent = 'Autorizar y Limpiar Base Ahora';
         btn.disabled = false;
@@ -1425,7 +1473,7 @@
       await supabaseClient.from('cierres_adesca').insert([{
         fecha: todayStr,
         total_entregados: countToDelete,
-        cerrado_por: ALLOWED_STAFF_EMAIL
+        cerrado_por: currentSession.user.email
       }]);
 
       let delError = null;
@@ -1449,14 +1497,14 @@
 
       closeCleanDayModal();
       await fetchStaffData();
-      alert(`✅ ¡Base de datos limpiada con éxito! Se eliminaron ${countToDelete} exámenes y los códigos QR emitidos seguirán siendo verificables.`);
+      alert(`✅ ¡Base de datos limpiada con éxito! Se eliminaron ${countToDelete} exámenes.`);
     }
 
     // ============================================================================
     // REDACTOR COMPLETO DE EXÁMENES
     // ============================================================================
     function openExamEditor(recordId) {
-      if (!currentSession || currentSession.user.email.toLowerCase() !== ALLOWED_STAFF_EMAIL) return;
+      if (!currentSession) return;
       editingRecordId = recordId;
       document.getElementById('exam-modal').classList.remove('hidden');
 
@@ -1465,7 +1513,8 @@
         if (rec) {
           document.getElementById('ed-patient-name').value = rec.patient_name || '';
           document.getElementById('ed-patient-age').value = rec.patient_age || '';
-          document.getElementById('ed-patient-email').value = rec.patient_email || '';
+          document.getElementById('ed-patient-email').value = (rec.patient_email || '').includes('@') ? rec.patient_email : '';
+          document.getElementById('ed-patient-phone').value = '';
           document.getElementById('ed-status').value = rec.status || 'ready';
 
           const saved = decompressExamData(rec.exam_data_compressed);
@@ -1474,6 +1523,7 @@
             document.getElementById('editor-template-select').value = currentTemplateKey;
             document.getElementById('ed-exam-date').value = saved.examDate || getFormattedTodayUpper();
             document.getElementById('ed-observations').value = saved.observations || '';
+            document.getElementById('ed-patient-phone').value = saved.patientPhone || '';
             currentFormState = JSON.parse(JSON.stringify(saved.formState || {}));
             renderDynamicFields();
             updateLivePreview();
@@ -1484,6 +1534,7 @@
         document.getElementById('ed-patient-name').value = '';
         document.getElementById('ed-patient-age').value = '';
         document.getElementById('ed-patient-email').value = '';
+        document.getElementById('ed-patient-phone').value = '';
         document.getElementById('ed-status').value = 'ready';
       }
 
@@ -1598,7 +1649,7 @@
     }
 
     // ============================================================================
-    // RENDERIZADO DE BOLETA OFICIAL CON QR PERMANENTE, ASTERISCO (*) Y LEYENDA
+    // RENDERIZADO DE BOLETA OFICIAL (AQUÍ SÍ VA EL LOGO DEL MICROSCOPIO DEL WORD)
     // ============================================================================
     function buildOfficialSheetHTML(forceDigitalStamp = null) {
       const rawName = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
@@ -1609,7 +1660,6 @@
       const f = currentFormState;
       const examTitle = f.customTitle || tpl.title;
 
-      // Generar Sello Criptográfico y QR sin base de datos
       const sealCode = generateAdescasSeal(rawName, examTitle, date);
       const tokenPayload = LZString.compressToEncodedURIComponent(JSON.stringify({
         p: rawName,
@@ -1665,7 +1715,7 @@
               <tr><td><strong>SANGRE OCULTA:</strong></td><td>${formatResultValue(f.sangre_oculta)}</td><td><strong>FILAMENTOS MUCOIDE:</strong></td><td>${formatResultValue(f.mucoide)}</td></tr>
               <tr><td><strong>CUERPOS CETONICOS:</strong></td><td>${formatResultValue(f.cetonas)}</td><td><strong>PARASITOS:</strong></td><td>${formatResultValue(f.parasitos)}</td></tr>
               <tr><td><strong>UROBILINOGENO:</strong></td><td>${formatResultValue(f.urobilinogeno)}</td><td colspan="2" rowspan="3" class="align-top"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</td></tr>
-              <tr><td><strong>BILIRRUBINA:</strong></td><td>${formatResultValue(f.bilirrubina)}</td></tr>
+              <tr><td><strong>BILIRRUBINA:</strong></td><td>${formatResultValue(f.bilirrubina}</td></tr>
               <tr><td><strong>ESTERASA LEUCOCITARIA:</strong></td><td>${formatResultValue(f.esterasa)}</td></tr>
             </tbody>
           </table>`;
@@ -1869,7 +1919,6 @@
           </div>`;
       }
 
-      // PIE DE PÁGINA CON QR ANTIFALSIFICACIÓN PERMANENTE (Opción 1) + LEYENDA LEGAL (Opción 4)
       const footerHTML = `
         ${obs && tpl.layout !== 'ego' ? `<p class="text-xs mt-3"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</p>` : ''}
         <div class="mt-5 pt-3 border-t border-slate-300 flex items-end justify-between gap-4">
@@ -1877,7 +1926,7 @@
             <img src="${qrImgUrl}" alt="QR Verificación" class="w-16 h-16 border border-slate-300 p-0.5 rounded bg-white shrink-0" crossorigin="anonymous" />
             <div class="text-[9.5px] text-slate-600 leading-tight max-w-xs">
               <p class="font-extrabold text-[#1b3b6f]">SELLO DIGITAL: <span class="font-mono">${sealCode}</span></p>
-              <p class="mt-0.5">Escanee el código QR para verificar la autenticidad matemática de este reporte.</p>
+              <p class="mt-0.5">Escanee el código QR para verificar la autenticidad de este reporte.</p>
               <p class="mt-1 font-bold text-slate-800">Documento oficial emitido por Laboratorio Clínico "ADESCAS" (Ahuachapán). Cualquier alteración parcial o total anula su validez legal.</p>
             </div>
           </div>
@@ -1892,11 +1941,11 @@
     }
 
     // ============================================================================
-    // GUARDAR, IMPRIMIR PAPEL, DESCARGAR PDF Y ENVIAR BOLETA VISUAL POR GMAIL
+    // GUARDAR, IMPRIMIR PAPEL, DESCARGAR PDF, ENVIAR POR GMAIL Y POR WHATSAPP
     // ============================================================================
     async function saveCompressedExam() {
-      if (!currentSession || currentSession.user.email.toLowerCase() !== ALLOWED_STAFF_EMAIL) {
-        alert('Acceso no autorizado.');
+      if (!currentSession) {
+        alert('Sesión expirada.');
         return false;
       }
       const name = document.getElementById('ed-patient-name').value.trim().toUpperCase();
@@ -1906,6 +1955,7 @@
       }
       const age = document.getElementById('ed-patient-age').value.trim().toUpperCase();
       const email = document.getElementById('ed-patient-email').value.trim();
+      const phone = document.getElementById('ed-patient-phone').value.trim();
       const status = document.getElementById('ed-status').value;
       const tpl = EXAM_TEMPLATES[currentTemplateKey];
       const examTitle = currentFormState.customTitle || tpl.title;
@@ -1918,14 +1968,17 @@
         templateKey: currentTemplateKey,
         examDate: document.getElementById('ed-exam-date').value,
         observations: document.getElementById('ed-observations').value,
+        patientPhone: phone,
         formState: currentFormState
       });
+
+      const contactInfo = email || phone;
 
       if (editingRecordId) {
         await supabaseClient.from('examenes_adesca').update({
           patient_name: name,
           patient_age: age,
-          patient_email: email,
+          patient_email: contactInfo,
           exam_type: examTitle,
           status: status,
           exam_data_compressed: compressedPayload,
@@ -1937,7 +1990,7 @@
           code: randomCode,
           patient_name: name,
           patient_age: age,
-          patient_email: email,
+          patient_email: contactInfo,
           exam_type: examTitle,
           status: status,
           exam_data_compressed: compressedPayload,
@@ -1974,7 +2027,7 @@
       const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
       const cleanFileName = `Resultado_ADESCAS_${name.replace(/\s+/g, '_')}.pdf`;
       const btn = document.getElementById('btn-dl-pdf');
-      btn.textContent = 'Generando PDF...';
+      btn.textContent = 'Generando...';
 
       const element = document.getElementById('preview-wrapper');
       await html2pdf().set({
@@ -1985,34 +2038,15 @@
         jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
       }).from(element).save();
 
-      btn.textContent = '📄 3. Descargar PDF Oficial';
+      btn.textContent = '📄 3. PDF';
     }
 
-    async function sendVisualSheetByGmail() {
-      const email = document.getElementById('ed-patient-email').value.trim();
-      if (!email) {
-        alert('Escriba primero el correo Gmail del paciente en el campo "Correo Gmail del Paciente".');
-        document.getElementById('ed-patient-email').focus();
-        return;
-      }
-
-      const ok = await saveCompressedExam();
-      if (!ok) return;
-
+    async function prepareVisualBoletaClipboardAndPDF(name) {
       if (getSavedStamp()) {
         document.getElementById('toggle-digital-stamp').checked = true;
         updateLivePreview();
       }
-
-      const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
-      const tpl = EXAM_TEMPLATES[currentTemplateKey];
-      const examTitle = currentFormState.customTitle || tpl.title;
       const cleanFileName = `Resultado_ADESCAS_${name.replace(/\s+/g, '_')}.pdf`;
-
-      const btn = document.getElementById('btn-gmail-visual');
-      btn.textContent = 'Preparando Boleta Visual...';
-      btn.disabled = true;
-
       const element = document.getElementById('preview-wrapper');
 
       try {
@@ -2032,16 +2066,74 @@
           jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
         }).from(element).save();
       } catch (e) {}
+    }
 
-      btn.textContent = '📧 4. Enviar Boleta Visual por Gmail';
+    async function sendVisualSheetByGmail() {
+      const email = document.getElementById('ed-patient-email').value.trim();
+      if (!email) {
+        alert('Escriba primero el correo Gmail del paciente en el campo "Correo Gmail Paciente".');
+        document.getElementById('ed-patient-email').focus();
+        return;
+      }
+
+      const ok = await saveCompressedExam();
+      if (!ok) return;
+
+      const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+      const examTitle = currentFormState.customTitle || tpl.title;
+
+      const btn = document.getElementById('btn-gmail-visual');
+      btn.textContent = 'Preparando...';
+      btn.disabled = true;
+
+      await prepareVisualBoletaClipboardAndPDF(name);
+
+      btn.textContent = '📧 4. Enviar Gmail';
       btn.disabled = false;
 
       const subject = `Resultado Oficial de Laboratorio Clínico ADESCAS - ${name} (${examTitle})`;
       const body = `Estimado(a) ${name}, adjuntamos su resultado oficial de Laboratorio Clínico "ADESCAS" (Ahuachapán):\n\n`;
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-      document.getElementById('gmail-final-link').href = gmailUrl;
-      document.getElementById('gmail-guide-modal').classList.remove('hidden');
+      document.getElementById('send-platform-name').textContent = 'Gmail';
+      document.getElementById('send-final-link').href = gmailUrl;
+      document.getElementById('send-guide-modal').classList.remove('hidden');
+    }
+
+    async function sendVisualSheetByWhatsApp() {
+      let phoneRaw = document.getElementById('ed-patient-phone').value.replace(/\D/g, '');
+      if (!phoneRaw) {
+        alert('Escriba primero el número de WhatsApp del paciente (ej. 7895-5220).');
+        document.getElementById('ed-patient-phone').focus();
+        return;
+      }
+      if (phoneRaw.length === 8) {
+        phoneRaw = '503' + phoneRaw;
+      }
+
+      const ok = await saveCompressedExam();
+      if (!ok) return;
+
+      const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+      const examTitle = currentFormState.customTitle || tpl.title;
+
+      const btn = document.getElementById('btn-wa-visual');
+      btn.textContent = 'Preparando...';
+      btn.disabled = true;
+
+      await prepareVisualBoletaClipboardAndPDF(name);
+
+      btn.textContent = '💬 5. Enviar WhatsApp';
+      btn.disabled = false;
+
+      const msg = `🏥 *LABORATORIO CLÍNICO "ADESCAS"*\nEstimado(a) *${name}*, le enviamos el reporte oficial de su estudio: *${examTitle}*.`;
+      const waUrl = `https://wa.me/${phoneRaw}?text=${encodeURIComponent(msg)}`;
+
+      document.getElementById('send-platform-name').textContent = 'WhatsApp';
+      document.getElementById('send-final-link').href = waUrl;
+      document.getElementById('send-guide-modal').classList.remove('hidden');
     }
 
     supabaseClient.channel('realtime-adesca')
