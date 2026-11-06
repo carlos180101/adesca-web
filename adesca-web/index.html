@@ -3,28 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ADESCA - Laboratorio Clínico</title>
+  <title>ADESCAS - Laboratorio Clínico</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Librería de compresión LZ-String para ahorrar hasta 75% de espacio en Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
+    
+    /* ESTILOS EXCLUSIVOS DE IMPRESIÓN (Idéntico al Word de ADESCAS) */
+    @media print {
+      body * { visibility: hidden !important; }
+      #print-area, #print-area * { visibility: visible !important; }
+      #print-area {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12mm !important;
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .no-print { display: none !important; }
+      @page { size: letter; margin: 8mm; }
+    }
+
+    .print-table th, .print-table td {
+      border: 1px solid #1e293b;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .print-table th {
+      background-color: #f1f5f9;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
-  <!-- HEADER -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+  <!-- HEADER PRINCIPAL (No se imprime) -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div onclick="switchView('patient')" class="cursor-pointer flex items-center gap-3">
-        <img src="./logo-adesca.png" alt="ADESCA" class="h-12 w-auto object-contain" onerror="this.style.display='none'" />
+        <img src="./logo-adesca.png" alt="ADESCAS" class="h-12 w-auto object-contain" onerror="this.style.display='none'" />
         <div>
-          <span class="text-xl font-black tracking-wider text-[#163a70] block leading-none">ADESCA</span>
-          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Laboratorio Clínico</span>
+          <span class="text-xl font-black tracking-wider text-[#163a70] block leading-none">ADESCAS</span>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Laboratorio Clínico • Ahuachapán</span>
         </div>
       </div>
 
-      <div>
+      <div class="flex items-center gap-2">
         <button id="btn-to-staff" onclick="switchView('staff')" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-[#163a70] hover:bg-slate-100 flex items-center gap-1.5 border border-transparent hover:border-slate-200">
           🔒 Acceso Licenciados
           <span id="badge-requested" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">0</span>
@@ -36,8 +68,10 @@
     </div>
   </header>
 
-  <!-- VISTA 1: PACIENTES -->
-  <main id="view-patient" class="flex-1 max-w-3xl w-full mx-auto px-4 py-10">
+  <!-- ========================================================= -->
+  <!-- VISTA 1: PORTAL PÚBLICO DE PACIENTES (Cero datos clínicos) -->
+  <!-- ========================================================= -->
+  <main id="view-patient" class="flex-1 max-w-3xl w-full mx-auto px-4 py-10 no-print">
     <div class="text-center mb-8">
       <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-[#163a70] px-3.5 py-1.5 rounded-full text-xs font-bold mb-4">
         ✨ Consulta Digital de Estado de Exámenes
@@ -73,7 +107,7 @@
           </button>
         </div>
         <p class="text-[11px] text-slate-400">
-          🛡️ Búsqueda confidencial: ingrese al menos 4 letras para consultar únicamente su resultado.
+          🛡️ Privacidad médica protegida: este portal únicamente informa el estado de su orden. Sus resultados clínicos son confidenciales.
         </p>
       </form>
     </div>
@@ -81,20 +115,22 @@
     <div id="patient-results" class="space-y-4"></div>
   </main>
 
-  <!-- VISTA 2: LICENCIADOS -->
-  <main id="view-staff" class="hidden flex-1 max-w-6xl w-full mx-auto px-4 py-8">
-    <!-- LOGIN -->
+  <!-- ========================================================= -->
+  <!-- VISTA 2: PANEL PRIVADO DE LICENCIADOS                     -->
+  <!-- ========================================================= -->
+  <main id="view-staff" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 py-6 no-print">
+    <!-- CAJA DE LOGIN -->
     <div id="staff-login-box" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-8 mt-6">
       <div class="text-center mb-6">
         <h2 class="text-xl font-extrabold text-[#163a70]">Acceso Exclusivo Licenciados</h2>
-        <p class="text-xs text-slate-500 mt-1">Ingrese con su usuario autorizado</p>
+        <p class="text-xs text-slate-500 mt-1">Conexión cifrada y protegida para personal del laboratorio</p>
       </div>
 
       <div id="login-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold"></div>
 
       <form onsubmit="handleStaffLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Correo Electrónico</label>
+          <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Correo Autorizado</label>
           <input id="staff-email" type="email" required placeholder="licenciado@adesca.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm outline-none focus:border-[#163a70]" />
         </div>
         <div>
@@ -107,16 +143,26 @@
       </form>
     </div>
 
-    <!-- PANEL DE CONTROL -->
+    <!-- DASHBOARD DE LICENCIADOS -->
     <div id="staff-dashboard" class="hidden space-y-6">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
-        <span id="staff-user-email" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md"></span>
-        <div class="flex items-center gap-2">
-          <button onclick="handleCleanDelivered()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs px-3.5 py-2 rounded-xl">
-            🧹 Cerrar Día y Limpiar Entregados (<span id="count-delivered">0</span>)
+      <!-- BARRA SUPERIOR DE HERRAMIENTAS Y SEGURIDAD -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+          <span id="staff-user-email" class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg"></span>
+          <span class="text-[11px] text-slate-400 hidden sm:inline">🔒 Auto-cierre por inactividad: 20 min</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openExamEditor(null)" class="bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5">
+            📝 + Redactar Nuevo Examen Completo
           </button>
-          <button onclick="handleLogout()" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl">
-            Cerrar Sesión
+          <button onclick="downloadDailyBackup()" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3.5 py-2.5 rounded-xl">
+            📥 Descargar Exámenes del Día (Ligero)
+          </button>
+          <button onclick="handleCleanDelivered()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs px-3.5 py-2.5 rounded-xl">
+            🧹 Cerrar Día / Limpiar Base (<span id="count-delivered">0</span>)
+          </button>
+          <button onclick="handleLogout()" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-bold text-xs px-3.5 py-2.5 rounded-xl">
+            Salir
           </button>
         </div>
       </div>
@@ -125,40 +171,44 @@
       <div id="window-alert" class="hidden bg-rose-600 text-white rounded-2xl p-4 shadow-lg flex items-center justify-between">
         <div>
           <h4 class="font-extrabold text-sm">🔔 ¡Paciente esperando su examen en ventanilla!</h4>
-          <p class="text-xs text-rose-100">Presione "Marcar Entregado" cuando se lo entregue en mano.</p>
+          <p class="text-xs text-rose-100">Puede imprimir su boleta o marcarlo como entregado cuando lo retire.</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- SUBIR PACIENTE -->
+        <!-- COLUMNA IZQUIERDA: REGISTRO RÁPIDO + CIERRES -->
         <div class="lg:col-span-4 space-y-6">
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h3 class="font-extrabold text-[#163a70] text-base mb-4">+ Registrar Examen</h3>
-            <form onsubmit="handleAddRecord(event)" class="space-y-4">
+            <h3 class="font-extrabold text-[#163a70] text-sm uppercase tracking-wider mb-1">⚡ Aviso Rápido de Examen</h3>
+            <p class="text-xs text-slate-500 mb-4">Si solo desea subir el nombre rápido o bien use el botón "Redactar Examen Completo" arriba.</p>
+            <form onsubmit="handleQuickAddRecord(event)" class="space-y-3">
               <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nombre del Paciente</label>
-                <input id="new-patient-name" type="text" required placeholder="Ej. María Fernanda López" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Nombre del Paciente</label>
+                <input id="quick-patient-name" type="text" required placeholder="Ej. Israel Ruiz" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
               </div>
-              <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Tipo de Examen</label>
-                <input id="new-exam-type" type="text" required value="Hematología Completa" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm mb-2" />
-                <div class="flex flex-wrap gap-1.5">
-                  <button type="button" onclick="setExamPreset('Hematología Completa')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Hematología</button>
-                  <button type="button" onclick="setExamPreset('Química Sanguínea')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Química</button>
-                  <button type="button" onclick="setExamPreset('Examen General de Orina (EGO)')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Orina (EGO)</button>
-                  <button type="button" onclick="setExamPreset('Examen General de Heces (EGH)')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Heces (EGH)</button>
-                  <button type="button" onclick="setExamPreset('Perfil Lipídico')" class="text-[11px] px-2.5 py-1 rounded-lg border bg-slate-50 hover:bg-blue-50">Perfil Lipídico</button>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Edad</label>
+                  <input id="quick-patient-age" type="text" placeholder="Ej. 25 AÑOS" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Correo (Opcional)</label>
+                  <input id="quick-patient-email" type="email" placeholder="paciente@gmail.com" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
                 </div>
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Estado Inicial</label>
-                <select id="new-initial-status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-emerald-700">
+                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Estudio Realizado</label>
+                <input id="quick-exam-type" type="text" required value="EXAMEN GENERAL DE ORINA" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Estado</label>
+                <select id="quick-initial-status" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold text-emerald-700">
                   <option value="ready">✅ EXAMEN LISTO (Verde)</option>
                   <option value="processing">⏳ EN PROCESO (Amarillo)</option>
                 </select>
               </div>
-              <button type="submit" class="w-full bg-[#163a70] hover:bg-[#102a52] text-white font-bold py-3 rounded-xl shadow-md text-sm">
-                Guardar Paciente
+              <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs">
+                Subir Aviso Rápido
               </button>
             </form>
           </div>
@@ -169,12 +219,15 @@
           </div>
         </div>
 
-        <!-- LISTA DE EXÁMENES -->
+        <!-- COLUMNA DERECHA: LISTA DE PACIENTES DEL DÍA -->
         <div class="lg:col-span-8">
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center">
-              <h3 class="font-bold text-sm text-[#163a70]">Pacientes Activos del Día</h3>
-              <button onclick="fetchStaffData()" class="text-xs font-bold text-[#163a70] hover:underline">↻ Actualizar</button>
+            <div class="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
+              <h3 class="font-extrabold text-sm text-[#163a70]">Pacientes y Exámenes del Día</h3>
+              <div class="flex items-center gap-2">
+                <input id="staff-filter-input" oninput="renderStaffRecords()" type="text" placeholder="Buscar paciente..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs" />
+                <button onclick="fetchStaffData()" class="text-xs font-bold text-[#163a70] hover:underline px-2">↻ Actualizar</button>
+              </div>
             </div>
             <div id="staff-records-list" class="divide-y divide-slate-100"></div>
           </div>
@@ -183,14 +236,576 @@
     </div>
   </main>
 
+  <!-- ========================================================= -->
+  <!-- MODAL REDACTOR / IMPRESOR / GMAIL DE EXÁMENES (WORD)      -->
+  <!-- ========================================================= -->
+  <div id="exam-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm overflow-y-auto p-2 sm:p-6 no-print">
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4">
+      <!-- Barra superior del Modal -->
+      <div class="bg-[#163a70] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-extrabold">Redactor Oficial de Exámenes — Laboratorio Clínico "ADESCAS"</h2>
+          <p class="text-xs text-blue-200">Seleccione el formato del examen, digite los resultados, guárdelo comprimido, imprímalo o envíelo por Gmail.</p>
+        </div>
+        <button onclick="closeExamEditor()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold">
+          ✕ Cerrar Ventana
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12">
+        <!-- Panel Izquierdo: Formulario para digitar -->
+        <div class="lg:col-span-5 p-5 bg-slate-50 border-r border-slate-200 space-y-4 max-h-[82vh] overflow-y-auto">
+          <div>
+            <label class="block text-xs font-extrabold uppercase text-[#163a70] mb-1">1. Seleccionar Formato de Examen (Word)</label>
+            <select id="editor-template-select" onchange="onTemplateChange()" class="w-full px-3 py-2.5 rounded-xl border-2 border-[#163a70] bg-white text-sm font-bold text-slate-900">
+            </select>
+          </div>
+
+          <!-- Datos Generales del Paciente -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 class="text-xs font-extrabold uppercase text-slate-500">2. Datos del Paciente</h4>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600">NOMBRE COMPLETO:</label>
+              <input id="ed-patient-name" oninput="updateLivePreview()" type="text" placeholder="Ej. ISRAEL RUIZ" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-bold uppercase" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600">EDAD:</label>
+                <input id="ed-patient-age" oninput="updateLivePreview()" type="text" placeholder="Ej. 25 AÑOS" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm uppercase" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600">FECHA:</label>
+                <input id="ed-exam-date" oninput="updateLivePreview()" type="text" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm uppercase" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600">CORREO GMAIL DEL PACIENTE:</label>
+                <input id="ed-patient-email" type="email" placeholder="ejemplo@gmail.com" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600">ESTADO EN WEB:</label>
+                <select id="ed-status" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-emerald-700">
+                  <option value="ready">✅ LISTO (Verde)</option>
+                  <option value="processing">⏳ EN PROCESO</option>
+                  <option value="delivered">✔️ ENTREGADO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos Dinámicos del Examen Seleccionado -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-extrabold uppercase text-slate-500">3. Resultados del Examen</h4>
+              <button type="button" onclick="addCustomParameterRow()" id="btn-add-row" class="hidden text-[11px] bg-blue-50 text-[#163a70] px-2.5 py-1 rounded font-bold border border-blue-200">+ Agregar Fila</button>
+            </div>
+            <div id="dynamic-fields-container" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">OBSERVACIONES / NOTA:</label>
+            <textarea id="ed-observations" oninput="updateLivePreview()" rows="2" placeholder="Opcional..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"></textarea>
+          </div>
+        </div>
+
+        <!-- Panel Derecho: Vista Previa Exacta + Botones de Acción -->
+        <div class="lg:col-span-7 p-5 flex flex-col justify-between bg-slate-200/70 max-h-[82vh] overflow-y-auto">
+          <!-- Botonera de Acciones Principales -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 mb-4 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+            <button onclick="saveCompressedExam()" id="btn-save-exam" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5">
+              💾 Guardar Examen (Comprimido)
+            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="printCurrentExam()" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5">
+                🖨️ Imprimir / Guardar PDF
+              </button>
+              <button onclick="sendByGmail()" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5">
+                📧 Enviar por Gmail al Paciente
+              </button>
+            </div>
+          </div>
+
+          <!-- HOJA DE IMPRESIÓN OFICIAL (Vista Previa en Vivo) -->
+          <div id="preview-wrapper" class="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-slate-300 text-slate-900">
+            <!-- El contenido se clona también a #print-area al imprimir -->
+            <div id="live-sheet-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÁREA EXCLUSIVA PARA IMPRESIÓN DIRECTA -->
+  <div id="print-area" class="hidden print:block"></div>
+
   <script>
-    // TUS LLAVES REALES DE SUPABASE YA CONECTADAS
+    // ============================================================================
+    // CONEXIÓN A SUPABASE
+    // ============================================================================
     const SUPABASE_URL = "https://cdacldhkhfmlmwbizinu.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VaaLx_zZuGOlgFwwdN2voQ_6QyGAVR5";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentSession = null;
     let allRecords = [];
+    let editingRecordId = null;
+    let currentTemplateKey = 'ego';
+    let currentFormState = {};
+    let inactivityTimer = null;
+
+    // ============================================================================
+    // CATÁLOGO COMPLETO DE PLANTILLAS EXTRAÍDAS DEL WORD DE "ADESCAS"
+    // ============================================================================
+    const EXAM_TEMPLATES = {
+      ego: {
+        name: "1. Examen General de Orina (EGO)",
+        title: "EXAMEN GENERAL DE ORINA",
+        layout: "ego",
+        defaults: {
+          color: "AMARILLO", aspecto: "LIMPIDO", ph: "6.0", densidad: "1020",
+          glucosa: "NEGATIVO", proteinas: "NEGATIVO", nitritos: "NEGATIVO",
+          sangre_oculta: "NEGATIVO", cetonas: "NEGATIVO", urobilinogeno: "NEGATIVO",
+          bilirrubina: "NEGATIVO", esterasa: "NEGATIVO",
+          leucocitos: "0 - 1 X CAMPO", hematies: "0 X CAMPO", epiteliales: "ESCASAS",
+          bacterias: "ESCASAS", cilindros: "NO SE OBSERVAN", cristales: "NO SE OBSERVAN",
+          levaduras: "NO SE OBSERVAN", mucoide: "NO SE OBSERVAN", parasitos: "NO SE OBSERVAN"
+        }
+      },
+      egh: {
+        name: "2. Examen General de Heces (EGH)",
+        title: "EXAMEN GENERAL DE HECES",
+        layout: "egh",
+        defaults: {
+          color: "CAFE", consistencia: "PASTOSA", mucus: "NEGATIVO",
+          restos: "MODERADOS", grasa: "ESCASOS", levaduras: "ESCASO",
+          leucocitos: "0 X CAMPO", hematies: "0 X CAMPO", flora: "MODERADA",
+          quistes: "NO SE OBSERVAN", activos: "NO SE OBSERVAN",
+          huevos: "NO SE OBSERVAN", larvas: "NO SE OBSERVAN"
+        }
+      },
+      hemograma: {
+        name: "3. Hemograma Completo",
+        title: "HEMOGRAMA",
+        layout: "hemograma",
+        defaults: {
+          gr: "4,500,000 Xmm3", hb: "13.5 gr/dl", hto: "41 %",
+          vgm: "90.0", hgm: "30.0", chcm: "33.0", plaquetas: "250,000 Xmm3",
+          gb: "6,500 Xmm3", neut_tot: "", neut_banda: "", neut_seg: "55%",
+          linfocitos: "38%", basofilos: "0%", monocitos: "5%", eosinofilos: "2%"
+        }
+      },
+      leucograma: {
+        name: "4. Leucograma",
+        title: "LEUCOGRAMA",
+        layout: "table",
+        rows: [
+          { exam: "GLOBULOS BLANCOS", result: "13,600 Xmm3", ref: "5,000 – 10,000 Xmm3" },
+          { exam: "NEUTROFILOS TOTALES", result: "", ref: "" },
+          { exam: "NEUTROFILOS EN BANDA", result: "", ref: "" },
+          { exam: "NEUTROFILOS SEGMENTADOS", result: "66%", ref: "45 – 70%" },
+          { exam: "LINFOCITOS", result: "32%", ref: "20 – 45%" },
+          { exam: "BASOFILOS", result: "0%", ref: "0 – 1%" },
+          { exam: "MONOCITOS", result: "1%", ref: "2 – 8%" },
+          { exam: "EOSINOFILOS", result: "1%", ref: "1 – 5%" }
+        ]
+      },
+      hto_hb: {
+        name: "5. Hematología (Hematocrito y Hemoglobina)",
+        title: "HEMATOLOGIA",
+        layout: "table",
+        rows: [
+          { exam: "HEMATOCRITO", result: "45%", ref: "37 – 50%" },
+          { exam: "HEMOGLOBINA", result: "14.8 gr/dl", ref: "12.0 – 16.0 gr/dl" }
+        ]
+      },
+      frotis: {
+        name: "6. Frotis de Sangre Periférica",
+        title: "FROTIS DE SANGRE PERIFERICA",
+        layout: "frotis",
+        defaults: {
+          roja: "NORMOCITICA NORMOCROMICA",
+          blanca: "SE OBSERVAN CELULAS DE MORFOLOGIA NORMAL",
+          plaquetaria: "NORMAL EN NUMERO, FORMA Y TAMAÑO."
+        }
+      },
+      quimica: {
+        name: "7. Química Sanguínea (Panel Completo 2 Columnas)",
+        title: "QUIMICA SANGUINEA",
+        layout: "quimica",
+        defaults: {
+          glucosa: "95.0 mg/dl", colesterol: "180.0 mg/dl", trigliceridos: "140.0 mg/dl",
+          acido_urico: "5.2 mg/dl", creatinina: "0.9 mg/dl",
+          tgo: "___ U/L", tgp: "___ U/L", hdl: "––", ldl: "––", bun: "___ mg/dl"
+        }
+      },
+      urocultivo_antibiograma: {
+        name: "8. Urocultivo / Cultivo con Antibiograma (Sensible/Intermedio/Resistente)",
+        title: "CULTIVO Y ANTIBIOGRAMA",
+        layout: "antibiograma",
+        defaults: {
+          muestra: "ORINA",
+          examen_realizado: "UROCULTIVO",
+          resultado_aislamiento: "SE AISLA Escherichia coli",
+          recuento: "100,000 UFC/ml DE ORINA.",
+          ab1_name: "CEFEPIME", ab1_val: "S",
+          ab2_name: "AMOXICILINA/AC. CLAVULANICO", ab2_val: "S",
+          ab3_name: "AZTREONAN", ab3_val: "S",
+          ab4_name: "CEFOTAXIME", ab4_val: "S",
+          ab5_name: "PIPERACILINA/TAZOBACTAN", ab5_val: "S",
+          ab6_name: "TRIMETROPRIM/SULFAMETOXAZOLE", ab6_val: "R",
+          ab7_name: "FOSFOMICINA", ab7_val: "S",
+          ab8_name: "CIPROFLOXACINA", ab8_val: "S",
+          ab9_name: "LEVOFLOXACINA", ab9_val: "S",
+          ab10_name: "GENTAMICINA", ab10_val: "S"
+        }
+      },
+      cultivo_negativo: {
+        name: "9. Urocultivo / Coprocultivo / Faringeo (Sin Crecimiento)",
+        title: "MISCELANEO",
+        layout: "misc_muestra",
+        defaults: {
+          muestra: "ORINA",
+          examen_realizado: "UROCULTIVO",
+          resultado: "NEGATIVO 0 UFC/ml DE ORINA"
+        }
+      },
+      espermograma_oms: {
+        name: "10. Espermograma Completo (Movilidad, Vitalidad y Morfología)",
+        title: "ESPERMOGRAMA",
+        layout: "espermograma_oms",
+        defaults: {
+          muestra: "SEMEN", abstinencia: "4 DIAS", hora_col: "7:46 A.M", hora_ex: "8:10 A.M",
+          color: "BLANQUECINO", aspecto: "OPALESCENTE", volumen: "2.0 ml", ph: "7.8",
+          licuefaccion: "NORMAL", viscosidad: "NORMAL",
+          mov_pr: "42%", mov_np: "24%", mov_tot: "66%", inmoviles: "34%",
+          vivos: "70%", muertos: "30%",
+          millones_ml: "17,000,000", total_eyaculado: "34,000,000",
+          morf_normal: "68%", morf_anormal: "32%",
+          def_cabeza: "15%", def_pieza: "10%", def_flagelo: "7%",
+          leucocitos: "2 – 3 X CAMPO", hematies: "0 – 1 X CAMPO",
+          epiteliales: "ESCASAS", redondas: "ESCASO", bacterias: "NO SE OBSERVAN", debris: "ESCASAS"
+        }
+      },
+      espermograma_3h: {
+        name: "11. Espermograma Cinético (A la 1ra, 2da y 3ra Hora)",
+        title: "ESPERMOGRAMA (1, 2 Y 3 HORAS)",
+        layout: "espermograma_3h",
+        defaults: {
+          olor: "SUIS GENERIS", color: "BLANQUECINO", muestra: "LIQUIDO SEMINAL",
+          hora_col: "10:00 A.M", viscosidad: "NORMAL", licuefaccion: "COMPLETA",
+          hora_ex: "10:25 A.M", volumen: "2.5 ML", ph: "8.0",
+          rap_1h: "80%", rap_2h: "70%", rap_3h: "60%",
+          len_1h: "5%", len_2h: "10%", len_3h: "15%",
+          err_1h: "5%", err_2h: "10%", err_3h: "10%",
+          mue_1h: "10%", mue_2h: "10%", mue_3h: "15%",
+          nor_1h: "90%", nor_2h: "85%", nor_3h: "85%",
+          ano_1h: "10%", ano_2h: "15%", ano_3h: "15%",
+          leucocitos: "2 – 4 X CAMPO", epiteliales: "ESCASAS", hematies: "0 – 1 X CAMPO",
+          bacterias: "NO SE OBSERVAN", recuento: "95,000,000 XCC"
+        }
+      },
+      drogas_10: {
+        name: "12. Drogas de Abuso en Orina (Panel Completo 10 Drogas)",
+        title: "MISCELANEOS — DROGAS DE ABUSO",
+        layout: "table",
+        subtitle_muestra: "ORINA",
+        rows: [
+          { exam: "Cocaína (COC)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Marihuana (THC)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Anfetamina (AMP)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Barbitúricos (BAR)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Benzodiacepina (BZD)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Metanfetamina (MET)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Morfina (MOR)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Metadona (MTD)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Fenciclidina (PCP)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "Antidepresivos (TCA)", result: "NEGATIVO", ref: "NEGATIVO" }
+        ]
+      },
+      drogas_2: {
+        name: "13. Drogas de Abuso (Marihuana THC y Cocaína COC)",
+        title: "MISCELANEOS — DROGAS DE ABUSO",
+        layout: "table",
+        subtitle_muestra: "ORINA",
+        rows: [
+          { exam: "MARIHUANA (THC)", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "COCAINA (COC)", result: "NEGATIVO", ref: "NEGATIVO" }
+        ]
+      },
+      febriles: {
+        name: "14. Antígenos Febriles",
+        title: "MISCELANEOS — ANTIGENOS FEBRILES",
+        layout: "table",
+        subtitle_muestra: "SUERO",
+        rows: [
+          { exam: "TIFICO “O”", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "TIFICO “H”", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "PARATIFICO “A”", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "PARATIFICO “B”", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "BRUCELLA ABORTUS", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "PROTEUS OX-19", result: "NEGATIVO", ref: "NEGATIVO" }
+        ]
+      },
+      hcg_cuant: {
+        name: "15. HCG Beta Cuantificada (Con Tabla de Semanas de Embarazo)",
+        title: "MISCELANEOS — HCG BETA CUANTIFICADA",
+        layout: "hcg_cuant",
+        defaults: {
+          muestra: "SANGRE",
+          resultado: "1,083.0 mIU/mL"
+        }
+      },
+      tolerancia_glucosa: {
+        name: "16. Tolerancia a la Glucosa 3 Horas (Sangre y Orina)",
+        title: "TOLERANCIA A LA GLUCOSA 3 HORAS",
+        layout: "table",
+        subtitle_muestra: "SANGRE Y ORINA",
+        rows: [
+          { exam: "GLUCOSA EN AYUNAS (SANGRE)", result: "95.3 mg/dl", ref: "ORINA: NEGATIVO" },
+          { exam: "1° HORA (SANGRE)", result: "140.0 mg/dl", ref: "ORINA: NEGATIVO" },
+          { exam: "2° HORA (SANGRE)", result: "115.0 mg/dl", ref: "ORINA: NEGATIVO" },
+          { exam: "3° HORA (SANGRE)", result: "90.0 mg/dl", ref: "ORINA: NEGATIVO" }
+        ]
+      },
+      curva_insulina: {
+        name: "17. Insulina Curva 3 Horas",
+        title: "INSULINA CURVA 3 HORAS",
+        layout: "table",
+        subtitle_muestra: "SANGRE",
+        rows: [
+          { exam: "INSULINA EN AYUNAS", result: "12.0 µUI/ml", ref: "2 – 25 µUI/ml" },
+          { exam: "INSULINA EN 1 HORA", result: "53.8 µUI/ml", ref: "45 – 280 µUI/ml" },
+          { exam: "INSULINA EN 2 HORAS", result: "16.1 µUI/ml", ref: "15.0 – 18 µUI/ml" },
+          { exam: "INSULINA EN 3 HORAS", result: "20.0 µUI/ml", ref: "MENOR DE 30 µUI/ml" }
+        ]
+      },
+      depuracion_creat: {
+        name: "18. Depuración de Creatinina en Orina de 24 Horas",
+        title: "DEPURACION DE CREATININA",
+        layout: "table",
+        subtitle_muestra: "SUERO Y ORINA (NO SE RECIBEN MUESTRAS EN FRASCOS DE VIDRIO)",
+        rows: [
+          { exam: "CREATININA EN SUERO", result: "1.18 mg/dl", ref: "0.6 – 1.4 mg/dl" },
+          { exam: "CREATININA EN ORINA", result: "51.0 mg/dl", ref: "8.0 – 20 mg/dl" },
+          { exam: "DEPURACION DE CREATININA", result: "43.52 mg/24horas", ref: "25 – 132 mg/24horas" },
+          { exam: "VOLUMEN URINARIO", result: "1,450 ml", ref: "24 HORAS" }
+        ]
+      },
+      filtrado_glomerular: {
+        name: "19. Filtrado Glomerular + Creatinina",
+        title: "FILTRADO GLOMERULAR",
+        layout: "table",
+        subtitle_muestra: "SANGRE",
+        rows: [
+          { exam: "FILTRADO GLOMERULAR", result: "85.0 ml/min", ref: "70 a 130 ml/min" },
+          { exam: "PESO DEL PACIENTE", result: "75.0 KILOGRAMOS", ref: "" },
+          { exam: "CREATININA EN SANGRE", result: "0.9 mg/dl", ref: "0.6 – 1.4 mg/dl" }
+        ]
+      },
+      tiroideo: {
+        name: "20. Perfil Tiroideo (T3, T4, TSH / Libres)",
+        title: "PERFIL TIROIDEO",
+        layout: "table",
+        rows: [
+          { exam: "T3", result: "1.25 ng/ml", ref: "0.8 – 2.0 ng/ml" },
+          { exam: "T4", result: "10.3 ug/dl", ref: "5.1 – 14.1 ug/dl" },
+          { exam: "TSH", result: "2.7 µUI/ml", ref: "0.2 – 4.20 µUI/ml" }
+        ]
+      },
+      coagulacion_tp_ttp: {
+        name: "21. Tiempos de Coagulación (TP, INR, TTP, Sangramiento)",
+        title: "COAGULACION",
+        layout: "table",
+        rows: [
+          { exam: "TIEMPO DE PROTOMBINA (TP)", result: "13.5 SEGUNDOS", ref: "12.0 – 16.0 SEGUNDOS" },
+          { exam: "INR", result: "1.05", ref: "0.85 – 1.30" },
+          { exam: "TIEMPO DE TROMBOPLASTINA (TTP)", result: "30.0 SEGUNDOS", ref: "24 – 36 SEGUNDOS" }
+        ]
+      },
+      bilirrubinas: {
+        name: "22. Bilirrubinas (Total, Directa e Indirecta)",
+        title: "MISCELANEOS — BILIRRUBINAS",
+        layout: "table",
+        rows: [
+          { exam: "BILIRRUBINA TOTAL", result: "0.34 mg/dl", ref: "EN ADULTOS HASTA 1.1 mg/dl" },
+          { exam: "BILIRRUBINA DIRECTA", result: "0.19 mg/dl", ref: "HASTA 0.25 mg/dl" },
+          { exam: "BILIRRUBINA INDIRECTA", result: "0.15 mg/dl", ref: "HASTA 0.8 mg/dl" }
+        ]
+      },
+      proteinas_fracc: {
+        name: "23. Proteínas Totales, Albúmina, Globulina y Relación A/G",
+        title: "PROTEINAS FRACCIONADAS",
+        layout: "table",
+        rows: [
+          { exam: "PROTEINAS TOTALES", result: "7.58 g/dl", ref: "ADULTOS 6.4 – 8.3 g/dl" },
+          { exam: "ALBUMINA", result: "4.11 g/dl", ref: "ADULTOS 3.97 – 4.95 g/dl" },
+          { exam: "GLOBULINA", result: "3.47 g/dl", ref: "2.6 – 3.1 g/dl" },
+          { exam: "RELACION A/G", result: "1.18", ref: "1.1 – 3.1" }
+        ]
+      },
+      electrolitos: {
+        name: "24. Electrolitos (Sodio, Potasio, Calcio, Magnesio)",
+        title: "MISCELANEOS — ELECTROLITOS",
+        layout: "table",
+        rows: [
+          { exam: "SODIO", result: "138.1 mmol/L", ref: "135 – 155 mmol/L" },
+          { exam: "POTASIO", result: "4.2 mmol/L", ref: "3.5 – 5.5 mmol/L" },
+          { exam: "CALCIO SERICO", result: "9.0 mg/dl", ref: "8.5 – 10.5 mg/dl" },
+          { exam: "MAGNESIO", result: "1.8 mEq/L", ref: "1.6 – 2.1 mEq/L" }
+        ]
+      },
+      lipidico_hdl_ldl: {
+        name: "25. Colesterol, Triglicéridos, HDL y LDL",
+        title: "PERFIL LIPIDICO",
+        layout: "table",
+        rows: [
+          { exam: "COLESTEROL TOTAL", result: "175.0 mg/dl", ref: "HASTA 200 mg/dl" },
+          { exam: "TRIGLICERIDOS", result: "145.0 mg/dl", ref: "HASTA 150 mg/dl" },
+          { exam: "COLESTEROL HDL", result: "55.0 mg/dl", ref: "HOMBRE: 35–45 / MUJER: 45–55 mg/dl" },
+          { exam: "COLESTEROL LDL", result: "110.0 mg/dl", ref: "HASTA 150 mg/dl" }
+        ]
+      },
+      lupico: {
+        name: "26. Anticoagulante Lúpico (LA1, LA2, Radio)",
+        title: "MISCELANEOS — ANTICOAGULANTE LUPICO",
+        layout: "table",
+        subtitle_muestra: "PLASMA CON CITRATO",
+        rows: [
+          { exam: "LA 1", result: "40.6 SEGUNDOS", ref: "31 – 44 SEGUNDOS" },
+          { exam: "LA 2", result: "35.7 SEGUNDOS", ref: "30 – 38 SEGUNDOS" },
+          { exam: "RADIO LA 1 – LA 2", result: "1.1", ref: "0.8 – 1.2" }
+        ]
+      },
+      dengue_panel: {
+        name: "27. Dengue (NS1, IgG, IgM / Anticuerpos)",
+        title: "MISCELANEO — DENGUE",
+        layout: "table",
+        subtitle_muestra: "SANGRE",
+        rows: [
+          { exam: "NS1", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "IgG", result: "NEGATIVO", ref: "NEGATIVO" },
+          { exam: "IgM", result: "NEGATIVO", ref: "NEGATIVO" }
+        ]
+      },
+      tipeo: {
+        name: "28. Tipeo Sanguíneo (Grupo y Factor Rh)",
+        title: "TIPEO SANGUINEO",
+        layout: "misc_muestra",
+        defaults: {
+          muestra: "SANGRE",
+          examen_realizado: "TIPEO SANGUINEO",
+          resultado: "GRUPO “O” FACTOR Rh “POSITIVO”."
+        }
+      },
+      embarazo: {
+        name: "29. Prueba de Embarazo en Sangre",
+        title: "MISCELANEO",
+        layout: "misc_muestra",
+        defaults: {
+          muestra: "SANGRE",
+          examen_realizado: "PRUEBA DE EMBARAZO",
+          resultado: "NEGATIVO A LA FECHA."
+        }
+      },
+      vih: {
+        name: "30. V.I.H. / P.R.S (RPR Sífilis)",
+        title: "MISCELANEOS",
+        layout: "misc_muestra",
+        defaults: {
+          muestra: "SANGRE",
+          examen_realizado: "V.I.H.",
+          resultado: "NO REACTIVO."
+        }
+      },
+      heces_misc: {
+        name: "31. Heces: H. Pylori / Sangre Oculta / Azul de Metileno / Sust. Reductoras",
+        title: "MISCELANEOS",
+        layout: "misc_muestra",
+        defaults: {
+          muestra: "HECES",
+          examen_realizado: "Helicobacter pylori",
+          resultado: "NEGATIVO."
+        }
+      },
+      misc_tabla_libre: {
+        name: "32. Misceláneos de Tabla (PSA, HbA1c, Ferritina, B12, Vit D, Hormonas, PCR, ASTO, etc.)",
+        title: "MISCELANEOS",
+        layout: "table",
+        rows: [
+          { exam: "HEMOGLOBINA GLICOSILADA", result: "6.1 %", ref: "4.2 – 6.2 %" }
+        ]
+      }
+    };
+
+    // Catálogo rápido de autocompletado de Misceláneos del Word para agregar con 1 clic
+    const MISC_PRESETS_CATALOG = [
+      { label: "Hb Glicosilada", exam: "HEMOGLOBINA GLICOSILADA", result: "6.1 %", ref: "4.2 – 6.2 %" },
+      { label: "PSA Prostático", exam: "ANTIGENO PROSTATICO ESPECIFICO (PSA)", result: "1.8 ng/ml", ref: "HASTA 4.0 ng/ml" },
+      { label: "Glucosa Ayunas", exam: "GLUCOSA", result: "92.0 mg/dl", ref: "60 - 110 mg/dl" },
+      { label: "Glucosa Postprandial", exam: "GLUCOSA POSTPRANDIAL", result: "79.8 mg/dl", ref: "HASTA 110 mg/dl" },
+      { label: "Test O'Sullivan", exam: "TEST O SULLIVAN", result: "115.0 mg/dl", ref: "60 – 110 mg/dl" },
+      { label: "Insulina Ayunas", exam: "INSULINA EN AYUNAS", result: "12.5 µUI/ml", ref: "2 – 25 µUI/ml" },
+      { label: "TGO y TGP", exam: "TGO / TGP", result: "25.0 U/L", ref: "TGO HASTA 35 / TGP HASTA 45 U/L" },
+      { label: "Fosfatasa Alcalina", exam: "FOSFATASA ALCALINA", result: "110.8 U/L", ref: "98 – 279 U/L" },
+      { label: "GGT", exam: "GAMMA GLUTAMIL TRANSPEPTIDASA (GGT)", result: "29.6 U/L", ref: "0 – 50.0 U/L" },
+      { label: "Amilasa", exam: "AMILASA", result: "62.13 U/L", ref: "28 – 100 U/L" },
+      { label: "Lipasa", exam: "LIPASA", result: "31.47 U/L", ref: "HASTA 60 U/L" },
+      { label: "LDH", exam: "LDH", result: "314.5 U/L", ref: "225 – 450 U/L" },
+      { label: "CPK Total", exam: "CPK- TOTAL", result: "138.1 U/L", ref: "HOMBRES: HASTA 195 / MUJERES: HASTA 170 U/L" },
+      { label: "PCR Reactiva", exam: "PROTEÍNA “C” REACTIVA", result: "NEGATIVA", ref: "HASTA 6 mg/dl" },
+      { label: "ASTO y Látex RA", exam: "ANTIESTREPTOLISINA O (ASTO)", result: "NEGATIVO", ref: "HASTA 200 IU/mL" },
+      { label: "Factor Reumatoideo", exam: "FACTOR REUMATOIDEO (LATEX RA)", result: "NEGATIVO", ref: "HASTA 12 IU/mL" },
+      { label: "Anti-CCP", exam: "PEPTIDO CICLICO CITRULINADO (ANTI – CCP)", result: "3.0 U/ml", ref: "NEGATIVO: HASTA 5 / POSITIVO: 5 – 200 U/ml" },
+      { label: "Eritrosedimentación", exam: "VELOCIDAD DE ERITROSEDIMENTACION", result: "15 mm/h", ref: "HASTA 19 mm/h" },
+      { label: "Ferritina Sérica", exam: "FERRITINA SERICA", result: "138.6 ng/ml", ref: "MUJERES 20–250 / HOMBRES 30–350 ng/mL" },
+      { label: "Hierro Sérico", exam: "HIERRO SERICO", result: "68.7 µg/dl", ref: "40 - 150 µg/dl" },
+      { label: "Sat. Transferrina", exam: "SATURACION DE TRANSFERRINA", result: "27.73 %", ref: "HOMBRES 20–50% / MUJERES 15–50%" },
+      { label: "Vitamina B12", exam: "VITAMINA B12", result: "357.0 pg/ml", ref: "211 – 946 pg/ml" },
+      { label: "Vitamina D", exam: "VITAMINA D", result: "81.5 ng/dl", ref: "30 – 100 ng/dl SUFICIENCIA" },
+      { label: "Cortisol A.M", exam: "CORTISOL A.M", result: "371.8 mmol/L", ref: "ADULTOS AM: 140 – 700 mmol/L" },
+      { label: "Prolactina", exam: "PROLACTINA", result: "24.9 ng/ml", ref: "1.9 – 35.0 ng/ml" },
+      { label: "F.S.H", exam: "HORMONA FOLICULO ESTIMULANTE (F.S.H)", result: "11.86 mIU/ml", ref: "Fase Folicular 3–12 / Menopausia 35–151" },
+      { label: "Estrógenos", exam: "ESTROGENOS", result: "45.0 pg/mL", ref: "Folicular 12–252 / Ovulación 40–396 pg/mL" },
+      { label: "Testosterona", exam: "TESTOSTERONA", result: "6.8 ng/dl", ref: "2.0 – 8.0 ng/dl" },
+      { label: "Tiroglobulina", exam: "TIROGLOBULINA", result: "21.8 ng/ml", ref: "3.5 – 56.0 ng/ml" },
+      { label: "IgE Total", exam: "INMUNOGLOBULINAS IgE TOTAL", result: "2.22 mg/dl", ref: "0.05 – 10.00 mg/dl" },
+      { label: "H. Pylori Heces Cuant.", exam: "HELICOBACTER PYLORI HECES CUANTITATIVO", result: "10.4 ng/ml", ref: "NEGATIVO: <15 / POSITIVO: >20 ng/mL" },
+      { label: "H. Pylori IgM/IgG", exam: "AC. HELICOBACTER PYLORI IgM / IgG", result: "0.70 O.D", ref: "NEGATIVO < 0.90 / POSITIVO > 1.10 O.D" },
+      { label: "Toxoplasma IgM/IgG", exam: "TOXOPLASMA GONDII IgM / IgG", result: "0.35 U/L", ref: "NEGATIVO MENOR 2.0 / POSITIVO MAYOR 2.60" },
+      { label: "Citomegalovirus", exam: "AC. CITOMEGALOVIRUS IgM / IgG", result: "0.48 U/L", ref: "NEGATIVO < 0.90 / POSITIVO > 1.10 U/L" },
+      { label: "Chagas Anticuerpos", exam: "ANTICUERPOS PARA CHAGAS", result: "0.089 OD", ref: "NEGATIVO: MENOR DE 0.200 OD" },
+      { label: "Hepatitis A / B", exam: "ANTICUERPOS HEPATITIS A / B", result: "0.54 OD", ref: "NEGATIVO MENOR 1.0 OD" },
+      { label: "VPH IgG", exam: "VIRUS DEL PAPILOMA HUMANO (VPH) IgG", result: "0.081 OD", ref: "NO REACTIVO ≤ 0.341 OD" },
+      { label: "Chlamydia IgM/IgG", exam: "CHLAMYDIA TRACHOMATIS IgG-IgM", result: "0.15 O.D", ref: "NEGATIVO < 0.90 / POSITIVO > 1.0 O.D" },
+      { label: "Herpes II IgM/IgG", exam: "HERPES TIPO II IgM / IgG", result: "0.15", ref: "NEGATIVO < 0.90 / POSITIVO > 1.10" },
+      { label: "CA-125 / AFP / CEA / CA 19-9", exam: "CA - 125", result: "21.2 U/ml", ref: "HASTA 35 U/ml" },
+      { label: "ANA Antinucleares", exam: "AC. ANTINUCLEARES (ANA)", result: "0.28 O.D", ref: "NEGATIVO MENOR 1.0 O.D" },
+      { label: "Anti-Cardiolipina", exam: "ANTI-CARDIOLIPINA IgM / IgG", result: "8.65 GPL", ref: "NEGATIVO: MENOR DE 12 GPL" },
+      { label: "P-ANCA y C-ANCA", exam: "P-ANCA / C-ANCA", result: "9.5 UA/ml", ref: "NEGATIVA: < 12 UA/ml" },
+      { label: "Complemento C3 y C4", exam: "COMPLEMENTO C3 / C4", result: "1.0 mg/ml", ref: "C3: 0.9–1.8 / C4: 0.1–0.4 mg/dl" },
+      { label: "Fibrinógeno", exam: "FIBRINOGENO", result: "273.14 g/l", ref: "150 – 350 g/l" },
+      { label: "Relación Albúmina/Creat Orina", exam: "RELACION ALBUMINA/CREATININA EN ORINA", result: "19.9 mg/g", ref: "NORMAL: MENOR A 30 mg/g" }
+    ];
+
+    // ============================================================================
+    // INICIALIZACIÓN DEL SELECTOR Y FECHAS
+    // ============================================================================
+    function initTemplateSelector() {
+      const sel = document.getElementById('editor-template-select');
+      sel.innerHTML = Object.entries(EXAM_TEMPLATES).map(([k, v]) =>
+        `<option value="${k}">${v.name}</option>`
+      ).join('');
+    }
+    initTemplateSelector();
+
+    function getFormattedTodayUpper() {
+      const meses = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+      const d = new Date();
+      const dia = String(d.getDate()).padStart(2, '0');
+      return `${dia}/${meses[d.getMonth()]}/${d.getFullYear()}`;
+    }
 
     function getCurrentTime() {
       return new Date().toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
@@ -203,11 +818,23 @@
       document.getElementById('btn-to-patient').classList.toggle('hidden', view === 'patient');
     }
 
-    function setExamPreset(val) {
-      document.getElementById('new-exam-type').value = val;
+    // ============================================================================
+    // PROTECCIÓN POR INACTIVIDAD (20 MINUTOS)
+    // ============================================================================
+    function resetInactivityTimer() {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      if (currentSession) {
+        inactivityTimer = setTimeout(() => {
+          handleLogout();
+        }, 20 * 60 * 1000);
+      }
     }
+    window.addEventListener('mousemove', resetInactivityTimer);
+    window.addEventListener('keydown', resetInactivityTimer);
 
-    // --- PACIENTES ---
+    // ============================================================================
+    // BÚSQUEDA PÚBLICA DE PACIENTES (PRIVACIDAD BLINDADA)
+    // ============================================================================
     async function handlePatientSearch(e) {
       e.preventDefault();
       const raw = document.getElementById('patient-search-input').value;
@@ -282,7 +909,9 @@
       handlePatientSearch(new Event('submit'));
     }
 
-    // --- LICENCIADOS AUTH ---
+    // ============================================================================
+    // AUTENTICACIÓN DE LICENCIADOS
+    // ============================================================================
     async function handleStaffLogin(e) {
       e.preventDefault();
       const email = document.getElementById('staff-email').value.trim();
@@ -292,7 +921,7 @@
 
       const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
-        errBox.textContent = 'Correo o contraseña incorrectos.';
+        errBox.textContent = 'Credenciales inválidas. Acceso exclusivo para Licenciados.';
         errBox.classList.remove('hidden');
       }
     }
@@ -304,22 +933,51 @@
 
     supabaseClient.auth.onAuthStateChange((_event, session) => {
       currentSession = session;
+      resetInactivityTimer();
       document.getElementById('staff-login-box').classList.toggle('hidden', !!session);
       document.getElementById('staff-dashboard').classList.toggle('hidden', !session);
       if (session) {
-        document.getElementById('staff-user-email').textContent = 'Sesión Activa: ' + session.user.email;
+        document.getElementById('staff-user-email').textContent = '👨‍⚕️ Licenciado(a): ' + session.user.email;
         fetchStaffData();
       }
     });
 
-    // --- PANEL LICENCIADOS ---
+    // ============================================================================
+    // GESTIÓN DE REGISTROS Y COMPRESIÓN LZ-STRING
+    // ============================================================================
+    function compressExamData(obj) {
+      try {
+        return LZString.compressToUTF16(JSON.stringify(obj));
+      } catch (e) {
+        return JSON.stringify(obj);
+      }
+    }
+
+    function decompressExamData(str) {
+      if (!str) return null;
+      try {
+        const decomp = LZString.decompressFromUTF16(str);
+        if (decomp && decomp.startsWith('{')) return JSON.parse(decomp);
+        return JSON.parse(str);
+      } catch (e) {
+        return null;
+      }
+    }
+
     async function fetchStaffData() {
       if (!currentSession) return;
-      const { data: exams } = await supabaseClient.from('examenes_adesca').select('*').order('created_at', { ascending: false });
+      const { data: exams } = await supabaseClient
+        .from('examenes_adesca')
+        .select('*')
+        .order('created_at', { ascending: false });
       allRecords = exams || [];
       renderStaffRecords();
 
-      const { data: summaries } = await supabaseClient.from('cierres_adesca').select('*').order('created_at', { ascending: false }).limit(8);
+      const { data: summaries } = await supabaseClient
+        .from('cierres_adesca')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(8);
       const sumContainer = document.getElementById('summaries-list');
       sumContainer.innerHTML = (summaries || []).map(s => `
         <div class="flex justify-between bg-slate-50 p-2.5 rounded-lg border">
@@ -339,64 +997,80 @@
       badge.textContent = requestedCount;
       badge.classList.toggle('hidden', requestedCount === 0);
 
+      const q = (document.getElementById('staff-filter-input')?.value || '').toLowerCase();
+      const filtered = allRecords.filter(r =>
+        r.patient_name.toLowerCase().includes(q) ||
+        r.code.toLowerCase().includes(q) ||
+        r.exam_type.toLowerCase().includes(q)
+      );
+
       const list = document.getElementById('staff-records-list');
-      if (allRecords.length === 0) {
-        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No hay pacientes registrados hoy.</div>`;
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No hay exámenes registrados con ese filtro.</div>`;
         return;
       }
 
-      list.innerHTML = allRecords.map(item => {
+      list.innerHTML = filtered.map(item => {
         let statusTag = '';
         if (item.status === 'ready') statusTag = `<span class="text-[11px] font-extrabold bg-emerald-500 text-white px-2.5 py-0.5 rounded-full">EXAMEN LISTO</span>`;
         if (item.status === 'requested') statusTag = `<span class="text-[11px] font-extrabold bg-rose-600 text-white px-2.5 py-0.5 rounded-full animate-pulse">SOLICITADO EN VENTANILLA</span>`;
         if (item.status === 'processing') statusTag = `<span class="text-[11px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">EN PROCESO</span>`;
         if (item.status === 'delivered') statusTag = `<span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">ENTREGADO (${item.delivered_at || ''})</span>`;
 
+        const hasFullReport = !!item.exam_data_compressed;
+
         let actionBtns = '';
         if (item.status === 'processing') {
-          actionBtns = `<button onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl">Poner Listo (Verde)</button>`;
+          actionBtns += `<button onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Poner Listo</button>`;
         } else if (item.status === 'ready' || item.status === 'requested') {
-          actionBtns = `<button onclick="updateStatus('${item.id}', 'delivered')" class="bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-3.5 py-2 rounded-xl">Marcar Entregado</button>`;
+          actionBtns += `<button onclick="updateStatus('${item.id}', 'delivered')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Entregado</button>`;
         }
 
         return `
-          <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/80">
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span>
                 ${statusTag}
+                ${hasFullReport ? '<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 Boleta Redactada</span>' : ''}
               </div>
-              <h4 class="font-bold text-slate-900 mt-1">${item.patient_name}</h4>
-              <p class="text-xs text-slate-500">${item.exam_type}</p>
+              <h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4>
+              <p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ✉️ ${item.patient_email}` : ''}</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">
+                ${hasFullReport ? '🖨️ Ver / Imprimir / Gmail' : '📝 Redactar Boleta'}
+              </button>
               ${actionBtns}
-              <button onclick="deleteRecord('${item.id}')" class="px-2.5 py-2 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️ Borrar</button>
+              <button onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>
             </div>
           </div>`;
       }).join('');
     }
 
-    async function handleAddRecord(e) {
+    async function handleQuickAddRecord(e) {
       e.preventDefault();
-      const nameInput = document.getElementById('new-patient-name');
-      const examInput = document.getElementById('new-exam-type');
-      const statusInput = document.getElementById('new-initial-status');
-
-      const cleanName = nameInput.value.replace(/[<>"'`;]/g, '').trim();
-      const cleanExam = examInput.value.replace(/[<>"'`;]/g, '').trim();
-      if (!cleanName) return;
+      const name = document.getElementById('quick-patient-name').value.replace(/[<>"'`;]/g, '').trim().toUpperCase();
+      const age = document.getElementById('quick-patient-age').value.replace(/[<>"'`;]/g, '').trim().toUpperCase();
+      const email = document.getElementById('quick-patient-email').value.trim();
+      const exam = document.getElementById('quick-exam-type').value.replace(/[<>"'`;]/g, '').trim().toUpperCase();
+      const status = document.getElementById('quick-initial-status').value;
+      if (!name) return;
 
       const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
       await supabaseClient.from('examenes_adesca').insert([{
         code: randomCode,
-        patient_name: cleanName,
-        exam_type: cleanExam,
-        status: statusInput.value,
+        patient_name: name,
+        patient_age: age,
+        patient_email: email,
+        exam_type: exam,
+        status: status,
         updated_at: getCurrentTime()
       }]);
 
-      nameInput.value = '';
+      document.getElementById('quick-patient-name').value = '';
+      document.getElementById('quick-patient-age').value = '';
+      document.getElementById('quick-patient-email').value = '';
       fetchStaffData();
     }
 
@@ -410,6 +1084,30 @@
     async function deleteRecord(id) {
       await supabaseClient.from('examenes_adesca').delete().eq('id', id);
       fetchStaffData();
+    }
+
+    // ============================================================================
+    // DESCARGA LIGERA DEL DÍA Y CIERRE CON PURGA DE DATOS MÉDICOS
+    // ============================================================================
+    function downloadDailyBackup() {
+      if (allRecords.length === 0) return;
+      const exportList = allRecords.map(r => ({
+        codigo: r.code,
+        paciente: r.patient_name,
+        edad: r.patient_age || '',
+        correo: r.patient_email || '',
+        examen: r.exam_type,
+        estado: r.status,
+        resultados: decompressExamData(r.exam_data_compressed)
+      }));
+
+      const blob = new Blob([JSON.stringify(exportList, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Respaldo_ADESCAS_${getFormattedTodayUpper().replace(/\//g, '-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     async function handleCleanDelivered() {
@@ -427,7 +1125,537 @@
       fetchStaffData();
     }
 
-    // Escuchar cambios en tiempo real
+    // ============================================================================
+    // REDACTOR COMPLETO DE EXÁMENES (PLANTILLAS DEL WORD)
+    // ============================================================================
+    function openExamEditor(recordId) {
+      editingRecordId = recordId;
+      document.getElementById('exam-modal').classList.remove('hidden');
+
+      if (recordId) {
+        const rec = allRecords.find(r => r.id === recordId);
+        if (rec) {
+          document.getElementById('ed-patient-name').value = rec.patient_name || '';
+          document.getElementById('ed-patient-age').value = rec.patient_age || '';
+          document.getElementById('ed-patient-email').value = rec.patient_email || '';
+          document.getElementById('ed-status').value = rec.status || 'ready';
+
+          const saved = decompressExamData(rec.exam_data_compressed);
+          if (saved && saved.templateKey && EXAM_TEMPLATES[saved.templateKey]) {
+            currentTemplateKey = saved.templateKey;
+            document.getElementById('editor-template-select').value = currentTemplateKey;
+            document.getElementById('ed-exam-date').value = saved.examDate || getFormattedTodayUpper();
+            document.getElementById('ed-observations').value = saved.observations || '';
+            currentFormState = JSON.parse(JSON.stringify(saved.formState || {}));
+            renderDynamicFields();
+            updateLivePreview();
+            return;
+          }
+        }
+      } else {
+        document.getElementById('ed-patient-name').value = '';
+        document.getElementById('ed-patient-age').value = '';
+        document.getElementById('ed-patient-email').value = '';
+        document.getElementById('ed-status').value = 'ready';
+      }
+
+      document.getElementById('ed-exam-date').value = getFormattedTodayUpper();
+      document.getElementById('ed-observations').value = '';
+      currentTemplateKey = document.getElementById('editor-template-select').value;
+      loadTemplateDefaults(currentTemplateKey);
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function closeExamEditor() {
+      document.getElementById('exam-modal').classList.add('hidden');
+    }
+
+    function onTemplateChange() {
+      currentTemplateKey = document.getElementById('editor-template-select').value;
+      loadTemplateDefaults(currentTemplateKey);
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function loadTemplateDefaults(key) {
+      const tpl = EXAM_TEMPLATES[key];
+      if (tpl.layout === 'table') {
+        currentFormState = {
+          customTitle: tpl.title,
+          subtitleMuestra: tpl.subtitle_muestra || '',
+          rows: JSON.parse(JSON.stringify(tpl.rows))
+        };
+      } else {
+        currentFormState = JSON.parse(JSON.stringify(tpl.defaults));
+      }
+    }
+
+    function renderDynamicFields() {
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+      const container = document.getElementById('dynamic-fields-container');
+      const btnAddRow = document.getElementById('btn-add-row');
+      btnAddRow.classList.toggle('hidden', tpl.layout !== 'table');
+
+      if (tpl.layout === 'table') {
+        let presetsHtml = '';
+        if (currentTemplateKey === 'misc_tabla_libre') {
+          presetsHtml = `
+            <div class="mb-3 p-2.5 bg-blue-50/70 rounded-lg border border-blue-200">
+              <span class="block text-[10px] font-extrabold uppercase text-[#163a70] mb-1.5">⚡ Cargar Examen Misceláneo del Word con 1 Clic:</span>
+              <div class="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
+                ${MISC_PRESETS_CATALOG.map((p, idx) =>
+                  `<button type="button" onclick="applyMiscPreset(${idx})" class="text-[10px] bg-white hover:bg-[#163a70] hover:text-white text-slate-700 border border-slate-300 px-2 py-0.5 rounded font-semibold transition">${p.label}</button>`
+                ).join('')}
+              </div>
+            </div>`;
+        }
+
+        container.innerHTML = `
+          ${presetsHtml}
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500">TÍTULO DE SECCIÓN:</label>
+              <input type="text" value="${currentFormState.customTitle || tpl.title}" oninput="currentFormState.customTitle=this.value; updateLivePreview()" class="w-full px-2 py-1 rounded border text-xs font-bold" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500">MUESTRA (Opcional):</label>
+              <input type="text" value="${currentFormState.subtitleMuestra || ''}" placeholder="Ej. SANGRE / SUERO" oninput="currentFormState.subtitleMuestra=this.value; updateLivePreview()" class="w-full px-2 py-1 rounded border text-xs" />
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${currentFormState.rows.map((r, i) => `
+              <div class="p-2 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-12 gap-1.5 items-center">
+                <input type="text" value="${r.exam}" placeholder="Examen" oninput="updateTableRow(${i}, 'exam', this.value)" class="col-span-4 px-2 py-1 rounded border text-xs font-bold" />
+                <input type="text" value="${r.result}" placeholder="Resultado" oninput="updateTableRow(${i}, 'result', this.value)" class="col-span-4 px-2 py-1 rounded border text-xs font-extrabold text-[#163a70]" />
+                <input type="text" value="${r.ref}" placeholder="Valor Normal" oninput="updateTableRow(${i}, 'ref', this.value)" class="col-span-3 px-2 py-1 rounded border text-[11px]" />
+                <button type="button" onclick="removeTableRow(${i})" class="col-span-1 text-rose-500 font-bold text-xs">✕</button>
+              </div>
+            `).join('')}
+          </div>`;
+        return;
+      }
+
+      // Campos clave-valor para plantillas especiales (EGO, EGH, Hemograma, Química, Espermograma, Antibiograma, etc.)
+      container.innerHTML = Object.keys(currentFormState).map(k => `
+        <div class="grid grid-cols-5 gap-2 items-center">
+          <label class="col-span-2 text-[11px] font-bold uppercase text-slate-600 truncate">${k.replace(/_/g, ' ')}:</label>
+          <input type="text" value="${currentFormState[k]}" oninput="currentFormState['${k}']=this.value; updateLivePreview()" class="col-span-3 px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-semibold" />
+        </div>
+      `).join('');
+    }
+
+    function applyMiscPreset(index) {
+      const p = MISC_PRESETS_CATALOG[index];
+      currentFormState.rows.push({ exam: p.exam, result: p.result, ref: p.ref });
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function updateTableRow(idx, field, val) {
+      currentFormState.rows[idx][field] = val;
+      updateLivePreview();
+    }
+
+    function removeTableRow(idx) {
+      currentFormState.rows.splice(idx, 1);
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function addCustomParameterRow() {
+      if (!currentFormState.rows) currentFormState.rows = [];
+      currentFormState.rows.push({ exam: "NUEVO PARAMETRO", result: "", ref: "" });
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    // ============================================================================
+    // RENDERIZADO DE LA BOLETA OFICIAL IDÉNTICA AL WORD DE "ADESCAS"
+    // ============================================================================
+    function buildOfficialSheetHTML() {
+      const name = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
+      const age = (document.getElementById('ed-patient-age').value || '____').toUpperCase();
+      const date = (document.getElementById('ed-exam-date').value || getFormattedTodayUpper()).toUpperCase();
+      const obs = document.getElementById('ed-observations').value.trim();
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+      const f = currentFormState;
+
+      // Encabezado Oficial ADESCAS (Idéntico al Word)
+      const headerHTML = `
+        <div class="border-b-2 border-[#163a70] pb-3 mb-3 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <img src="./logo-adesca.png" alt="ADESCAS" class="h-16 w-auto object-contain" onerror="this.style.display='none'" />
+          </div>
+          <div class="text-center flex-1">
+            <h1 class="text-lg font-black tracking-wide text-[#163a70]">LABORATORIO CLINICO “ADESCAS”</h1>
+            <p class="text-[11px] font-semibold text-slate-700">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p>
+            <p class="text-[11px] text-slate-600">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p>
+            <p class="text-[11px] font-bold text-slate-800">Tel: 2413-4125 &nbsp;&nbsp;&nbsp;&nbsp; WhatsApp: 7895-5220</p>
+          </div>
+        </div>
+        <table class="w-full print-table mb-4">
+          <tr>
+            <td><strong>NOMBRE:</strong> ${name}</td>
+            <td><strong>EDAD:</strong> ${age}</td>
+            <td><strong>FECHA:</strong> ${date}</td>
+          </tr>
+        </table>`;
+
+      let bodyHTML = '';
+
+      if (tpl.layout === 'ego') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">EXAMEN GENERAL DE ORINA</h2>
+          <table class="w-full print-table">
+            <thead>
+              <tr><th colspan="2">EXAMEN FISICO - QUIMICO</th><th colspan="2">EXAMEN MICROSCOPICO</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>COLOR:</strong></td><td>${f.color}</td><td><strong>LEUCOCITOS:</strong></td><td>${f.leucocitos}</td></tr>
+              <tr><td><strong>ASPECTO:</strong></td><td>${f.aspecto}</td><td><strong>HEMATIES:</strong></td><td>${f.hematies}</td></tr>
+              <tr><td><strong>PH:</strong></td><td>${f.ph}</td><td><strong>CELULAS EPITELIALES:</strong></td><td>${f.epiteliales}</td></tr>
+              <tr><td><strong>DENSIDAD:</strong></td><td>${f.densidad}</td><td><strong>BACTERIAS:</strong></td><td>${f.bacterias}</td></tr>
+              <tr><td><strong>GLUCOSA:</strong></td><td>${f.glucosa}</td><td><strong>CILINDROS:</strong></td><td>${f.cilindros}</td></tr>
+              <tr><td><strong>PROTEINAS:</strong></td><td>${f.proteinas}</td><td><strong>CRISTALES:</strong></td><td>${f.cristales}</td></tr>
+              <tr><td><strong>NITRITOS:</strong></td><td>${f.nitritos}</td><td><strong>LEVADURAS:</strong></td><td>${f.levaduras}</td></tr>
+              <tr><td><strong>SANGRE OCULTA:</strong></td><td>${f.sangre_oculta}</td><td><strong>FILAMENTOS MUCOIDE:</strong></td><td>${f.mucoide}</td></tr>
+              <tr><td><strong>CUERPOS CETONICOS:</strong></td><td>${f.cetonas}</td><td><strong>PARASITOS:</strong></td><td>${f.parasitos}</td></tr>
+              <tr><td><strong>UROBILINOGENO:</strong></td><td>${f.urobilinogeno}</td><td colspan="2" rowspan="3" class="align-top"><strong>OBSERVACIONES:</strong> ${obs}</td></tr>
+              <tr><td><strong>BILIRRUBINA:</strong></td><td>${f.bilirrubina}</td></tr>
+              <tr><td><strong>ESTERASA LEUCOCITARIA:</strong></td><td>${f.esterasa}</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'egh') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">EXAMEN GENERAL DE HECES</h2>
+          <table class="w-full print-table mb-3">
+            <tbody>
+              <tr><td><strong>COLOR:</strong> ${f.color}</td><td><strong>LEVADURAS:</strong> ${f.levaduras}</td></tr>
+              <tr><td><strong>CONSISTENCIA:</strong> ${f.consistencia}</td><td><strong>LEUCOCITOS:</strong> ${f.leucocitos}</td></tr>
+              <tr><td><strong>MUCUS:</strong> ${f.mucus}</td><td><strong>HEMATIES:</strong> ${f.hematies}</td></tr>
+              <tr><td><strong>RESTOS ALIMENTICIOS:</strong> ${f.restos}</td><td><strong>FLORA BACTERIANA BACILAR:</strong> ${f.flora}</td></tr>
+              <tr><td><strong>GLOBULOS DE GRASA:</strong> ${f.grasa}</td><td></td></tr>
+            </tbody>
+          </table>
+          <table class="w-full print-table">
+            <thead><tr><th>PROTOZOARIOS</th><th>METAZOARIOS</th></tr></thead>
+            <tbody>
+              <tr><td><strong>QUISTES:</strong> ${f.quistes}</td><td><strong>HUEVOS:</strong> ${f.huevos}</td></tr>
+              <tr><td><strong>ACTIVOS:</strong> ${f.activos}</td><td><strong>LARVAS:</strong> ${f.larvas}</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'hemograma') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">HEMOGRAMA</h2>
+          <table class="w-full print-table">
+            <tbody>
+              <tr><td><strong>GLOBULOS ROJOS</strong></td><td>${f.gr}</td><td><strong>GLOBULOS BLANCOS</strong></td><td>${f.gb}</td></tr>
+              <tr><td><strong>HEMOGLOBINA</strong></td><td>${f.hb}</td><td><strong>NEUTROFILOS TOTALES</strong></td><td>${f.neut_tot}</td></tr>
+              <tr><td><strong>HEMATOCRITO</strong></td><td>${f.hto}</td><td><strong>NEUTROFILOS EN BANDA</strong></td><td>${f.neut_banda}</td></tr>
+              <tr><td><strong>VGM</strong></td><td>${f.vgm}</td><td><strong>NEUTROFILOS SEGMENTADOS</strong></td><td>${f.neut_seg}</td></tr>
+              <tr><td><strong>HGM</strong></td><td>${f.hgm}</td><td><strong>LINFOCITOS</strong></td><td>${f.linfocitos}</td></tr>
+              <tr><td><strong>CHCM</strong></td><td>${f.chcm}</td><td><strong>BASOFILOS</strong></td><td>${f.basofilos}</td></tr>
+              <tr><td><strong>PLAQUETAS</strong></td><td>${f.plaquetas}</td><td><strong>MONOCITOS</strong></td><td>${f.monocitos}</td></tr>
+              <tr><td></td><td></td><td><strong>EOSINOFILOS</strong></td><td>${f.eosinofilos}</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'quimica') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">QUIMICA SANGUINEA</h2>
+          <table class="w-full print-table">
+            <thead>
+              <tr>
+                <th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th>
+                <th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>GLUCOSA</strong></td><td>${f.glucosa}</td><td>60 - 110 mg/dl</td><td><strong>TGO</strong></td><td>${f.tgo}</td><td>HASTA 35 U/L</td></tr>
+              <tr><td><strong>COLESTEROL</strong></td><td>${f.colesterol}</td><td>HASTA 200 mg/dl</td><td><strong>TGP</strong></td><td>${f.tgp}</td><td>HASTA 45 U/L</td></tr>
+              <tr><td><strong>TRIGLICERIDOS</strong></td><td>${f.trigliceridos}</td><td>HASTA 150 mg/dl</td><td><strong>HDL</strong></td><td>${f.hdl}</td><td>35 - 55 mg/dl</td></tr>
+              <tr><td><strong>ACIDO URICO</strong></td><td>${f.acido_urico}</td><td>2.1 - 6.0 mg/dl</td><td><strong>LDL</strong></td><td>${f.ldl}</td><td>HASTA 150 mg/dl</td></tr>
+              <tr><td><strong>CREATININA</strong></td><td>${f.creatinina}</td><td>0.6 – 1.4 mg/dl</td><td><strong>NITROGENO UREICO</strong></td><td>${f.bun}</td><td>7.0 – 20 mg/dl</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'antibiograma') {
+        let rowsHtml = '';
+        for (let i = 1; i <= 10; i++) {
+          const abName = f[`ab${i}_name`];
+          const abVal = (f[`ab${i}_val`] || '').toUpperCase().trim();
+          if (abName) {
+            rowsHtml += `
+              <tr>
+                <td><strong>${abName}</strong></td>
+                <td class="text-center font-extrabold">${abVal === 'S' ? 'X' : ''}</td>
+                <td class="text-center font-extrabold">${abVal === 'I' ? 'X' : ''}</td>
+                <td class="text-center font-extrabold">${abVal === 'R' ? 'X' : ''}</td>
+              </tr>`;
+          }
+        }
+        bodyHTML = `
+          <table class="w-full print-table mb-3">
+            <tr>
+              <td><strong>MUESTRA:</strong> ${f.muestra}</td>
+              <td><strong>RESULTADO:</strong> ${f.resultado_aislamiento} <br/><strong>RECUENTO:</strong> ${f.recuento}</td>
+            </tr>
+            <tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr>
+          </table>
+          <table class="w-full print-table">
+            <thead><tr><th>ANTIBIOTICO</th><th class="text-center">SENSIBLE</th><th class="text-center">INTERMEDIO</th><th class="text-center">RESISTENTE</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>`;
+      } else if (tpl.layout === 'frotis') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-3 underline">FROTIS DE SANGRE PERIFERICA</h2>
+          <div class="space-y-3 text-xs border border-slate-800 p-4">
+            <p><strong>LINEA ROJA:</strong> ${f.roja}</p>
+            <p><strong>LINEA BLANCA:</strong> ${f.blanca}</p>
+            <p><strong>LINEA PLAQUETARIA:</strong> ${f.plaquetaria}</p>
+          </div>`;
+      } else if (tpl.layout === 'hcg_cuant') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">MISCELANEOS</h2>
+          <p class="text-xs mb-1"><strong>MUESTRA:</strong> ${f.muestra}</p>
+          <p class="text-xs mb-2"><strong>EXAMEN REALIZADO:</strong> HCG BETA CUANTIFICADA</p>
+          <p class="text-sm font-black text-[#163a70] mb-3">RESULTADO: ${f.resultado}</p>
+          <table class="w-full print-table text-[11px]">
+            <tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr>
+            <tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr>
+            <tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr>
+            <tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr>
+            <tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr>
+            <tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr>
+          </table>`;
+      } else if (tpl.layout === 'espermograma_oms') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">ESPERMOGRAMA</h2>
+          <p class="text-xs mb-2"><strong>TIPO DE MUESTRA:</strong> ${f.muestra} &nbsp;|&nbsp; <strong>DIAS DE ABSTINENCIA:</strong> ${f.abstinencia} &nbsp;|&nbsp; <strong>COLECCION:</strong> ${f.hora_col} &nbsp;|&nbsp; <strong>EXAMINADO:</strong> ${f.hora_ex}</p>
+          <table class="w-full print-table mb-3">
+            <thead><tr><th>PARAMETROS MACROSCOPICOS</th><th>RESULTADO</th><th>RANGO DE REFERENCIA</th></tr></thead>
+            <tbody>
+              <tr><td>COLOR</td><td>${f.color}</td><td>BLANQUECINO</td></tr>
+              <tr><td>ASPECTO</td><td>${f.aspecto}</td><td>OPALESCENTE</td></tr>
+              <tr><td>VOLUMEN</td><td>${f.volumen}</td><td>1.5 ml</td></tr>
+              <tr><td>pH</td><td>${f.ph}</td><td>MAYOR O IGUAL A 7.2</td></tr>
+              <tr><td>LICUEFACCION</td><td>${f.licuefaccion}</td><td>MENOR A 60 MINUTOS</td></tr>
+              <tr><td>VISCOSIDAD</td><td>${f.viscosidad}</td><td>FILAMENTO MENOR O IGUAL A 2 CM</td></tr>
+            </tbody>
+          </table>
+          <table class="w-full print-table mb-3">
+            <thead>
+              <tr><th>MOVILIDAD (1 HORA)</th><th>RESULTADO</th><th>REF.</th><th>CONCENTRACION / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>PROGRESIVA (PR)</td><td>${f.mov_pr}</td><td>32%</td><td>MILLONES X ml</td><td>${f.millones_ml}</td><td>15 MILLONES X ml</td></tr>
+              <tr><td>NO PROGRESIVA (NP)</td><td>${f.mov_np}</td><td></td><td>TOTAL POR EYACULADO</td><td>${f.total_eyaculado}</td><td>39 MILLONES</td></tr>
+              <tr><td>MOVILIDAD TOTAL</td><td>${f.mov_tot}</td><td>40%</td><td>VIVOS %</td><td>${f.vivos}</td><td>58%</td></tr>
+              <tr><td>INMOVILES %</td><td>${f.inmoviles}</td><td></td><td>MUERTOS %</td><td>${f.muertos}</td><td></td></tr>
+            </tbody>
+          </table>
+          <div class="grid grid-cols-2 gap-2 text-xs border border-slate-800 p-3">
+            <div>
+              <p><strong>MORFOLOGIA NORMAL:</strong> ${f.morf_normal}</p>
+              <p><strong>MORFOLOGIA ANORMAL:</strong> ${f.morf_anormal}</p>
+              <p><strong>DEFECTOS CABEZA / PIEZA / FLAGELO:</strong> ${f.def_cabeza} / ${f.def_pieza} / ${f.def_flagelo}</p>
+            </div>
+            <div>
+              <p><strong>LEUCOCITOS:</strong> ${f.leucocitos}</p>
+              <p><strong>HEMATIES:</strong> ${f.hematies}</p>
+              <p><strong>CELULAS EPITELIALES:</strong> ${f.epiteliales} &nbsp;|&nbsp; <strong>BACTERIAS:</strong> ${f.bacterias}</p>
+            </div>
+          </div>`;
+      } else if (tpl.layout === 'espermograma_3h') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">ESPERMOGRAMA</h2>
+          <p class="text-xs mb-2"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p>
+          <table class="w-full print-table mb-3">
+            <thead><tr><th colspan="3">MOVILIDAD</th></tr><tr><th>A LA HORA</th><th>A LAS DOS HORAS</th><th>A LAS TRES HORAS</th></tr></thead>
+            <tbody>
+              <tr><td>RAPIDOS: ${f.rap_1h}</td><td>RAPIDOS: ${f.rap_2h}</td><td>RAPIDOS: ${f.rap_3h}</td></tr>
+              <tr><td>LENTOS: ${f.len_1h}</td><td>LENTOS: ${f.len_2h}</td><td>LENTOS: ${f.len_3h}</td></tr>
+              <tr><td>ERRATICOS: ${f.err_1h}</td><td>ERRATICOS: ${f.err_2h}</td><td>ERRATICOS: ${f.err_3h}</td></tr>
+              <tr><td>MUERTOS: ${f.mue_1h}</td><td>MUERTOS: ${f.mue_2h}</td><td>MUERTOS: ${f.mue_3h}</td></tr>
+            </tbody>
+          </table>
+          <table class="w-full print-table mb-3">
+            <thead><tr><th colspan="3">MORFOLOGIA</th></tr><tr><th>A LA HORA</th><th>A LAS DOS HORAS</th><th>A LAS TRES HORAS</th></tr></thead>
+            <tbody>
+              <tr><td>NORMALES: ${f.nor_1h}</td><td>NORMALES: ${f.nor_2h}</td><td>NORMALES: ${f.nor_3h}</td></tr>
+              <tr><td>ANORMALES: ${f.ano_1h}</td><td>ANORMALES: ${f.ano_2h}</td><td>ANORMALES: ${f.ano_3h}</td></tr>
+            </tbody>
+          </table>
+          <p class="text-xs"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>BACTERIAS:</strong> ${f.bacterias}</p>
+          <p class="text-xs font-bold mt-1"><strong>RECUENTO:</strong> ${f.recuento} (VALOR NORMAL: 60,000,000 – 120,000,000)</p>`;
+      } else if (tpl.layout === 'misc_muestra') {
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-4 underline">${tpl.title}</h2>
+          <div class="border border-slate-800 p-5 space-y-3 text-sm">
+            <p><strong>MUESTRA:</strong> ${f.muestra}</p>
+            <p><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</p>
+            <p class="text-base font-black text-[#163a70] pt-2"><strong>RESULTADO:</strong> ${f.resultado}</p>
+          </div>`;
+      } else {
+        // Layout Tabla Estándar de Exámenes
+        bodyHTML = `
+          <h2 class="text-center font-black text-sm text-[#163a70] mb-2 underline">${f.customTitle || tpl.title}</h2>
+          ${f.subtitleMuestra ? `<p class="text-xs font-bold mb-2">MUESTRA: ${f.subtitleMuestra}</p>` : ''}
+          <table class="w-full print-table">
+            <thead><tr><th>EXAMENES</th><th>RESULTADO</th><th>VALOR NORMAL / RANGO DE REFERENCIA</th></tr></thead>
+            <tbody>
+              ${(f.rows || []).map(r => `
+                <tr>
+                  <td><strong>${r.exam}</strong></td>
+                  <td class="font-extrabold text-[#163a70]">${r.result}</td>
+                  <td class="whitespace-pre-line">${r.ref}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
+
+      const footerHTML = `
+        ${obs && tpl.layout !== 'ego' ? `<p class="text-xs mt-3"><strong>OBSERVACIONES:</strong> ${obs}</p>` : ''}
+        <div class="mt-10 pt-4 flex justify-between items-end text-xs text-slate-600">
+          <div>
+            <p class="text-[10px]">Reporte Oficial — Laboratorio Clínico "ADESCAS"</p>
+          </div>
+          <div class="text-center">
+            <div class="w-52 border-t border-slate-800 pt-1 font-bold text-slate-800">FIRMA Y SELLO DEL LICENCIADO(A)</div>
+          </div>
+        </div>`;
+
+      return headerHTML + bodyHTML + footerHTML;
+    }
+
+    function updateLivePreview() {
+      const html = buildOfficialSheetHTML();
+      document.getElementById('live-sheet-content').innerHTML = html;
+    }
+
+    // ============================================================================
+    // GUARDAR EXAMEN COMPRIMIDO, IMPRIMIR Y ENVIAR POR GMAIL
+    // ============================================================================
+    async function saveCompressedExam() {
+      const name = document.getElementById('ed-patient-name').value.trim().toUpperCase();
+      if (!name) {
+        alert('Por favor ingrese el nombre del paciente.');
+        return;
+      }
+      const age = document.getElementById('ed-patient-age').value.trim().toUpperCase();
+      const email = document.getElementById('ed-patient-email').value.trim();
+      const status = document.getElementById('ed-status').value;
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+      const examTitle = currentFormState.customTitle || tpl.title;
+
+      const btn = document.getElementById('btn-save-exam');
+      btn.textContent = 'Guardando...';
+      btn.disabled = true;
+
+      const compressedPayload = compressExamData({
+        templateKey: currentTemplateKey,
+        examDate: document.getElementById('ed-exam-date').value,
+        observations: document.getElementById('ed-observations').value,
+        formState: currentFormState
+      });
+
+      if (editingRecordId) {
+        await supabaseClient.from('examenes_adesca').update({
+          patient_name: name,
+          patient_age: age,
+          patient_email: email,
+          exam_type: examTitle,
+          status: status,
+          exam_data_compressed: compressedPayload,
+          updated_at: getCurrentTime()
+        }).eq('id', editingRecordId);
+      } else {
+        const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
+        const { data } = await supabaseClient.from('examenes_adesca').insert([{
+          code: randomCode,
+          patient_name: name,
+          patient_age: age,
+          patient_email: email,
+          exam_type: examTitle,
+          status: status,
+          exam_data_compressed: compressedPayload,
+          updated_at: getCurrentTime()
+        }]).select();
+        if (data && data[0]) editingRecordId = data[0].id;
+      }
+
+      btn.textContent = '✅ ¡Guardado Comprimido!';
+      setTimeout(() => {
+        btn.textContent = '💾 Guardar Examen (Comprimido)';
+        btn.disabled = false;
+      }, 1800);
+
+      fetchStaffData();
+    }
+
+    async function printCurrentExam() {
+      await saveCompressedExam();
+      const printArea = document.getElementById('print-area');
+      printArea.innerHTML = buildOfficialSheetHTML();
+      window.print();
+    }
+
+    function buildPlainTextReport() {
+      const name = (document.getElementById('ed-patient-name').value || '').toUpperCase();
+      const age = (document.getElementById('ed-patient-age').value || '').toUpperCase();
+      const date = (document.getElementById('ed-exam-date').value || '').toUpperCase();
+      const obs = document.getElementById('ed-observations').value.trim();
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+
+      let lines = [
+        'LABORATORIO CLINICO "ADESCAS"',
+        '2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán',
+        'Tel: 2413-4125 | WhatsApp: 7895-5220',
+        '------------------------------------------------------------',
+        `PACIENTE: ${name}   |   EDAD: ${age}   |   FECHA: ${date}`,
+        `ESTUDIO: ${currentFormState.customTitle || tpl.title}`,
+        '------------------------------------------------------------',
+        ''
+      ];
+
+      if (tpl.layout === 'table') {
+        (currentFormState.rows || []).forEach(r => {
+          lines.push(`• ${r.exam}: ${r.result}  (Ref: ${r.ref || 'N/A'})`);
+        });
+      } else {
+        Object.entries(currentFormState).forEach(([k, v]) => {
+          if (v) lines.push(`• ${k.replace(/_/g, ' ').toUpperCase()}: ${v}`);
+        });
+      }
+
+      if (obs) {
+        lines.push('');
+        lines.push(`OBSERVACIONES: ${obs}`);
+      }
+      lines.push('');
+      lines.push('------------------------------------------------------------');
+      lines.push('Atentamente, Laboratorio Clínico ADESCAS.');
+      return lines.join('\n');
+    }
+
+    async function sendByGmail() {
+      const email = document.getElementById('ed-patient-email').value.trim();
+      if (!email) {
+        alert('Por favor escriba el correo Gmail del paciente en el campo "Correo Gmail del Paciente".');
+        document.getElementById('ed-patient-email').focus();
+        return;
+      }
+      await saveCompressedExam();
+      const name = (document.getElementById('ed-patient-name').value || 'Paciente').toUpperCase();
+      const tpl = EXAM_TEMPLATES[currentTemplateKey];
+      const subject = `Resultados de Laboratorio ADESCAS - ${name} (${currentFormState.customTitle || tpl.title})`;
+      const body = buildPlainTextReport();
+
+      // Abre directamente la ventana oficial de redactar de Gmail con destinatario, asunto y examen listo
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(gmailUrl, '_blank');
+    }
+
+    // Escuchar cambios en tiempo real para los licenciados
     supabaseClient.channel('realtime-adesca')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'examenes_adesca' }, () => {
         if (currentSession) fetchStaffData();
