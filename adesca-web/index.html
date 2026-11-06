@@ -375,7 +375,7 @@
         </button>
       </div>
 
-      <!-- BARRA DE PESTAÑAS MULTI-EXAMEN (PÁGINA 1, PÁGINA 2, + AGREGAR OTRO EXAMEN) -->
+      <!-- BARRA DE PESTAÑAS MULTI-EXAMEN -->
       <div class="bg-blue-50/90 border-b border-blue-200 px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-1.5 overflow-x-auto py-0.5" id="exam-pages-tabs"></div>
         <button type="button" onclick="addNewExamPage()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-sm shrink-0 flex items-center gap-1">
@@ -386,7 +386,6 @@
       <div class="grid grid-cols-1 lg:grid-cols-12">
         <!-- Panel Izquierdo: Formulario -->
         <div id="editor-left-col" class="lg:col-span-5 p-3.5 sm:p-4 bg-slate-50 border-r border-slate-200 space-y-3.5 max-h-[82vh] overflow-y-auto">
-          <!-- Datos Generales del Paciente (Compartidos en todas sus páginas) -->
           <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5">
             <h4 class="text-[11px] font-extrabold uppercase text-slate-500">1. Datos del Paciente (Para todas las páginas)</h4>
             <div>
@@ -423,7 +422,6 @@
             </div>
           </div>
 
-          <!-- Selector de Formato para la Página Activa -->
           <div class="bg-blue-50/70 p-3.5 rounded-xl border-2 border-[#163a70] space-y-2">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-extrabold uppercase text-[#163a70]">
@@ -437,7 +435,6 @@
             </select>
           </div>
 
-          <!-- Campos Dinámicos de la Página Activa -->
           <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5">
             <div class="flex items-center justify-between">
               <div>
@@ -454,7 +451,6 @@
             <textarea id="ed-observations" oninput="onObservationsInput(this.value)" rows="2" placeholder="Ej. DATO CONTROLADO*..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"></textarea>
           </div>
 
-          <!-- CONTROL DE FIRMA Y SELLO -->
           <div class="bg-slate-100 p-3.5 rounded-xl border border-slate-300 space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-extrabold uppercase text-[#163a70]">✒️ 4. Firma y Sello</span>
@@ -474,7 +470,6 @@
             </div>
           </div>
 
-          <!-- Botón rápido en celular para agregar otro examen o pasar a vista previa -->
           <div class="pt-1 flex flex-col sm:flex-row gap-2">
             <button type="button" onclick="addNewExamPage()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2.5 rounded-xl shadow">
               ➕ Agregar Otro Examen (Nueva Página)
@@ -507,7 +502,6 @@
             </div>
           </div>
 
-          <!-- CONTENEDOR DE TODAS LAS HOJAS DEL PACIENTE -->
           <div id="preview-wrapper" class="mx-auto w-full max-w-[210mm] space-y-6">
             <div id="live-sheet-content" class="space-y-6"></div>
           </div>
@@ -521,17 +515,14 @@
 
   <script>
     // ============================================================================
-    // VALIDACIÓN CRIPTOGRÁFICA SHA-256 DEL USUARIO AUTORIZADO
+    // BLINDAJE POR USER ID EXACTO DE SUPABASE (CERO CORREOS EXPUESTOS Y CERO FALLOS)
+    // Corresponde únicamente a la cuenta oficial de licpineda@adesca.com en Supabase
     // ============================================================================
-    const AUTHORIZED_EMAIL_SHA256 = "e64785b1b26b712b83a4760a8021a70d692a17f53c48554909f5e6f84989a707";
+    const ALLOWED_SUPABASE_USER_ID = "1936629c-26ab-430d-b967-9f4199e0a809";
 
-    async function verifyEmailHash(emailStr) {
-      const clean = (emailStr || '').trim().toLowerCase();
-      const msgBuffer = new TextEncoder().encode(clean);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      return hashHex === AUTHORIZED_EMAIL_SHA256;
+    function isAuthorizedStaffSession(session) {
+      if (!session || !session.user) return false;
+      return session.user.id === ALLOWED_SUPABASE_USER_ID;
     }
 
     // LOGO DEL MICROSCOPIO "ADESCAS Laboratorio Clínico" (Exclusivo para las boletas de examen)
@@ -631,7 +622,6 @@
     let allRecords = [];
     let editingRecordId = null;
 
-    // Estado Multi-Página: un arreglo donde cada elemento es 1 examen completo
     let examPages = [];
     let activePageIndex = 0;
     let lastGeneratedPdfBlob = null;
@@ -1274,30 +1264,39 @@
     }
 
     // ============================================================================
-    // LOGIN BLINDADO POR HASH SHA-256
+    // LOGIN DIRECTO CON SUPABASE AUTH + VERIFICACIÓN DE USER ID EXACTO
     // ============================================================================
     async function handleStaffLogin(e) {
       e.preventDefault();
       const email = document.getElementById('staff-email').value.trim().toLowerCase();
       const password = document.getElementById('staff-password').value;
       const errBox = document.getElementById('login-error');
+      const btn = document.getElementById('btn-login');
       errBox.classList.add('hidden');
 
-      const isAuthorized = await verifyEmailHash(email);
-      if (!isAuthorized) {
-        errBox.textContent = 'Credenciales inválidas.';
+      btn.textContent = 'Verificando...';
+      btn.disabled = true;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      btn.textContent = 'Iniciar Sesión';
+      btn.disabled = false;
+
+      if (error || !data?.session) {
+        errBox.textContent = 'Usuario o contraseña incorrectos.';
         errBox.classList.remove('hidden');
         return;
       }
 
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        errBox.textContent = 'Credenciales inválidas.';
+      if (!isAuthorizedStaffSession(data.session)) {
+        await supabaseClient.auth.signOut();
+        errBox.textContent = 'Acceso no autorizado.';
         errBox.classList.remove('hidden');
-      } else {
-        localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
-        document.getElementById('staff-password').value = '';
+        return;
       }
+
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      document.getElementById('staff-password').value = '';
     }
 
     async function handleLogout() {
@@ -1307,16 +1306,13 @@
     }
 
     supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        const ok = await verifyEmailHash(session.user.email);
-        if (!ok) {
-          await supabaseClient.auth.signOut();
-          currentSession = null;
-          return;
-        }
-        if (!localStorage.getItem(LAST_ACTIVITY_KEY)) {
-          localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
-        }
+      if (session && !isAuthorizedStaffSession(session)) {
+        await supabaseClient.auth.signOut();
+        currentSession = null;
+        return;
+      }
+      if (session && !localStorage.getItem(LAST_ACTIVITY_KEY)) {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
       }
       currentSession = session;
       document.getElementById('staff-login-box').classList.toggle('hidden', !!session);
@@ -1606,7 +1602,7 @@
     }
 
     function openExamEditor(recordId) {
-      if (!currentSession) return;
+      if (!isAuthorizedStaffSession(currentSession)) return;
       editingRecordId = recordId;
       document.getElementById('exam-modal').classList.remove('hidden');
       switchMobileEditorTab('form');
@@ -1628,7 +1624,6 @@
             if (Array.isArray(saved.pages) && saved.pages.length > 0) {
               examPages = JSON.parse(JSON.stringify(saved.pages));
             } else if (saved.templateKey && EXAM_TEMPLATES[saved.templateKey]) {
-              // Compatibilidad con registros de 1 sola página anteriores
               examPages = [{
                 templateKey: saved.templateKey,
                 observations: saved.observations || '',
@@ -1804,7 +1799,7 @@
     }
 
     // ============================================================================
-    // RENDERIZADO DE UNA PÁGINA INDIVIDUAL Y DEL CONJUNTO DE PÁGINAS
+    // RENDERIZADO DE BOLETAS OFICIALES
     // ============================================================================
     function buildSinglePageHTML(pageObj, pageIndex, totalPages, forceDigitalStamp = null) {
       const rawName = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
@@ -2117,7 +2112,7 @@
     // GUARDAR, IMPRIMIR PAPEL, DESCARGAR PDF, ENVIAR POR GMAIL Y WHATSAPP
     // ============================================================================
     async function saveCompressedExam() {
-      if (!currentSession) {
+      if (!isAuthorizedStaffSession(currentSession)) {
         alert('Sesión expirada.');
         return false;
       }
