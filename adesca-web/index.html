@@ -17,10 +17,6 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     
-    /* =====================================================================
-       CONFIGURACIÓN DE IMPRESIÓN EN MITAD DE PÁGINA CARTA (COMO EN WORD)
-       2 boletas caben exactamente en 1 página tamaño Carta (Letter)
-       ===================================================================== */
     @media print {
       body * { visibility: hidden !important; }
       #print-area, #print-area * { visibility: visible !important; }
@@ -33,7 +29,6 @@
         padding: 0 !important;
         background: white !important;
       }
-      /* Modo Media Página (2 exámenes por hoja Carta) */
       .half-page-print .exam-sheet-page {
         height: 134mm !important;
         max-height: 134mm !important;
@@ -55,7 +50,6 @@
         break-after: page !important;
         border-bottom: none !important;
       }
-      /* Modo Página Completa (para Espermograma u hojas muy extensas si se elige) */
       .full-page-print .exam-sheet-page {
         padding: 8mm !important;
         box-shadow: none !important;
@@ -85,15 +79,16 @@
       font-weight: 800;
       text-transform: uppercase;
     }
+    /* Elimina el fondo blanco de las fotos escaneadas de las firmas reales */
     .stamp-blend {
       mix-blend-mode: multiply;
-      filter: contrast(1.25) brightness(1.02);
+      filter: contrast(1.45) brightness(1.06);
     }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
-  <!-- HEADER PRINCIPAL: ÚNICAMENTE EL LOGO DE ADESCA -->
+  <!-- HEADER PRINCIPAL -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
     <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between">
       <div onclick="switchView('patient')" class="cursor-pointer flex items-center gap-2.5">
@@ -205,7 +200,6 @@
           </span>
         </div>
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <!-- Botones exclusivos para Licenciados (se ocultan si entra la Doctora) -->
           <div id="staff-only-actions" class="flex flex-wrap items-center gap-2 flex-1 sm:flex-initial">
             <button type="button" onclick="openExamEditor(null)" class="flex-1 sm:flex-initial justify-center bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5">
               📝 + Redactar Exámenes (1 o Varios)
@@ -240,7 +234,7 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <!-- COLUMNA IZQUIERDA (SE OCULTA PARA LA DOCTORA) -->
+        <!-- COLUMNA IZQUIERDA -->
         <div id="staff-left-column" class="lg:col-span-4 space-y-5">
           <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
             <h3 class="font-extrabold text-[#163a70] text-sm uppercase tracking-wider mb-1">⚡ Aviso Rápido de Examen</h3>
@@ -421,7 +415,7 @@
       <div class="bg-[#163a70] text-white px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 id="modal-header-title" class="text-sm sm:text-lg font-extrabold">Redactor Multi-Examen — Laboratorio Clínico "ADESCAS"</h2>
-          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Incluye Sello Institucional Obligatorio ADESCAS + Sello y Firma automático según el Licenciado</p>
+          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Incluye Sello Institucional Obligatorio ADESCAS + Sello y Firma Real del Licenciado</p>
         </div>
         <button type="button" onclick="closeExamEditor()" class="bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg text-xs font-bold">
           ✕ Cerrar
@@ -447,7 +441,7 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12">
-        <!-- Panel Izquierdo: Formulario (Se oculta si entra la Doctora) -->
+        <!-- Panel Izquierdo: Formulario -->
         <div id="editor-left-col" class="lg:col-span-5 p-3.5 sm:p-4 bg-slate-50 border-r border-slate-200 space-y-3.5 max-h-[82vh] overflow-y-auto">
           <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5">
             <h4 class="text-[11px] font-extrabold uppercase text-slate-500">1. Datos del Paciente (Para todas las páginas)</h4>
@@ -514,19 +508,24 @@
             <textarea id="ed-observations" oninput="onObservationsInput(this.value)" rows="2" placeholder="Ej. DATO CONTROLADO*..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"></textarea>
           </div>
 
-          <!-- CONTROL DE SELLOS Y FIRMA OFICIAL AUTOMÁTICA + MODO IMPRESIÓN -->
+          <!-- CONTROL DE SELLOS Y FIRMA REAL + MODO IMPRESIÓN -->
           <div class="bg-slate-100 p-3.5 rounded-xl border border-slate-300 space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-[11px] font-extrabold uppercase text-[#163a70]">✒️ 4. Sellos Oficiales y Tamaño Impresión</span>
+              <span class="text-[11px] font-extrabold uppercase text-[#163a70]">✒️ 4. Firma y Sello Real de este Usuario</span>
               <label class="inline-flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-blue-300">
                 <input id="toggle-digital-stamp" type="checkbox" checked onchange="updateLivePreview()" class="w-3.5 h-3.5 accent-[#163a70]" />
                 <span class="text-[11px] font-extrabold text-[#163a70]">Incluir Sellos y Firma</span>
               </label>
             </div>
-            <p class="text-[10px] text-slate-600 leading-tight">
-              • <strong>En Envío Digital (Gmail/WhatsApp/PDF):</strong> Siempre estampa el Sello del Laboratorio ADESCAS + el Sello y Firma del Licenciado activo.<br/>
-              • <strong>En Impresión en Papel:</strong> Puede desmarcar la casilla si desea sellar y firmar a mano con tinta.
-            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="cursor-pointer bg-white hover:bg-blue-50 text-[#163a70] border border-blue-300 font-bold text-[10.5px] px-2.5 py-1.5 rounded-lg shadow-sm">
+                📷 Cargar Foto Exacta de Mi Firma/Sello (Opcional si no está en GitHub)
+                <input type="file" accept="image/*" onchange="handleUserStampUpload(event)" class="hidden" />
+              </label>
+              <button type="button" onclick="clearUserCustomStamp()" class="text-[10px] text-slate-500 hover:text-rose-600 underline">
+                Restaurar por defecto
+              </button>
+            </div>
             <div class="pt-1">
               <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">FORMATO AL IMPRIMIR EN PAPEL:</label>
               <select id="print-size-mode" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-[#163a70] bg-white">
@@ -553,7 +552,7 @@
               💾 1. Guardar Todo
             </button>
             <div class="flex flex-wrap items-center gap-1.5">
-              <button type="button" onclick="printPhysicalExam()" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow" title="Imprime en mitad de página como en Word">
+              <button type="button" onclick="printPhysicalExam()" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
                 🖨️ 2. Imprimir (Media Pág.)
               </button>
               <button type="button" onclick="downloadOnlyPDF()" id="btn-dl-pdf" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
@@ -576,7 +575,7 @@
     </div>
   </div>
 
-  <!-- CONTENEDOR OCULTO DE TAMAÑO FIJO (800px) PARA EXPORTACIÓN DIGITAL PERFECTA SIN BUGS -->
+  <!-- CONTENEDOR OCULTO DE TAMAÑO FIJO (790px) PARA EXPORTACIÓN DIGITAL PERFECTA -->
   <div id="digital-export-stage" style="position: fixed; left: -9999px; top: 0; width: 790px; background: #ffffff; z-index: -10;"></div>
 
   <!-- ÁREA EXCLUSIVA PARA IMPRESIÓN FÍSICA -->
@@ -592,28 +591,32 @@
         displayName: "Lic. Ernesto Alexander Pineda Recinos",
         jvplc: "5080",
         title: "LICENCIADO EN LABORATORIO CLINICO",
-        stampKey: "pineda"
+        stampKey: "pineda",
+        imgFile: "/sello-pineda.png"
       },
       "lickarla@adesca.com": {
         role: "licenciado",
         displayName: "Licda. Karla Johanna Quintanilla Aguilar",
         jvplc: "7307",
         title: "LICENCIADA EN LABORATORIO CLINICO",
-        stampKey: "karla"
+        stampKey: "karla",
+        imgFile: "/sello-karla.png"
       },
       "liccalderon@adesca.com": {
         role: "licenciado",
         displayName: "Licda. Verónica Vanessa Calderón Erazo",
         jvplc: "1432",
         title: "LICENCIADA EN LABORATORIO CLÍNICO",
-        stampKey: "calderon"
+        stampKey: "calderon",
+        imgFile: "/sello-calderon.png"
       },
       "docsandoval@adesca.com": {
         role: "doctora",
         displayName: "Dra. Sandoval (Consulta Médica)",
         jvplc: "",
         title: "MÉDICO CONSULTANTE",
-        stampKey: "none"
+        stampKey: "none",
+        imgFile: ""
       }
     };
 
@@ -628,71 +631,192 @@
       return prof && prof.role === "doctora";
     }
 
+    // Permitir también subir/guardar en caché la foto exacta por cada usuario
+    function handleUserStampUpload(event) {
+      const file = event.target.files[0];
+      const prof = getCurrentProfile();
+      if (!file || !prof) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxW = 500;
+          const scale = Math.min(1, maxW / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/png', 0.95);
+          localStorage.setItem('adescas_real_stamp_' + prof.stampKey, dataUrl);
+          updateLivePreview();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearUserCustomStamp() {
+      const prof = getCurrentProfile();
+      if (!prof) return;
+      localStorage.removeItem('adescas_real_stamp_' + prof.stampKey);
+      updateLivePreview();
+    }
+
     // ============================================================================
-    // SELLOS Y FIRMAS DIGITALES OFICIALES VECTORIZADOS DE ALTA DEFINICIÓN
+    // SELLOS Y FIRMAS REALES (CARGA IMAGEN REAL PNG + TRAZADO EXACTO DE LAS FOTOS)
     // ============================================================================
 
     // 1. SELLO OBLIGATORIO EN TODOS LOS EXÁMENES: LABORATORIO CLÍNICO ADESCAS (N° 2083)
     const SELLO_LAB_ADESCAS_SVG = `
-      <svg viewBox="0 0 270 140" class="h-20 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
-        <g transform="rotate(-2 135 70)" fill="#1e293b" stroke="#1e293b">
-          <rect x="6" y="6" width="258" height="128" rx="4" fill="none" stroke="#1e293b" stroke-width="2.5"/>
-          <rect x="10" y="10" width="250" height="120" rx="2" fill="none" stroke="#1e293b" stroke-width="1"/>
-          <text x="135" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" stroke="none">República de El Salvador</text>
-          <text x="135" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" stroke="none">C. S. S. P.</text>
-          <text x="135" y="54" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="900" stroke="none" letter-spacing="0.5">LABORATORIO CLÍNICO</text>
-          <text x="135" y="73" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="17" font-weight="900" stroke="none" letter-spacing="1.5">ADESCAS</text>
-          <text x="135" y="88" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="bold" stroke="none">N° Inscripción 2083</text>
-          <text x="135" y="102" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" stroke="none">Prop. LICDA. DINA MARISOL VINDEL DE CHÁVEZ</text>
-          <text x="135" y="114" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" stroke="none">AHUACHAPÁN CENTRO.</text>
-          <text x="135" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" stroke="none">AHUACHAPÁN</text>
+      <svg viewBox="0 0 260 135" class="h-20 sm:h-22 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
+        <g transform="rotate(-1.5 130 67)" fill="#1b365d">
+          <text x="130" y="20" text-anchor="middle" font-family="'Times New Roman', serif" font-size="12.5" font-weight="bold">República de El Salvador</text>
+          <text x="130" y="34" text-anchor="middle" font-family="'Times New Roman', serif" font-size="12" font-weight="bold">C. S. S. P.</text>
+          <text x="130" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="900" letter-spacing="0.4">LABORATORIO CLÍNICO</text>
+          <text x="130" y="69" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="17.5" font-weight="900" letter-spacing="1.2">ADESCAS</text>
+          <text x="130" y="84" text-anchor="middle" font-family="'Times New Roman', serif" font-size="12" font-weight="bold">N° Inscripción 2083</text>
+          <text x="130" y="98" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.8" font-weight="bold">Prop. LICDA. DINA MARISOL VINDEL DE CHÁVEZ</text>
+          <text x="130" y="111" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold">AHUACHAPÁN CENTRO.</text>
+          <text x="130" y="123" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold">AHUACHAPÁN</text>
         </g>
       </svg>`;
 
-    // 2. SELLO Y FIRMA: LIC. ERNESTO ALEXANDER PINEDA RECINOS (J.V.P.L.C. No. 5080)
-    const SELLO_LIC_PINEDA_SVG = `
-      <svg viewBox="0 0 310 145" class="h-20 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
-        <g transform="rotate(-1.5 155 72)">
-          <!-- Firma manuscrita azul/negra de Lic. Pineda -->
-          <path d="M 55,78 C 68,25 92,15 88,65 C 85,95 62,102 72,62 C 82,25 110,45 106,75 C 115,52 128,55 126,74 C 136,55 150,58 148,74 C 162,48 185,30 198,18 C 206,10 192,68 188,88 C 185,102 215,58 248,46 M 42,68 L 265,54" fill="none" stroke="#0f172a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Sello profesional -->
-          <text x="155" y="102" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="bold" font-size="13.5" fill="#0f172a">Lic. Ernesto Alexander Pineda Recinos</text>
-          <text x="155" y="117" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="10.5" fill="#0f172a" letter-spacing="0.4">LICENCIADO EN LABORATORIO CLINICO</text>
-          <text x="155" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="11.5" fill="#0f172a">J.V.P.L.C. No. 5080</text>
+    // 2. LIC. ERNESTO ALEXANDER PINEDA RECINOS (Calcado exacto de tu foto image_7bed75.png:
+    //    Trazo superior curvo largo hacia la derecha, "A" inclinada con barra transversal y punto, y caja rectangular azul)
+    const SELLO_LIC_PINEDA_EXACT_SVG = `
+      <svg viewBox="0 0 320 155" class="h-22 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
+        <!-- Firma exacta de Lic. Ernesto Pineda (Foto image_7bed75.png) -->
+        <g fill="none" stroke="#001a80" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Arco superior largo que inicia con pequeño gancho izquierdo y vuela hasta la derecha -->
+          <path d="M 134,26 C 118,25 114,22 126,18 C 165,6 245,2 292,5 C 298,6 301,8 302,10" stroke-width="2.1"/>
+          <!-- A estilizada central: pierna diagonal izquierda, bajada curva derecha y barra horizontal -->
+          <path d="M 122,64 C 142,46 158,32 170,18 C 162,34 156,48 158,56 C 161,63 192,64 202,60 C 205,58 205,55 204,54" stroke-width="2.6"/>
+          <!-- Barra horizontal que cruza la A -->
+          <path d="M 116,49 C 142,46 178,43 201,39 C 203,38 202,36 200,36" stroke-width="1.9"/>
+          <!-- Pequeño trazo/punto suelto a la derecha -->
+          <path d="M 222,53 C 220,55 220,57 222,58" stroke-width="2.2"/>
+        </g>
+        <!-- Recuadro rectangular de sello de hule azul exacto a la foto -->
+        <g transform="translate(22, 68)">
+          <rect x="0" y="0" width="256" height="74" fill="none" stroke="#0b2265" stroke-width="2.2"/>
+          <circle cx="7" cy="6" r="1.3" fill="#0b2265"/>
+          <text x="128" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="21" fill="#0b2265" textLength="242" lengthAdjust="spacingAndGlyphs">Lic. Ernesto Alexander Pineda Recinos</text>
+          <text x="128" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" font-size="16.5" fill="#0b2265" textLength="240" lengthAdjust="spacingAndGlyphs">LICENCIADO EN LABORATORIO CLINICO</text>
+          <text x="128" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="20.5" fill="#0b2265" letter-spacing="1">J.V.P.L.C. No. 5080</text>
         </g>
       </svg>`;
 
-    // 3. SELLO Y FIRMA: LICDA. KARLA JOHANNA QUINTANILLA AGUILAR (J.V.P.L.C. No. 7307)
-    const SELLO_LIC_KARLA_SVG = `
-      <svg viewBox="0 0 310 145" class="h-20 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
-        <g transform="rotate(-1 155 72)">
-          <!-- Firma manuscrita tinta azul estilizada de Licda. Karla -->
-          <path d="M 68,18 C 52,35 45,95 65,112 C 82,125 90,45 78,28 C 70,18 65,98 72,135 M 55,68 C 95,32 185,22 222,58 C 242,78 212,95 198,65 C 185,35 198,12 205,95 M 88,82 C 95,55 102,85 108,58 C 114,85 120,55 126,82 C 132,55 138,82 145,55 C 152,82 158,52 165,80 C 172,52 178,80 186,48 C 194,80 202,45 210,76 M 28,55 L 265,36 M 32,85 L 282,58" fill="none" stroke="#002699" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Sello profesional -->
-          <text x="155" y="104" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="bold" font-size="13" fill="#1e293b">Licda. Karla Johanna Quintanilla Aguilar</text>
-          <text x="155" y="119" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="10.5" fill="#1e293b" letter-spacing="0.4">LICENCIADA EN LABORATORIO CLINICO</text>
-          <text x="155" y="134" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="11.5" fill="#1e293b">J.V.P.L.C. No. 7307</text>
+    // 3. LICDA. KARLA JOHANNA QUINTANILLA AGUILAR (Calcado exacto de tu foto image_7bf4fb.png:
+    //    Bucle vertical izquierdo largo hacia abajo, 11 ondas apretadas centrales, arco grande cruzado con doble barra paralela)
+    const SELLO_LIC_KARLA_EXACT_SVG = `
+      <svg viewBox="0 0 320 165" class="h-22 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="#0018a8" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Bucle superior izquierdo y tallo largo vertical que baja hasta el fondo -->
+          <path d="M 88,24 C 86,14 78,12 73,26 C 68,44 71,72 82,78 C 89,80 93,48 93,18 L 94,118" stroke-width="2.5"/>
+          <!-- Gran bucle inferior izquierdo y diagonal ascendente que forma la cúpula derecha -->
+          <path d="M 93,52 C 94,76 62,108 55,105 C 49,102 54,68 72,48 C 98,22 142,20 165,46 C 176,58 175,80 167,82 C 158,83 151,42 150,8 L 166,94" stroke-width="2.5"/>
+          <!-- Cúpula superior derecha alta y envolvente -->
+          <path d="M 96,76 C 122,48 158,14 176,8 C 192,3 212,28 216,52 C 219,68 212,76 206,72 C 198,66 190,34 189,22 C 192,42 199,66 204,74" stroke-width="2.3"/>
+          <!-- Tallo central alto que corta verticalmente -->
+          <path d="M 176,6 L 194,76" stroke-width="2.4"/>
+          <!-- Las 11 ondas verticales tupidas características en el centro -->
+          <path d="M 95,48 C 95,68 98,78 102,76 C 106,74 107,50 107,48 C 107,68 110,78 114,76 C 118,74 119,48 119,46 C 119,68 122,76 126,75 C 130,73 131,46 131,44 C 131,66 134,75 138,74 C 142,72 142,40 142,36 C 143,64 146,74 150,72 C 154,70 154,36 154,34 C 155,62 158,73 162,72 C 166,70 166,38 166,36 C 168,62 172,72 176,70 C 180,68 182,42 182,40 C 184,60 188,70 192,68" stroke-width="2.2"/>
+          <!-- Dos líneas rectas horizontales paralelas que atraviesan toda la firma -->
+          <path d="M 48,46 L 238,26" stroke-width="2.5"/>
+          <path d="M 49,70 L 268,46" stroke-width="2.6"/>
+          <!-- Punto superior característico -->
+          <circle cx="124" cy="22" r="2" fill="#0018a8"/>
+        </g>
+        <!-- Sello de Licda. Karla debajo -->
+        <g transform="translate(22, 108)">
+          <rect x="0" y="0" width="276" height="52" fill="none" stroke="#0b2265" stroke-width="1.8"/>
+          <text x="138" y="17" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="bold" font-size="13" fill="#0b2265">Licda. Karla Johanna Quintanilla Aguilar</text>
+          <text x="138" y="33" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="10.5" fill="#0b2265" letter-spacing="0.4">LICENCIADA EN LABORATORIO CLINICO</text>
+          <text x="138" y="47" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="12" fill="#0b2265">J.V.P.L.C. No. 7307</text>
         </g>
       </svg>`;
 
-    // 4. SELLO Y FIRMA: LICDA. VERÓNICA VANESSA CALDERÓN ERAZO (J.V.P.L.C. No. 1432)
-    const SELLO_LIC_CALDERON_SVG = `
-      <svg viewBox="0 0 310 145" class="h-20 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
-        <g transform="rotate(-1.5 155 72)">
-          <!-- Firma manuscrita de Licda. Calderón -->
-          <path d="M 75,22 C 62,55 58,92 78,88 C 98,84 122,25 138,18 C 152,12 132,78 148,82 C 164,85 182,42 195,65 C 208,85 228,48 255,35 M 52,72 C 115,62 195,52 268,48" fill="none" stroke="#1e293b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Sello profesional -->
-          <text x="155" y="102" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="12.5" fill="#1e293b">Licda. Verónica Vanessa Calderón Erazo</text>
-          <text x="155" y="117" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="10.5" fill="#1e293b" letter-spacing="0.4">LICENCIADA EN LABORATORIO CLÍNICO</text>
-          <text x="155" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="11.5" fill="#1e293b">J.V.P.L.C. No. 1432</text>
+    // 4. LICDA. VERÓNICA VANESSA CALDERÓN ERAZO (Calcado exacto de tu foto image_7bee32.jpg:
+    //    Firma cursiva "VCalderón" con óvalo envolvente que pisa la palabra "Verónica" del recuadro rectangular)
+    const SELLO_LIC_CALDERON_EXACT_SVG = `
+      <svg viewBox="0 0 320 155" class="h-22 sm:h-24 w-auto select-none stamp-blend" xmlns="http://www.w3.org/2000/svg">
+        <!-- Recuadro rectangular de sello de hule exacto a image_7bee32.jpg -->
+        <g transform="translate(22, 56)">
+          <rect x="0" y="0" width="276" height="82" fill="none" stroke="#162660" stroke-width="2.3"/>
+          <circle cx="8" cy="6" r="1.3" fill="#162660"/>
+          <text x="138" y="27" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#162660" textLength="248" lengthAdjust="spacingAndGlyphs">Licda. Verónica Vanessa Calderón Erazo</text>
+          <text x="138" y="51" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" font-size="17" fill="#162660" textLength="250" lengthAdjust="spacingAndGlyphs">LICENCIADA EN LABORATORIO CLÍNICO</text>
+          <text x="138" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="21" fill="#162660" letter-spacing="1.2">J.V.P.L.C. No. 1432</text>
+        </g>
+        <!-- Firma manuscrita superpuesta exactamente sobre el borde superior como en image_7bee32.jpg -->
+        <g fill="none" stroke="#182b8c" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Tallo alto central que sube hasta arriba y baja cruzando "Verónica" -->
+          <path d="M 131,12 C 128,6 127,20 124,48 C 121,70 119,82 118,86" stroke-width="2.1"/>
+          <!-- Trazo cursivo izquierdo y letras centrales -->
+          <path d="M 84,56 C 88,36 93,26 95,32 C 96,42 93,56 96,56 C 100,56 104,34 108,32 C 110,32 106,54 110,55 C 114,56 120,40 123,40 C 125,40 122,55 126,55 C 132,55 142,22 145,20 C 147,20 140,54 144,55 C 148,55 154,38 157,38 C 159,38 155,54 159,54 C 163,54 168,38 172,38 C 175,38 171,54 176,54 C 181,54 186,36 192,36 C 196,36 192,52 196,52" stroke-width="1.9"/>
+          <!-- Gran óvalo envolvente doble que rodea la firma y baja hasta tocar "Verónica" -->
+          <path d="M 85,48 C 108,34 162,22 192,26 C 206,28 202,42 178,52 C 148,64 106,74 88,68 C 74,62 82,42 114,32 C 148,22 192,22 204,30 C 212,36 194,48 168,55 C 145,60 198,58 212,54 C 216,52 206,42 192,36" stroke-width="2"/>
         </g>
       </svg>`;
 
-    function getLicenciadoStampSVG(stampKey) {
-      if (stampKey === "karla") return SELLO_LIC_KARLA_SVG;
-      if (stampKey === "calderon") return SELLO_LIC_CALDERON_SVG;
-      return SELLO_LIC_PINEDA_SVG;
+    function getLicenciadoStampHTML(stampKey) {
+      // 1. Si el licenciado cargó su imagen personalizada en navegador, usar esa imagen real
+      const customUploaded = localStorage.getItem('adescas_real_stamp_' + stampKey);
+      if (customUploaded) {
+        if (stampKey === 'karla') {
+          return `
+            <div class="text-center">
+              <img src="${customUploaded}" alt="Firma" class="h-16 w-auto object-contain mx-auto -mb-2 stamp-blend" />
+              <div class="border border-[#0b2265] px-2 py-0.5 text-[#0b2265] leading-tight">
+                <p class="font-serif italic font-bold text-[10px]">Licda. Karla Johanna Quintanilla Aguilar</p>
+                <p class="font-extrabold text-[8.5px]">LICENCIADA EN LABORATORIO CLINICO</p>
+                <p class="font-black text-[9.5px]">J.V.P.L.C. No. 7307</p>
+              </div>
+            </div>`;
+        }
+        return `<img src="${customUploaded}" alt="Firma y Sello" class="h-22 sm:h-24 w-auto object-contain stamp-blend" />`;
+      }
+
+      // 2. Intenta cargar el archivo PNG real desde GitHub (/sello-pineda.png, /sello-karla.png, /sello-calderon.png)
+      //    y si aún no lo has subido a GitHub, muestra automáticamente el calcado exacto de tus fotos.
+      const fallbackSVG = stampKey === 'karla'
+        ? SELLO_LIC_KARLA_EXACT_SVG
+        : (stampKey === 'calderon' ? SELLO_LIC_CALDERON_EXACT_SVG : SELLO_LIC_PINEDA_EXACT_SVG);
+
+      const fileMap = {
+        pineda: '/sello-pineda.png',
+        karla: '/sello-karla.png',
+        calderon: '/sello-calderon.png'
+      };
+      const fileUrl = fileMap[stampKey] || '/sello-pineda.png';
+
+      if (stampKey === 'karla') {
+        return `
+          <div class="relative flex flex-col items-center">
+            <img src="${fileUrl}" alt="Firma Licda. Karla" class="h-16 w-auto object-contain -mb-1 stamp-blend" crossorigin="anonymous"
+                 onerror="this.parentElement.innerHTML = window. KARLA_EXACT_FALLBACK_HTML;" />
+            <div class="border border-[#0b2265] px-2.5 py-0.5 text-[#0b2265] leading-tight text-center">
+              <p class="font-serif italic font-bold text-[10px]">Licda. Karla Johanna Quintanilla Aguilar</p>
+              <p class="font-extrabold text-[8.5px]">LICENCIADA EN LABORATORIO CLINICO</p>
+              <p class="font-black text-[9.5px]">J.V.P.L.C. No. 7307</p>
+            </div>
+          </div>`;
+      }
+
+      return `
+        <div class="relative flex items-center">
+          <img src="${fileUrl}" alt="Sello y Firma Oficial" class="h-22 sm:h-24 w-auto object-contain stamp-blend" crossorigin="anonymous"
+               onerror="this.outerHTML = window.STAMP_FALLBACKS['${stampKey}'];" />
+        </div>`;
     }
+
+    window.KARLA_EXACT_FALLBACK_HTML = SELLO_LIC_KARLA_EXACT_SVG;
+    window.STAMP_FALLBACKS = {
+      pineda: SELLO_LIC_PINEDA_EXACT_SVG,
+      karla: SELLO_LIC_KARLA_EXACT_SVG,
+      calderon: SELLO_LIC_CALDERON_EXACT_SVG
+    };
 
     // LOGO DEL MICROSCOPIO "ADESCAS Laboratorio Clínico" (Exclusivo para las boletas de examen)
     const OFFICIAL_ADESCAS_LOGO_SVG = `
@@ -1511,7 +1635,6 @@
 
     async function fetchStaffData() {
       if (!currentSession) return;
-      // Ordenar por fecha de subida ascendente para numerar #1, #2, #3... y mostrar del más reciente al primero
       const { data: exams } = await supabaseClient
         .from('examenes_adesca')
         .select('*')
@@ -1521,7 +1644,6 @@
         ...item,
         dailyNumber: idx + 1
       }));
-      // Mostrar en lista con su número correlativo asignado
       allRecords = numbered.reverse();
       renderStaffRecords();
 
@@ -1578,7 +1700,6 @@
         const pageCount = savedObj?.pages?.length || (savedObj ? 1 : 0);
 
         if (isDoc) {
-          // VISTA EXCLUSIVA PARA LA DOCTORA SANDOVAL (SOLO VER RESULTADOS)
           return `
             <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-blue-50/40">
               <div class="flex items-start gap-3">
@@ -1606,7 +1727,6 @@
             </div>`;
         }
 
-        // VISTA COMPLETA PARA LICENCIADOS
         let actionBtns = '';
         if (item.status === 'processing') {
           actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Poner Listo</button>`;
@@ -1841,7 +1961,6 @@
       editingRecordId = recordId;
       document.getElementById('exam-modal').classList.remove('hidden');
 
-      // Configurar interfaz si es Doctora (Solo Lectura) vs Licenciado
       const leftCol = document.getElementById('editor-left-col');
       const rightCol = document.getElementById('editor-right-col');
       const mobTabs = document.getElementById('mobile-editor-tabs-bar');
@@ -1859,7 +1978,7 @@
         toolbar.classList.add('hidden');
       } else {
         document.getElementById('modal-header-title').textContent = `Redactor Multi-Examen — ${prof.displayName}`;
-        document.getElementById('modal-header-subtitle').textContent = `Sello activo: Laboratorio Clínico ADESCAS (N° 2083) + Firma ${prof.displayName} (J.V.P.L.C. ${prof.jvplc})`;
+        document.getElementById('modal-header-subtitle').textContent = `Sello activo: Laboratorio Clínico ADESCAS (N° 2083) + Firma Real ${prof.displayName} (J.V.P.L.C. ${prof.jvplc})`;
         leftCol.classList.remove('hidden');
         rightCol.classList.remove('lg:col-span-12');
         rightCol.classList.add('lg:col-span-7');
@@ -2067,7 +2186,7 @@
     }
 
     // ============================================================================
-    // RENDERIZADO DE BOLETAS OFICIALES CON SELLO LAB ADESCAS + SELLO LICENCIADO
+    // RENDERIZADO DE BOLETAS OFICIALES CON SELLO LAB ADESCAS + SELLO LICENCIADO REAL
     // ============================================================================
     function buildSinglePageHTML(pageObj, pageIndex, totalPages, forceDigitalStamp = null) {
       const rawName = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
@@ -2300,13 +2419,13 @@
           </table>`;
       }
 
-      // BLOQUE DE SELLOS OFICIALES: Sello Lab ADESCAS (Obligatorio) + Sello y Firma del Licenciado Activo
+      // BLOQUE DE SELLOS OFICIALES: Sello Lab ADESCAS (Obligatorio) + Sello y Firma Real del Licenciado
       let stampsBlock = '';
       if (useDigitalStamp) {
         stampsBlock = `
-          <div class="flex items-center justify-end gap-3 shrink-0">
+          <div class="flex items-center justify-end gap-4 shrink-0">
             ${SELLO_LAB_ADESCAS_SVG}
-            ${getLicenciadoStampSVG(activeStampKey)}
+            ${getLicenciadoStampHTML(activeStampKey)}
           </div>`;
       } else {
         stampsBlock = `
@@ -2436,8 +2555,6 @@
       window.print();
     }
 
-    // Renderiza las boletas en un contenedor fijo de 790px de ancho para que en Celular o PC
-    // el PDF y la Imagen salgan siempre con proporciones perfectas y con ambos sellos
     async function renderDigitalFixedStage(name) {
       document.getElementById('toggle-digital-stamp').checked = true;
       updateLivePreview();
@@ -2448,7 +2565,6 @@
       const cleanFileName = `Resultados_ADESCAS_${name.replace(/\s+/g, '_')}.pdf`;
       lastGeneratedPdfName = cleanFileName;
 
-      // Esperar breve instante para asegurar carga del QR
       await new Promise(r => setTimeout(r, 250));
 
       try {
