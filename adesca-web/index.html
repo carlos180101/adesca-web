@@ -11,16 +11,23 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
     
     /* =====================================================================
-       IMPRESIÓN EN MITAD DE PÁGINA CARTA (COMO EN WORD) O PÁGINA COMPLETA
+       IMPRESIÓN FÍSICA PERFECTA: MITAD DE PÁGINA CARTA (2 POR HOJA) O CARTA
+       Sin márgenes cortados ni textos encogidos en PC
        ===================================================================== */
     @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        width: 100% !important;
+      }
       body * { visibility: hidden !important; }
       #print-area, #print-area * { visibility: visible !important; }
       #print-area {
@@ -34,14 +41,16 @@
       }
       .half-page-print .exam-sheet-page {
         width: 100% !important;
-        height: 134mm !important;
-        max-height: 134mm !important;
-        padding: 4mm 8mm !important;
+        max-width: 100% !important;
+        height: 132mm !important;
+        max-height: 132mm !important;
+        padding: 5mm 10mm !important;
         margin: 0 !important;
         box-sizing: border-box !important;
         border: none !important;
-        border-bottom: 1px dashed #94a3b8 !important;
+        border-bottom: 1px dashed #64748b !important;
         box-shadow: none !important;
+        border-radius: 0 !important;
         overflow: hidden !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
@@ -56,48 +65,45 @@
       }
       .full-page-print .exam-sheet-page {
         width: 100% !important;
-        padding: 8mm !important;
-        box-shadow: none !important;
-        border: none !important;
+        max-width: 100% !important;
+        padding: 10mm 12mm !important;
         margin: 0 !important;
+        box-sizing: border-box !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
         page-break-after: always !important;
         break-after: page !important;
       }
       .no-print { display: none !important; }
-      @page { size: letter portrait; margin: 5mm; }
+      @page { size: letter portrait; margin: 4mm; }
     }
 
+    /* Estilos de la Boleta Oficial con márgenes garantizados */
+    .exam-sheet-page {
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      color: #0f172a;
+    }
     .print-table {
       border-collapse: collapse;
       width: 100%;
       table-layout: fixed;
     }
     .print-table th, .print-table td {
-      border: 1px solid #0f172a;
-      padding: 3.5px 7px;
-      font-size: 11px;
+      border: 1.5px solid #0f172a;
+      padding: 4px 8px;
+      font-size: 11.5px;
       line-height: 1.25;
       color: #0f172a;
       word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .print-table th {
-      background-color: #f8fafc;
+      background-color: #f1f5f9;
       font-weight: 800;
       text-transform: uppercase;
-    }
-    .layout-rigid-table {
-      width: 100%;
-      border-collapse: collapse;
-      border: none;
-    }
-    .layout-rigid-table td {
-      border: none;
-      padding: 0;
-      vertical-align: middle;
-    }
-    .stamp-blend {
-      mix-blend-mode: multiply;
-      filter: contrast(1.4) brightness(1.05);
     }
   </style>
 </head>
@@ -111,11 +117,11 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button id="btn-to-staff" type="button" onclick="switchView('staff')" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-[#163a70] hover:bg-slate-100 flex items-center gap-1.5 border border-transparent hover:border-slate-200">
+        <button id="btn-to-staff" type="button" onclick="switchView('staff')" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:text-[#163a70] hover:bg-slate-100 flex items-center gap-1.5 border border-slate-200">
           🔒 Personal
           <span id="badge-requested" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">0</span>
         </button>
-        <button id="btn-to-patient" type="button" onclick="switchView('patient')" class="hidden px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200">
+        <button id="btn-to-patient" type="button" onclick="switchView('patient')" class="hidden px-3.5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 border border-slate-200">
           ← Volver a Consulta
         </button>
       </div>
@@ -311,7 +317,7 @@
                   <option value="processing">⏳ EN PROCESO (Amarillo)</option>
                 </select>
               </div>
-              <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs">
+              <button id="btn-quick-submit" type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs">
                 Subir Aviso Rápido
               </button>
             </form>
@@ -398,12 +404,12 @@
     <div class="max-w-lg w-full bg-white rounded-2xl shadow-2xl border-2 border-emerald-500 overflow-hidden">
       <div class="bg-emerald-600 text-white px-5 py-4">
         <h3 class="text-base font-extrabold">✅ ¡Reporte Oficial Listo con Sellos y Firma!</h3>
-        <p class="text-xs text-emerald-100 mt-0.5">Se descargó el PDF en tamaño perfecto y se copió la imagen nítida al portapapeles</p>
+        <p class="text-xs text-emerald-100 mt-0.5">Se descargó el PDF a página completa sin recortes y se copió la imagen al portapapeles</p>
       </div>
       <div class="p-5 space-y-4 text-xs text-slate-700">
         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
           <p class="font-extrabold text-sm text-emerald-950">Opciones para enviarlo ahora mismo:</p>
-          <p>• <strong>En Computadora:</strong> Presione el botón azul abajo para abrir <strong id="send-platform-name">Gmail / WhatsApp</strong>. Adentro del mensaje presione <kbd class="bg-white border border-slate-400 px-1.5 py-0.5 rounded font-black">Ctrl</kbd> + <kbd class="bg-white border border-slate-400 px-1.5 py-0.5 rounded font-black">V</kbd> (Pegar) o adjunte el PDF descargado.</p>
+          <p>• <strong>En Computadora:</strong> Presione el botón azul abajo para abrir <strong id="send-platform-name">Gmail / WhatsApp</strong>. Adentro del mensaje presione <kbd class="bg-white border border-slate-400 px-1.5 py-0.5 rounded font-black">Ctrl</kbd> + <kbd class="bg-white border border-slate-400 px-1.5 py-0.5 rounded font-black">V</kbd> (Pegar) o arrastre el PDF descargado.</p>
           <p>• <strong>En Celular / Tablet:</strong> Use el botón verde <strong>"📲 Compartir PDF directo en Celular"</strong>.</p>
         </div>
         <div class="flex flex-wrap justify-end gap-2">
@@ -430,7 +436,7 @@
       <div class="bg-[#163a70] text-white px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 id="modal-header-title" class="text-sm sm:text-lg font-extrabold">Redactor Multi-Examen — Laboratorio Clínico "ADESCAS"</h2>
-          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Incluye Sello Institucional Obligatorio ADESCAS + Sello y Firma Real del Licenciado</p>
+          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Márgenes completos verificados en PC y Celular • Sello Lab ADESCAS + Firma Real</p>
         </div>
         <button type="button" onclick="closeExamEditor()" class="bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg text-xs font-bold">
           ✕ Cerrar
@@ -462,12 +468,12 @@
             <h4 class="text-[11px] font-extrabold uppercase text-slate-500">1. Datos del Paciente (Para todas las páginas)</h4>
             <div>
               <label class="block text-[10px] font-bold text-slate-600">NOMBRE COMPLETO:</label>
-              <input id="ed-patient-name" oninput="updateLivePreview()" type="text" placeholder="Ej. ISRAEL RUIZ" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold uppercase" />
+              <input id="ed-patient-name" oninput="updateLivePreview()" type="text" placeholder="Ej. LIAM ABRAHAM QUINTANILLA VARGAS" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold uppercase" />
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block text-[10px] font-bold text-slate-600">EDAD:</label>
-                <input id="ed-patient-age" oninput="updateLivePreview()" type="text" placeholder="Ej. 25 AÑOS" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs uppercase" />
+                <input id="ed-patient-age" oninput="updateLivePreview()" type="text" placeholder="Ej. 5 AÑOS" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs uppercase" />
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-600">FECHA:</label>
@@ -520,7 +526,7 @@
 
           <div class="bg-white p-3.5 rounded-xl border border-slate-200">
             <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">OBSERVACIONES DE ESTA PÁGINA:</label>
-            <textarea id="ed-observations" oninput="onObservationsInput(this.value)" rows="2" placeholder="Ej. DATO CONTROLADO*..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"></textarea>
+            <textarea id="ed-observations" oninput="onObservationsInput(this.value)" rows="2" placeholder="Opcional (si lo deja vacío no aparecerá nada raro en la boleta)..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"></textarea>
           </div>
 
           <!-- CONTROL DE SELLOS Y FIRMA REAL + MODO IMPRESIÓN -->
@@ -534,7 +540,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <label class="cursor-pointer bg-white hover:bg-blue-50 text-[#163a70] border border-blue-300 font-bold text-[10.5px] px-2.5 py-1.5 rounded-lg shadow-sm">
-                📷 Cargar Foto Exacta de Mi Firma/Sello (Opcional si no está en GitHub)
+                📷 Subir Imagen Exacta de Mi Firma/Sello (PNG/JPG)
                 <input type="file" accept="image/*" onchange="handleUserStampUpload(event)" class="hidden" />
               </label>
               <button type="button" onclick="clearUserCustomStamp()" class="text-[10px] text-slate-500 hover:text-rose-600 underline">
@@ -542,10 +548,10 @@
               </button>
             </div>
             <div class="pt-1">
-              <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">FORMATO AL IMPRIMIR EN PAPEL:</label>
+              <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">FORMATO AL IMPRIMIR O BAJAR PDF:</label>
               <select id="print-size-mode" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-[#163a70] bg-white">
                 <option value="half">📄 Mitad de Página Carta (2 Exámenes por Hoja como en Word)</option>
-                <option value="full">📄 Página Carta Completa (1 Examen por Hoja)</option>
+                <option value="full">📄 Página Carta Completa (1 Examen Grande por Hoja)</option>
               </select>
             </div>
           </div>
@@ -567,8 +573,8 @@
               💾 1. Guardar Todo
             </button>
             <div class="flex flex-wrap items-center gap-1.5">
-              <button type="button" onclick="printPhysicalExam()" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
-                🖨️ 2. Imprimir (Media Pág.)
+              <button type="button" onclick="printPhysicalExam()" id="btn-print-paper" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
+                🖨️ 2. Imprimir Papel
               </button>
               <button type="button" onclick="downloadOnlyPDF()" id="btn-dl-pdf" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
                 📄 3. Bajar PDF
@@ -582,7 +588,7 @@
             </div>
           </div>
 
-          <div id="preview-wrapper" class="mx-auto w-full max-w-[210mm] space-y-6">
+          <div id="preview-wrapper" class="mx-auto w-full max-w-[780px] space-y-6">
             <div id="live-sheet-content" class="space-y-6"></div>
           </div>
         </div>
@@ -594,17 +600,6 @@
   <div id="print-area" class="hidden print:block half-page-print"></div>
 
   <script>
-    // ============================================================================
-    // PROTECCIÓN DE COMILLAS PARA QUE NUNCA SE RECORTE O BORRE TEXTO (Ej. GRUPO "O")
-    // ============================================================================
-    function escAttr(str) {
-      return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    }
-
     // ============================================================================
     // PERFILES OFICIALES AUTORIZADOS (3 LICENCIADOS + 1 DOCTORA SOLO LECTURA)
     // ============================================================================
@@ -654,6 +649,8 @@
       return prof && prof.role === "doctora";
     }
 
+    // Convierte una foto subida con fondo blanco en un PNG con fondo 100% transparente
+    // para que html2canvas en PC y Celular jamás la borre ni la corte
     function handleUserStampUpload(event) {
       const file = event.target.files[0];
       const prof = getCurrentProfile();
@@ -663,13 +660,24 @@
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          const maxW = 500;
+          const maxW = 480;
           const scale = Math.min(1, maxW / img.width);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/png', 0.95);
+
+          // Hacer transparente el papel blanco automáticamente
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const d = imgData.data;
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i] > 215 && d[i + 1] > 215 && d[i + 2] > 215) {
+              d[i + 3] = 0;
+            }
+          }
+          ctx.putImageData(imgData, 0, 0);
+
+          const dataUrl = canvas.toDataURL('image/png');
           localStorage.setItem('adescas_real_stamp_' + prof.stampKey, dataUrl);
           updateLivePreview();
         };
@@ -686,42 +694,67 @@
     }
 
     // ============================================================================
-    // SELLOS Y LOGOS CON ANCHO Y ALTO EXPLÍCITO EN PÍXELES (NUNCA SE APLASTAN EN PDF)
+    // LOGOS Y SELLOS EN BASE64 DATA-URI CON DIMENSIONES FIJAS EN PÍXELES
+    // (Al ser <img src="data:image/svg+xml;base64,..."> con width/height fijos,
+    //  nunca desaparecen ni se desconfiguran en PC ni en PDF)
     // ============================================================================
+    function svgToDataUri(svgString) {
+      return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString.trim())));
+    }
 
-    const SELLO_LAB_ADESCAS_SVG = `
-      <svg width="165" height="86" viewBox="0 0 260 135" style="width:165px; height:86px; display:inline-block;" xmlns="http://www.w3.org/2000/svg">
-        <g transform="rotate(-1.5 130 67)" fill="#1b365d">
-          <text x="130" y="20" text-anchor="middle" font-family="'Times New Roman', serif" font-size="12.5" font-weight="bold">República de El Salvador</text>
-          <text x="130" y="34" text-anchor="middle" font-family="'Times New Roman', serif" font-size="12" font-weight="bold">C. S. S. P.</text>
-          <text x="130" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="900" letter-spacing="0.4">LABORATORIO CLÍNICO</text>
-          <text x="130" y="69" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="17.5" font-weight="900" letter-spacing="1.2">ADESCAS</text>
-          <text x="130" y="84" text-anchor="middle" font-family="'Times New Roman', serif" font-size="12" font-weight="bold">N° Inscripción 2083</text>
-          <text x="130" y="98" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.8" font-weight="bold">Prop. LICDA. DINA MARISOL VINDEL DE CHÁVEZ</text>
-          <text x="130" y="111" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold">AHUACHAPÁN CENTRO.</text>
-          <text x="130" y="123" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold">AHUACHAPÁN</text>
+    const LOGO_MICRO_URI = svgToDataUri(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="210" height="85" viewBox="0 0 430 175">
+        <path d="M 65,138 A 48,48 0 0,1 65,45" fill="none" stroke="#1b3b6f" stroke-width="24" stroke-linecap="round"/>
+        <rect x="62" y="96" width="52" height="8" rx="4" fill="#1b3b6f" transform="rotate(-18 85 100)"/>
+        <g transform="translate(76, 48) rotate(-35)">
+          <rect x="-15" y="-42" width="32" height="68" rx="6" fill="#1b3b6f"/>
+          <rect x="-10" y="-54" width="22" height="14" rx="3" fill="#1b3b6f"/>
+          <rect x="-4" y="-32" width="8" height="44" rx="4" fill="#5b87c6"/>
+          <rect x="-11" y="28" width="24" height="8" rx="3" fill="#5b87c6"/>
         </g>
-      </svg>`;
+        <circle cx="73" cy="138" r="22" fill="#ffffff"/>
+        <circle cx="73" cy="138" r="14" fill="#5b87c6"/>
+        <path d="M 30,168 C 35,148 111,148 116,168 Z" fill="#1b3b6f"/>
+        <rect x="24" y="163" width="98" height="9" rx="4.5" fill="#1b3b6f"/>
+        <text x="115" y="102" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="60" fill="#1b3b6f" letter-spacing="1">ADESCAS</text>
+        <line x1="78" y1="115" x2="422" y2="115" stroke="#5b87c6" stroke-width="4" stroke-linecap="round"/>
+        <text x="136" y="156" font-family="Arial, sans-serif" font-weight="700" font-size="35" fill="#5b87c6">Laboratorio Clínico</text>
+      </svg>`);
 
-    const SELLO_LIC_PINEDA_EXACT_SVG = `
-      <svg width="195" height="94" viewBox="0 0 320 155" style="width:195px; height:94px; display:inline-block;" xmlns="http://www.w3.org/2000/svg">
+    const SELLO_LAB_URI = svgToDataUri(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="175" height="90" viewBox="0 0 260 135">
+        <g transform="rotate(-1.2 130 67)" fill="#1b365d">
+          <rect x="4" y="4" width="252" height="126" rx="4" fill="none" stroke="#1b365d" stroke-width="2.5"/>
+          <text x="130" y="21" text-anchor="middle" font-family="Times New Roman, serif" font-size="12.5" font-weight="bold">República de El Salvador</text>
+          <text x="130" y="35" text-anchor="middle" font-family="Times New Roman, serif" font-size="12" font-weight="bold">C. S. S. P.</text>
+          <text x="130" y="51" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="900">LABORATORIO CLÍNICO</text>
+          <text x="130" y="70" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="17" font-weight="900">ADESCAS</text>
+          <text x="130" y="85" text-anchor="middle" font-family="Times New Roman, serif" font-size="12" font-weight="bold">N° Inscripción 2083</text>
+          <text x="130" y="99" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.8" font-weight="bold">Prop. LICDA. DINA MARISOL VINDEL DE CHÁVEZ</text>
+          <text x="130" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold">AHUACHAPÁN CENTRO.</text>
+          <text x="130" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold">AHUACHAPÁN</text>
+        </g>
+      </svg>`);
+
+    const SELLO_PINEDA_URI = svgToDataUri(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="205" height="98" viewBox="0 0 320 155">
         <g fill="none" stroke="#001a80" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M 134,26 C 118,25 114,22 126,18 C 165,6 245,2 292,5 C 298,6 301,8 302,10" stroke-width="2.1"/>
+          <path d="M 134,26 C 118,25 114,22 126,18 C 165,6 245,2 292,5 C 298,6 301,8 302,10" stroke-width="2.2"/>
           <path d="M 122,64 C 142,46 158,32 170,18 C 162,34 156,48 158,56 C 161,63 192,64 202,60 C 205,58 205,55 204,54" stroke-width="2.6"/>
-          <path d="M 116,49 C 142,46 178,43 201,39 C 203,38 202,36 200,36" stroke-width="1.9"/>
+          <path d="M 116,49 C 142,46 178,43 201,39 C 203,38 202,36 200,36" stroke-width="2"/>
           <path d="M 222,53 C 220,55 220,57 222,58" stroke-width="2.2"/>
         </g>
         <g transform="translate(22, 68)">
           <rect x="0" y="0" width="256" height="74" fill="none" stroke="#0b2265" stroke-width="2.2"/>
-          <circle cx="7" cy="6" r="1.3" fill="#0b2265"/>
-          <text x="128" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="18.5" fill="#0b2265">Lic. Ernesto Alexander Pineda Recinos</text>
-          <text x="128" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" font-size="13.5" fill="#0b2265">LICENCIADO EN LABORATORIO CLINICO</text>
-          <text x="128" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="19" fill="#0b2265">J.V.P.L.C. No. 5080</text>
+          <circle cx="7" cy="6" r="1.4" fill="#0b2265"/>
+          <text x="128" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="14.5" fill="#0b2265">Lic. Ernesto Alexander Pineda Recinos</text>
+          <text x="128" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="11.5" fill="#0b2265">LICENCIADO EN LABORATORIO CLINICO</text>
+          <text x="128" y="67" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="17" fill="#0b2265">J.V.P.L.C. No. 5080</text>
         </g>
-      </svg>`;
+      </svg>`);
 
-    const SELLO_LIC_KARLA_EXACT_SVG = `
-      <svg width="195" height="98" viewBox="0 0 320 165" style="width:195px; height:98px; display:inline-block;" xmlns="http://www.w3.org/2000/svg">
+    const SELLO_KARLA_URI = svgToDataUri(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="205" height="105" viewBox="0 0 320 165">
         <g fill="none" stroke="#0018a8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M 88,24 C 86,14 78,12 73,26 C 68,44 71,72 82,78 C 89,80 93,48 93,18 L 94,118" stroke-width="2.5"/>
           <path d="M 93,52 C 94,76 62,108 55,105 C 49,102 54,68 72,48 C 98,22 142,20 165,46 C 176,58 175,80 167,82 C 158,83 151,42 150,8 L 166,94" stroke-width="2.5"/>
@@ -738,23 +771,23 @@
           <text x="138" y="33" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="10.5" fill="#0b2265">LICENCIADA EN LABORATORIO CLINICO</text>
           <text x="138" y="47" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="12" fill="#0b2265">J.V.P.L.C. No. 7307</text>
         </g>
-      </svg>`;
+      </svg>`);
 
-    const SELLO_LIC_CALDERON_EXACT_SVG = `
-      <svg width="195" height="94" viewBox="0 0 320 155" style="width:195px; height:94px; display:inline-block;" xmlns="http://www.w3.org/2000/svg">
+    const SELLO_CALDERON_URI = svgToDataUri(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="205" height="98" viewBox="0 0 320 155">
         <g transform="translate(22, 56)">
           <rect x="0" y="0" width="276" height="82" fill="none" stroke="#162660" stroke-width="2.3"/>
-          <circle cx="8" cy="6" r="1.3" fill="#162660"/>
-          <text x="138" y="27" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="17" fill="#162660">Licda. Verónica Vanessa Calderón Erazo</text>
-          <text x="138" y="51" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" font-size="13.5" fill="#162660">LICENCIADA EN LABORATORIO CLÍNICO</text>
-          <text x="138" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="19.5" fill="#162660">J.V.P.L.C. No. 1432</text>
+          <circle cx="8" cy="6" r="1.4" fill="#162660"/>
+          <text x="138" y="27" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#162660">Licda. Verónica Vanessa Calderón Erazo</text>
+          <text x="138" y="51" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="11.5" fill="#162660">LICENCIADA EN LABORATORIO CLÍNICO</text>
+          <text x="138" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="17.5" fill="#162660">J.V.P.L.C. No. 1432</text>
         </g>
         <g fill="none" stroke="#182b8c" stroke-linecap="round" stroke-linejoin="round">
           <path d="M 131,12 C 128,6 127,20 124,48 C 121,70 119,82 118,86" stroke-width="2.1"/>
           <path d="M 84,56 C 88,36 93,26 95,32 C 96,42 93,56 96,56 C 100,56 104,34 108,32 C 110,32 106,54 110,55 C 114,56 120,40 123,40 C 125,40 122,55 126,55 C 132,55 142,22 145,20 C 147,20 140,54 144,55 C 148,55 154,38 157,38 C 159,38 155,54 159,54 C 163,54 168,38 172,38 C 175,38 171,54 176,54 C 181,54 186,36 192,36 C 196,36 192,52 196,52" stroke-width="1.9"/>
           <path d="M 85,48 C 108,34 162,22 192,26 C 206,28 202,42 178,52 C 148,64 106,74 88,68 C 74,62 82,42 114,32 C 148,22 192,22 204,30 C 212,36 194,48 168,55 C 145,60 198,58 212,54 C 216,52 206,42 192,36" stroke-width="2"/>
         </g>
-      </svg>`;
+      </svg>`);
 
     function getLicenciadoStampHTML(stampKey) {
       const customUploaded = localStorage.getItem('adescas_real_stamp_' + stampKey);
@@ -762,16 +795,20 @@
         if (stampKey === 'karla') {
           return `
             <div style="text-align:center; display:inline-block;">
-              <img src="${customUploaded}" alt="Firma" style="height:56px; width:auto; display:block; margin:0 auto -6px auto;" class="stamp-blend" />
-              <div style="border:1.5px solid #0b2265; padding:2px 8px; color:#0b2265; line-height:1.15;">
-                <p style="font-family:Georgia,serif; font-style:italic; font-weight:bold; font-size:9.5px; margin:0;">Licda. Karla Johanna Quintanilla Aguilar</p>
-                <p style="font-weight:800; font-size:8px; margin:0;">LICENCIADA EN LABORATORIO CLINICO</p>
-                <p style="font-weight:900; font-size:9px; margin:0;">J.V.P.L.C. No. 7307</p>
+              <img src="${customUploaded}" alt="Firma" style="height:55px; width:auto; display:block; margin:0 auto -4px auto;" />
+              <div style="border:1.5px solid #0b2265; padding:2px 6px; color:#0b2265; line-height:1.1;">
+                <div style="font-family:Georgia,serif; font-style:italic; font-weight:bold; font-size:9.5px;">Licda. Karla Johanna Quintanilla Aguilar</div>
+                <div style="font-weight:800; font-size:8px;">LICENCIADA EN LABORATORIO CLINICO</div>
+                <div style="font-weight:900; font-size:9px;">J.V.P.L.C. No. 7307</div>
               </div>
             </div>`;
         }
-        return `<img src="${customUploaded}" alt="Firma y Sello" style="height:88px; width:auto; display:inline-block;" class="stamp-blend" />`;
+        return `<img src="${customUploaded}" alt="Firma y Sello" style="height:82px; width:auto; object-fit:contain;" />`;
       }
+
+      const fallbackUri = stampKey === 'karla'
+        ? SELLO_KARLA_URI
+        : (stampKey === 'calderon' ? SELLO_CALDERON_URI : SELLO_PINEDA_URI);
 
       const fileMap = {
         pineda: '/sello-pineda.png',
@@ -780,52 +817,8 @@
       };
       const fileUrl = fileMap[stampKey] || '/sello-pineda.png';
 
-      if (stampKey === 'karla') {
-        return `
-          <div style="display:inline-block; text-align:center;">
-            <img src="${fileUrl}" alt="Firma Licda. Karla" style="height:56px; width:auto; display:block; margin:0 auto -4px auto;" class="stamp-blend" crossorigin="anonymous"
-                 onerror="this.parentElement.innerHTML = window.KARLA_EXACT_FALLBACK_HTML;" />
-            <div style="border:1.5px solid #0b2265; padding:2px 8px; color:#0b2265; line-height:1.15; text-align:center;">
-              <p style="font-family:Georgia,serif; font-style:italic; font-weight:bold; font-size:9.5px; margin:0;">Licda. Karla Johanna Quintanilla Aguilar</p>
-              <p style="font-weight:800; font-size:8px; margin:0;">LICENCIADA EN LABORATORIO CLINICO</p>
-              <p style="font-weight:900; font-size:9px; margin:0;">J.V.P.L.C. No. 7307</p>
-            </div>
-          </div>`;
-      }
-
-      return `
-        <div style="display:inline-block;">
-          <img src="${fileUrl}" alt="Sello y Firma Oficial" style="height:88px; width:auto; display:inline-block;" class="stamp-blend" crossorigin="anonymous"
-               onerror="this.outerHTML = window.STAMP_FALLBACKS['${stampKey}'];" />
-        </div>`;
+      return `<img src="${fileUrl}" alt="Sello Licenciado" style="height:82px; width:auto; object-fit:contain;" onerror="this.onerror=null; this.src='${fallbackUri}';" />`;
     }
-
-    window.KARLA_EXACT_FALLBACK_HTML = SELLO_LIC_KARLA_EXACT_SVG;
-    window.STAMP_FALLBACKS = {
-      pineda: SELLO_LIC_PINEDA_EXACT_SVG,
-      karla: SELLO_LIC_KARLA_EXACT_SVG,
-      calderon: SELLO_LIC_CALDERON_EXACT_SVG
-    };
-
-    // LOGO DEL MICROSCOPIO CON DIMENSIONES FIJAS EXPLÍCITAS (140x56 px) PARA QUE NUNCA SE DESCARRILE EN PDF
-    const OFFICIAL_ADESCAS_LOGO_SVG = `
-      <svg width="142" height="58" viewBox="0 0 430 175" style="width:142px; height:58px; display:block;" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 65,138 A 48,48 0 0,1 65,45" fill="none" stroke="#1b3b6f" stroke-width="24" stroke-linecap="round"/>
-        <rect x="62" y="96" width="52" height="8" rx="4" fill="#1b3b6f" transform="rotate(-18 85 100)"/>
-        <g transform="translate(76, 48) rotate(-35)">
-          <rect x="-15" y="-42" width="32" height="68" rx="6" fill="#1b3b6f"/>
-          <rect x="-10" y="-54" width="22" height="14" rx="3" fill="#1b3b6f"/>
-          <rect x="-4" y="-32" width="8" height="44" rx="4" fill="#5b87c6"/>
-          <rect x="-11" y="28" width="24" height="8" rx="3" fill="#5b87c6"/>
-        </g>
-        <circle cx="73" cy="138" r="22" fill="#ffffff"/>
-        <circle cx="73" cy="138" r="14" fill="#5b87c6"/>
-        <path d="M 30,168 C 35,148 111,148 116,168 Z" fill="#1b3b6f"/>
-        <rect x="24" y="163" width="98" height="9" rx="4.5" fill="#1b3b6f"/>
-        <text x="115" y="102" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="60" fill="#1b3b6f" letter-spacing="1">ADESCAS</text>
-        <line x1="78" y1="115" x2="422" y2="115" stroke="#5b87c6" stroke-width="4" stroke-linecap="round"/>
-        <text x="136" y="156" font-family="'Inter', 'Arial', sans-serif" font-weight="700" font-size="33" fill="#5b87c6">Laboratorio Clínico</text>
-      </svg>`;
 
     // ============================================================================
     // FIRMA CRIPTOGRÁFICA MATEMÁTICA SIN BASE DE DATOS (PARA EL QR PERMANENTE)
@@ -888,7 +881,7 @@
     function formatResultValue(val) {
       const str = String(val || '');
       if (str.includes('*')) {
-        return `<span class="font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded border border-rose-300">${str} <span class="text-[8.5px] uppercase font-extrabold">[CONTROLADO]</span></span>`;
+        return `<span style="font-weight:900; color:#be123c; background:#fff1f2; padding:1px 4px; border-radius:4px; border:1px solid #fda4af;">${str} <span style="font-size:8.5px; text-transform:uppercase;">[CONTROLADO]</span></span>`;
       }
       return str;
     }
@@ -1455,60 +1448,62 @@
       btn.textContent = 'Buscando...';
       btn.disabled = true;
 
-      const { data, error } = await supabaseClient.rpc('buscar_examen_paciente', { termino: clean });
-      btn.textContent = 'Consultar Estado';
-      btn.disabled = false;
-
-      const container = document.getElementById('patient-results');
-      if (error || !data || data.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-            <h3 class="text-lg font-bold text-slate-800 mb-1">No se encontraron registros</h3>
-            <p class="text-sm text-slate-500">Verifique que su nombre esté bien escrito o consulte en recepción.</p>
-          </div>`;
-        return;
-      }
-
-      container.innerHTML = data.map(exam => {
-        const isReady = exam.status === 'ready' || exam.status === 'requested';
-        let badge = '';
-        if (isReady) {
-          badge = `<div class="inline-flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full font-extrabold text-sm shadow-md">✅ EXAMEN LISTO</div>`;
-        } else if (exam.status === 'processing') {
-          badge = `<div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 border border-amber-300 px-4 py-2 rounded-full font-bold text-sm">⏳ EN PROCESO DE ANÁLISIS</div>`;
-        } else {
-          badge = `<div class="inline-flex items-center gap-2 bg-slate-200 text-slate-700 px-4 py-2 rounded-full font-bold text-sm">✔️ ENTREGADO (${exam.delivered_at || ''})</div>`;
+      try {
+        const { data, error } = await supabaseClient.rpc('buscar_examen_paciente', { termino: clean });
+        const container = document.getElementById('patient-results');
+        if (error || !data || data.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+              <h3 class="text-lg font-bold text-slate-800 mb-1">No se encontraron registros</h3>
+              <p class="text-sm text-slate-500">Verifique que su nombre esté bien escrito o consulte en recepción.</p>
+            </div>`;
+          return;
         }
 
-        let actionBox = '';
-        if (exam.status === 'ready') {
-          actionBox = `
-            <div class="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-emerald-50/60 -mx-6 -mb-6 p-6 rounded-b-2xl">
-              <p class="text-xs text-emerald-800 font-medium">Presione el botón para avisar en ventanilla que usted ya está aquí para retirar su examen.</p>
-              <button type="button" onclick="requestExam('${exam.id}')" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-md shrink-0">
-                🔔 Solicitar mi Examen Ahora
-              </button>
-            </div>`;
-        } else if (exam.status === 'requested') {
-          actionBox = `
-            <div class="mt-5 pt-4 border-t border-emerald-200 bg-emerald-100/80 -mx-6 -mb-6 p-5 rounded-b-2xl text-emerald-950 text-xs font-bold">
-              ✅ ¡Solicitud recibida! El personal ya tiene su aviso en pantalla. Acérquese a ventanilla.
-            </div>`;
-        }
+        container.innerHTML = data.map(exam => {
+          const isReady = exam.status === 'ready' || exam.status === 'requested';
+          let badge = '';
+          if (isReady) {
+            badge = `<div class="inline-flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full font-extrabold text-sm shadow-md">✅ EXAMEN LISTO</div>`;
+          } else if (exam.status === 'processing') {
+            badge = `<div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 border border-amber-300 px-4 py-2 rounded-full font-bold text-sm">⏳ EN PROCESO DE ANÁLISIS</div>`;
+          } else {
+            badge = `<div class="inline-flex items-center gap-2 bg-slate-200 text-slate-700 px-4 py-2 rounded-full font-bold text-sm">✔️ ENTREGADO (${exam.delivered_at || ''})</div>`;
+          }
 
-        return `
-          <div class="bg-white rounded-2xl border-2 p-6 shadow-md ${isReady ? 'border-emerald-500' : 'border-slate-200'}">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span class="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">Orden: ${exam.code}</span>
-                <h3 class="text-xl font-extrabold text-slate-900 mt-2">${exam.patient_name}</h3>
-                <p class="text-sm font-medium text-slate-600">Estudio(s): ${exam.exam_type}</p>
+          let actionBox = '';
+          if (exam.status === 'ready') {
+            actionBox = `
+              <div class="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-emerald-50/60 -mx-6 -mb-6 p-6 rounded-b-2xl">
+                <p class="text-xs text-emerald-800 font-medium">Presione el botón para avisar en ventanilla que usted ya está aquí para retirar su examen.</p>
+                <button type="button" onclick="requestExam('${exam.id}')" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-md shrink-0">
+                  🔔 Solicitar mi Examen Ahora
+                </button>
+              </div>`;
+          } else if (exam.status === 'requested') {
+            actionBox = `
+              <div class="mt-5 pt-4 border-t border-emerald-200 bg-emerald-100/80 -mx-6 -mb-6 p-5 rounded-b-2xl text-emerald-950 text-xs font-bold">
+                ✅ ¡Solicitud recibida! El personal ya tiene su aviso en pantalla. Acérquese a ventanilla.
+              </div>`;
+          }
+
+          return `
+            <div class="bg-white rounded-2xl border-2 p-6 shadow-md ${isReady ? 'border-emerald-500' : 'border-slate-200'}">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span class="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">Orden: ${exam.code}</span>
+                  <h3 class="text-xl font-extrabold text-slate-900 mt-2">${exam.patient_name}</h3>
+                  <p class="text-sm font-medium text-slate-600">Estudio(s): ${exam.exam_type}</p>
+                </div>
+                <div>${badge}</div>
               </div>
-              <div>${badge}</div>
-            </div>
-            ${actionBox}
-          </div>`;
-      }).join('');
+              ${actionBox}
+            </div>`;
+        }).join('');
+      } finally {
+        btn.textContent = 'Consultar Estado';
+        btn.disabled = false;
+      }
     }
 
     async function requestExam(id) {
@@ -1520,7 +1515,7 @@
     }
 
     // ============================================================================
-    // AUTENTICACIÓN MULTIUSUARIO
+    // AUTENTICACIÓN MULTIUSUARIO (3 LICENCIADOS + DOCTORA SANDOVAL)
     // ============================================================================
     async function handleStaffLogin(e) {
       e.preventDefault();
@@ -1539,19 +1534,19 @@
       btn.textContent = 'Verificando...';
       btn.disabled = true;
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-      btn.textContent = 'Iniciar Sesión';
-      btn.disabled = false;
-
-      if (error || !data?.session) {
-        errBox.textContent = 'Usuario o contraseña incorrectos.';
-        errBox.classList.remove('hidden');
-        return;
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error || !data?.session) {
+          errBox.textContent = 'Usuario o contraseña incorrectos.';
+          errBox.classList.remove('hidden');
+          return;
+        }
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+        document.getElementById('staff-password').value = '';
+      } finally {
+        btn.textContent = 'Iniciar Sesión';
+        btn.disabled = false;
       }
-
-      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
-      document.getElementById('staff-password').value = '';
     }
 
     async function handleLogout() {
@@ -1763,25 +1758,34 @@
       const status = document.getElementById('quick-initial-status').value;
       if (!name) return;
 
-      const contactCombined = [email, phone].filter(Boolean).join(' | ');
-      const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
+      const btn = document.getElementById('btn-quick-submit');
+      btn.textContent = 'Subiendo...';
+      btn.disabled = true;
 
-      await supabaseClient.from('examenes_adesca').insert([{
-        code: randomCode,
-        patient_name: name,
-        patient_age: age,
-        patient_email: contactCombined,
-        exam_type: exam,
-        status: status,
-        updated_at: getCurrentTime()
-      }]);
+      try {
+        const contactCombined = [email, phone].filter(Boolean).join(' | ');
+        const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
 
-      document.getElementById('quick-patient-name').value = '';
-      document.getElementById('quick-patient-age').value = '';
-      document.getElementById('quick-patient-email').value = '';
-      document.getElementById('quick-patient-phone').value = '';
-      document.getElementById('quick-exam-custom').value = '';
-      fetchStaffData();
+        await supabaseClient.from('examenes_adesca').insert([{
+          code: randomCode,
+          patient_name: name,
+          patient_age: age,
+          patient_email: contactCombined,
+          exam_type: exam,
+          status: status,
+          updated_at: getCurrentTime()
+        }]);
+
+        document.getElementById('quick-patient-name').value = '';
+        document.getElementById('quick-patient-age').value = '';
+        document.getElementById('quick-patient-email').value = '';
+        document.getElementById('quick-patient-phone').value = '';
+        document.getElementById('quick-exam-custom').value = '';
+        await fetchStaffData();
+      } finally {
+        btn.textContent = 'Subir Aviso Rápido';
+        btn.disabled = false;
+      }
     }
 
     async function updateStatus(id, newStatus) {
@@ -1874,50 +1878,50 @@
       btn.textContent = 'Verificando contraseña...';
       btn.disabled = true;
 
-      const { error: authErr } = await supabaseClient.auth.signInWithPassword({
-        email: currentSession.user.email,
-        password: password
-      });
+      try {
+        const { error: authErr } = await supabaseClient.auth.signInWithPassword({
+          email: currentSession.user.email,
+          password: password
+        });
 
-      if (authErr) {
-        errBox.textContent = '❌ Contraseña incorrecta. No se autorizó el borrado.';
-        errBox.classList.remove('hidden');
+        if (authErr) {
+          errBox.textContent = '❌ Contraseña incorrecta. No se autorizó el borrado.';
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        const countToDelete = mode === 'delivered' ? deliveredList.length : allRecords.length;
+        const todayStr = new Date().toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        await supabaseClient.from('cierres_adesca').insert([{
+          fecha: todayStr,
+          total_entregados: countToDelete,
+          cerrado_por: currentSession.user.email
+        }]);
+
+        let delError = null;
+        if (mode === 'delivered') {
+          const { error } = await supabaseClient.from('examenes_adesca').delete().eq('status', 'delivered');
+          delError = error;
+        } else {
+          const ids = allRecords.map(r => r.id);
+          const { error } = await supabaseClient.from('examenes_adesca').delete().in('id', ids);
+          delError = error;
+        }
+
+        if (delError) {
+          errBox.textContent = 'Error al limpiar: ' + delError.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        closeCleanDayModal();
+        await fetchStaffData();
+        alert(`✅ ¡Base de datos limpiada con éxito! Se eliminaron ${countToDelete} registros.`);
+      } finally {
         btn.textContent = 'Autorizar y Limpiar Base';
         btn.disabled = false;
-        return;
       }
-
-      const countToDelete = mode === 'delivered' ? deliveredList.length : allRecords.length;
-      const todayStr = new Date().toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
-
-      await supabaseClient.from('cierres_adesca').insert([{
-        fecha: todayStr,
-        total_entregados: countToDelete,
-        cerrado_por: currentSession.user.email
-      }]);
-
-      let delError = null;
-      if (mode === 'delivered') {
-        const { error } = await supabaseClient.from('examenes_adesca').delete().eq('status', 'delivered');
-        delError = error;
-      } else {
-        const ids = allRecords.map(r => r.id);
-        const { error } = await supabaseClient.from('examenes_adesca').delete().in('id', ids);
-        delError = error;
-      }
-
-      btn.textContent = 'Autorizar y Limpiar Base';
-      btn.disabled = false;
-
-      if (delError) {
-        errBox.textContent = 'Error al limpiar: ' + delError.message;
-        errBox.classList.remove('hidden');
-        return;
-      }
-
-      closeCleanDayModal();
-      await fetchStaffData();
-      alert(`✅ ¡Base de datos limpiada con éxito! Se eliminaron ${countToDelete} registros.`);
     }
 
     // ============================================================================
@@ -2003,4 +2007,754 @@
                 observations: saved.observations || '',
                 formState: JSON.parse(JSON.stringify(saved.formState || {}))
               }];
+            } else {
+              examPages = [createBlankPageObject('ego')];
             }
+            activePageIndex = 0;
+            syncEditorWithActivePage();
+            return;
+          }
+        }
+      } else {
+        document.getElementById('ed-patient-name').value = '';
+        document.getElementById('ed-patient-age').value = '';
+        document.getElementById('ed-patient-email').value = '';
+        document.getElementById('ed-patient-phone').value = '';
+        document.getElementById('ed-status').value = 'ready';
+      }
+
+      document.getElementById('ed-exam-date').value = getFormattedTodayUpper();
+      examPages = [createBlankPageObject('ego')];
+      activePageIndex = 0;
+      syncEditorWithActivePage();
+    }
+
+    function closeExamEditor() {
+      document.getElementById('exam-modal').classList.add('hidden');
+    }
+
+    function renderPagesTabsBar() {
+      const container = document.getElementById('exam-pages-tabs');
+      container.innerHTML = examPages.map((p, idx) => {
+        const tpl = EXAM_TEMPLATES[p.templateKey] || EXAM_TEMPLATES.ego;
+        const shortTitle = (p.formState?.customTitle || tpl.title).slice(0, 18);
+        const isActive = idx === activePageIndex;
+        return `
+          <button type="button" onclick="selectExamPage(${idx})" class="px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition flex items-center gap-1.5 ${
+            isActive
+              ? 'bg-[#163a70] text-white shadow-sm'
+              : 'bg-white text-slate-700 border border-blue-200 hover:bg-blue-100'
+          }">
+            <span>📄 Pág. ${idx + 1}: ${shortTitle}</span>
+          </button>`;
+      }).join('');
+
+      document.getElementById('active-page-label').textContent = `Página ${activePageIndex + 1} de ${examPages.length}`;
+      document.getElementById('active-page-label-2').textContent = `Página ${activePageIndex + 1}`;
+      document.getElementById('mob-page-count').textContent = String(examPages.length);
+      document.getElementById('btn-delete-page').classList.toggle('hidden', isDoctorReadOnly() || examPages.length <= 1);
+    }
+
+    function selectExamPage(idx) {
+      activePageIndex = idx;
+      syncEditorWithActivePage();
+    }
+
+    function addNewExamPage() {
+      if (isDoctorReadOnly()) return;
+      examPages.push(createBlankPageObject('ego'));
+      activePageIndex = examPages.length - 1;
+      syncEditorWithActivePage();
+      switchMobileEditorTab('form');
+    }
+
+    function removeCurrentExamPage() {
+      if (isDoctorReadOnly() || examPages.length <= 1) return;
+      if (!confirm(`¿Quitar la Página ${activePageIndex + 1} de este paciente?`)) return;
+      examPages.splice(activePageIndex, 1);
+      if (activePageIndex >= examPages.length) activePageIndex = examPages.length - 1;
+      syncEditorWithActivePage();
+    }
+
+    function syncEditorWithActivePage() {
+      const page = examPages[activePageIndex];
+      document.getElementById('editor-template-select').value = page.templateKey;
+      document.getElementById('ed-observations').value = page.observations || '';
+      renderPagesTabsBar();
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function onTemplateChange() {
+      if (isDoctorReadOnly()) return;
+      const newKey = document.getElementById('editor-template-select').value;
+      examPages[activePageIndex] = createBlankPageObject(newKey);
+      syncEditorWithActivePage();
+    }
+
+    function onObservationsInput(val) {
+      examPages[activePageIndex].observations = val;
+      updateLivePreview();
+    }
+
+    function renderDynamicFields() {
+      const page = examPages[activePageIndex];
+      const tpl = EXAM_TEMPLATES[page.templateKey];
+      const f = page.formState;
+      const container = document.getElementById('dynamic-fields-container');
+      const btnAddRow = document.getElementById('btn-add-row');
+      btnAddRow.classList.toggle('hidden', tpl.layout !== 'table');
+
+      if (tpl.layout === 'table') {
+        let presetsHtml = '';
+        if (page.templateKey === 'misc_tabla_libre') {
+          presetsHtml = `
+            <div class="mb-3 p-2.5 bg-blue-50/70 rounded-lg border border-blue-200">
+              <span class="block text-[10px] font-extrabold uppercase text-[#163a70] mb-1.5">⚡ Cargar Examen Misceláneo del Word con 1 Clic:</span>
+              <div class="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
+                ${MISC_PRESETS_CATALOG.map((p, idx) =>
+                  `<button type="button" onclick="applyMiscPreset(${idx})" class="text-[10px] bg-white hover:bg-[#163a70] hover:text-white text-slate-700 border border-slate-300 px-2 py-0.5 rounded font-semibold transition">${p.label}</button>`
+                ).join('')}
+              </div>
+            </div>`;
+        }
+
+        container.innerHTML = `
+          ${presetsHtml}
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500">TÍTULO DE SECCIÓN:</label>
+              <input type="text" value="${f.customTitle || tpl.title}" oninput="examPages[activePageIndex].formState.customTitle=this.value; renderPagesTabsBar(); updateLivePreview()" class="w-full px-2 py-1 rounded border text-xs font-bold" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500">MUESTRA (Opcional):</label>
+              <input type="text" value="${f.subtitleMuestra || ''}" placeholder="Ej. SANGRE / SUERO" oninput="examPages[activePageIndex].formState.subtitleMuestra=this.value; updateLivePreview()" class="w-full px-2 py-1 rounded border text-xs" />
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${f.rows.map((r, i) => `
+              <div class="p-2 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-12 gap-1.5 items-center">
+                <input type="text" value="${r.exam}" placeholder="Examen" oninput="updateTableRow(${i}, 'exam', this.value)" class="col-span-4 px-2 py-1 rounded border text-xs font-bold" />
+                <input type="text" value="${r.result}" placeholder="Resultado (*)" oninput="updateTableRow(${i}, 'result', this.value)" class="col-span-4 px-2 py-1 rounded border text-xs font-extrabold text-[#163a70]" />
+                <input type="text" value="${r.ref}" placeholder="Valor Normal" oninput="updateTableRow(${i}, 'ref', this.value)" class="col-span-3 px-2 py-1 rounded border text-[11px]" />
+                <button type="button" onclick="removeTableRow(${i})" class="col-span-1 text-rose-500 font-bold text-xs">✕</button>
+              </div>
+            `).join('')}
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = Object.keys(f).map(k => `
+        <div class="grid grid-cols-5 gap-2 items-center">
+          <label class="col-span-2 text-[11px] font-bold uppercase text-slate-600 truncate">${k.replace(/_/g, ' ')}:</label>
+          <input type="text" value="${f[k]}" oninput="examPages[activePageIndex].formState['${k}']=this.value; updateLivePreview()" class="col-span-3 px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-semibold" />
+        </div>
+      `).join('');
+    }
+
+    function applyMiscPreset(index) {
+      const p = MISC_PRESETS_CATALOG[index];
+      examPages[activePageIndex].formState.rows.push({ exam: p.exam, result: p.result, ref: p.ref });
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function updateTableRow(idx, field, val) {
+      examPages[activePageIndex].formState.rows[idx][field] = val;
+      updateLivePreview();
+    }
+
+    function removeTableRow(idx) {
+      examPages[activePageIndex].formState.rows.splice(idx, 1);
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    function addCustomParameterRow() {
+      const f = examPages[activePageIndex].formState;
+      if (!f.rows) f.rows = [];
+      f.rows.push({ exam: "NUEVO PARAMETRO", result: "", ref: "" });
+      renderDynamicFields();
+      updateLivePreview();
+    }
+
+    // ============================================================================
+    // RENDERIZADO DE BOLETAS OFICIALES CON MÁRGENES GARANTIZADOS AL 100%
+    // ============================================================================
+    function buildSinglePageHTML(pageObj, pageIndex, totalPages, forceDigitalStamp = null) {
+      const rawName = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
+      const age = (document.getElementById('ed-patient-age').value || '____').toUpperCase();
+      const date = (document.getElementById('ed-exam-date').value || getFormattedTodayUpper()).toUpperCase();
+      const obs = (pageObj.observations || '').trim();
+      const tpl = EXAM_TEMPLATES[pageObj.templateKey] || EXAM_TEMPLATES.ego;
+      const f = pageObj.formState;
+      const examTitle = f.customTitle || tpl.title;
+
+      const sealCode = generateAdescasSeal(rawName, examTitle, date);
+      const tokenPayload = LZString.compressToEncodedURIComponent(JSON.stringify({
+        p: rawName,
+        e: examTitle,
+        f: date,
+        s: sealCode
+      }));
+      const verifyUrl = `${window.location.origin}/?verificar=${tokenPayload}`;
+      const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=2&data=${encodeURIComponent(verifyUrl)}`;
+
+      const useDigitalStamp = forceDigitalStamp !== null
+        ? forceDigitalStamp
+        : document.getElementById('toggle-digital-stamp').checked;
+
+      const prof = getCurrentProfile();
+      const activeStampKey = (prof && prof.role === 'licenciado') ? prof.stampKey : currentRecordStampOwner;
+
+      const headerHTML = `
+        <div style="width:100%;">
+          <div style="border-bottom: 2px solid #1b3b6f; padding-bottom: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="flex-shrink: 0;">
+              <img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height: 54px; width: auto; display: block;" />
+            </div>
+            <div style="text-align: center; flex: 1;">
+              <h1 style="font-size: 16px; font-weight: 900; color: #1b3b6f; margin: 0; line-height: 1.15;">LABORATORIO CLINICO “ADESCAS”</h1>
+              <p style="font-size: 10.5px; font-weight: 700; color: #1e293b; margin: 2px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p>
+              <p style="font-size: 10px; color: #334155; margin: 1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p>
+              <p style="font-size: 10.5px; font-weight: 800; color: #0f172a; margin: 1px 0 0 0;">Tel: 2413-4125 &nbsp;&nbsp;&nbsp;&nbsp; WhatsApp: 7895-5220</p>
+            </div>
+          </div>
+          <table class="print-table" style="margin-bottom: 10px;">
+            <tr>
+              <td style="width: 52%;"><strong>NOMBRE:</strong> ${rawName}</td>
+              <td style="width: 20%;"><strong>EDAD:</strong> ${age}</td>
+              <td style="width: 28%;"><strong>FECHA:</strong> ${date}</td>
+            </tr>
+          </table>
+        </div>`;
+
+      let bodyHTML = '';
+
+      if (tpl.layout === 'ego') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">EXAMEN GENERAL DE ORINA</h2>
+          <table class="print-table">
+            <thead>
+              <tr><th colspan="2">EXAMEN FISICO - QUIMICO</th><th colspan="2">EXAMEN MICROSCOPICO</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>COLOR:</strong></td><td>${formatResultValue(f.color)}</td><td><strong>LEUCOCITOS:</strong></td><td>${formatResultValue(f.leucocitos)}</td></tr>
+              <tr><td><strong>ASPECTO:</strong></td><td>${formatResultValue(f.aspecto)}</td><td><strong>HEMATIES:</strong></td><td>${formatResultValue(f.hematies)}</td></tr>
+              <tr><td><strong>PH:</strong></td><td>${formatResultValue(f.ph)}</td><td><strong>CELULAS EPITELIALES:</strong></td><td>${formatResultValue(f.epiteliales)}</td></tr>
+              <tr><td><strong>DENSIDAD:</strong></td><td>${formatResultValue(f.densidad)}</td><td><strong>BACTERIAS:</strong></td><td>${formatResultValue(f.bacterias)}</td></tr>
+              <tr><td><strong>GLUCOSA:</strong></td><td>${formatResultValue(f.glucosa)}</td><td><strong>CILINDROS:</strong></td><td>${formatResultValue(f.cilindros)}</td></tr>
+              <tr><td><strong>PROTEINAS:</strong></td><td>${formatResultValue(f.proteinas)}</td><td><strong>CRISTALES:</strong></td><td>${formatResultValue(f.cristales)}</td></tr>
+              <tr><td><strong>NITRITOS:</strong></td><td>${formatResultValue(f.nitritos)}</td><td><strong>LEVADURAS:</strong></td><td>${formatResultValue(f.levaduras)}</td></tr>
+              <tr><td><strong>SANGRE OCULTA:</strong></td><td>${formatResultValue(f.sangre_oculta)}</td><td><strong>FILAMENTOS MUCOIDE:</strong></td><td>${formatResultValue(f.mucoide)}</td></tr>
+              <tr><td><strong>CUERPOS CETONICOS:</strong></td><td>${formatResultValue(f.cetonas)}</td><td><strong>PARASITOS:</strong></td><td>${formatResultValue(f.parasitos)}</td></tr>
+              <tr><td><strong>UROBILINOGENO:</strong></td><td>${formatResultValue(f.urobilinogeno)}</td><td colspan="2" rowspan="3" style="vertical-align:top;"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</td></tr>
+              <tr><td><strong>BILIRRUBINA:</strong></td><td>${formatResultValue(f.bilirrubina)}</td></tr>
+              <tr><td><strong>ESTERASA LEUCOCITARIA:</strong></td><td>${formatResultValue(f.esterasa)}</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'egh') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">EXAMEN GENERAL DE HECES</h2>
+          <table class="print-table" style="margin-bottom:8px;">
+            <tbody>
+              <tr><td><strong>COLOR:</strong> ${formatResultValue(f.color)}</td><td><strong>LEVADURAS:</strong> ${formatResultValue(f.levaduras)}</td></tr>
+              <tr><td><strong>CONSISTENCIA:</strong> ${formatResultValue(f.consistencia)}</td><td><strong>LEUCOCITOS:</strong> ${formatResultValue(f.leucocitos)}</td></tr>
+              <tr><td><strong>MUCUS:</strong> ${formatResultValue(f.mucus)}</td><td><strong>HEMATIES:</strong> ${formatResultValue(f.hematies)}</td></tr>
+              <tr><td><strong>RESTOS ALIMENTICIOS:</strong> ${formatResultValue(f.restos)}</td><td><strong>FLORA BACTERIANA BACILAR:</strong> ${formatResultValue(f.flora)}</td></tr>
+              <tr><td><strong>GLOBULOS DE GRASA:</strong> ${formatResultValue(f.grasa)}</td><td></td></tr>
+            </tbody>
+          </table>
+          <table class="print-table">
+            <thead><tr><th>PROTOZOARIO</th><th>METAZOARIOS</th></tr></thead>
+            <tbody>
+              <tr><td><strong>QUISTES:</strong> ${formatResultValue(f.quistes)}</td><td><strong>HUEVOS:</strong> ${formatResultValue(f.huevos)}</td></tr>
+              <tr><td><strong>ACTIVOS:</strong> ${formatResultValue(f.activos)}</td><td><strong>LARVAS:</strong> ${formatResultValue(f.larvas)}</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'hemograma') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">HEMOGRAMA</h2>
+          <table class="print-table">
+            <tbody>
+              <tr><td><strong>GLOBULOS ROJOS</strong></td><td>${formatResultValue(f.gr)}</td><td><strong>GLOBULOS BLANCOS</strong></td><td>${formatResultValue(f.gb)}</td></tr>
+              <tr><td><strong>HEMOGLOBINA</strong></td><td>${formatResultValue(f.hb)}</td><td><strong>NEUTROFILOS TOTALES</strong></td><td>${formatResultValue(f.neut_tot)}</td></tr>
+              <tr><td><strong>HEMATOCRITO</strong></td><td>${formatResultValue(f.hto)}</td><td><strong>NEUTROFILOS EN BANDA</strong></td><td>${formatResultValue(f.neut_banda)}</td></tr>
+              <tr><td><strong>VGM</strong></td><td>${formatResultValue(f.vgm)}</td><td><strong>NEUTROFILOS SEGMENTADOS</strong></td><td>${formatResultValue(f.neut_seg)}</td></tr>
+              <tr><td><strong>HGM</strong></td><td>${formatResultValue(f.hgm)}</td><td><strong>LINFOCITOS</strong></td><td>${formatResultValue(f.linfocitos)}</td></tr>
+              <tr><td><strong>CHCM</strong></td><td>${formatResultValue(f.chcm)}</td><td><strong>BASOFILOS</strong></td><td>${formatResultValue(f.basofilos)}</td></tr>
+              <tr><td><strong>PLAQUETAS</strong></td><td>${formatResultValue(f.plaquetas)}</td><td><strong>MONOCITOS</strong></td><td>${formatResultValue(f.monocitos)}</td></tr>
+              <tr><td></td><td></td><td><strong>EOSINOFILOS</strong></td><td>${formatResultValue(f.eosinofilos)}</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'quimica') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">QUIMICA SANGUINEA</h2>
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th>
+                <th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>GLUCOSA</strong></td><td>${formatResultValue(f.glucosa)}</td><td>60 - 110 mg/dl</td><td><strong>TGO</strong></td><td>${formatResultValue(f.tgo)}</td><td>HASTA 35 U/L</td></tr>
+              <tr><td><strong>COLESTEROL</strong></td><td>${formatResultValue(f.colesterol)}</td><td>HASTA 200 mg/dl</td><td><strong>TGP</strong></td><td>${formatResultValue(f.tgp)}</td><td>HASTA 45 U/L</td></tr>
+              <tr><td><strong>TRIGLICERIDOS</strong></td><td>${formatResultValue(f.trigliceridos)}</td><td>HASTA 150 mg/dl</td><td><strong>HDL</strong></td><td>${formatResultValue(f.hdl)}</td><td>35 - 55 mg/dl</td></tr>
+              <tr><td><strong>ACIDO URICO</strong></td><td>${formatResultValue(f.acido_urico)}</td><td>2.1 - 6.0 mg/dl</td><td><strong>LDL</strong></td><td>${formatResultValue(f.ldl)}</td><td>HASTA 150 mg/dl</td></tr>
+              <tr><td><strong>CREATININA</strong></td><td>${formatResultValue(f.creatinina)}</td><td>0.6 – 1.4 mg/dl</td><td><strong>NITROGENO UREICO</strong></td><td>${formatResultValue(f.bun)}</td><td>7.0 – 20 mg/dl</td></tr>
+            </tbody>
+          </table>`;
+      } else if (tpl.layout === 'antibiograma') {
+        let rowsHtml = '';
+        for (let i = 1; i <= 10; i++) {
+          const abName = f[`ab${i}_name`];
+          const abVal = (f[`ab${i}_val`] || '').toUpperCase().trim();
+          if (abName) {
+            rowsHtml += `
+              <tr>
+                <td><strong>${abName}</strong></td>
+                <td style="text-align:center; font-weight:900;">${abVal === 'S' ? 'X' : ''}</td>
+                <td style="text-align:center; font-weight:900;">${abVal === 'I' ? 'X' : ''}</td>
+                <td style="text-align:center; font-weight:900;">${abVal === 'R' ? 'X' : ''}</td>
+              </tr>`;
+          }
+        }
+        bodyHTML = `
+          <table class="print-table" style="margin-bottom:8px;">
+            <tr>
+              <td><strong>MUESTRA:</strong> ${f.muestra}</td>
+              <td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)} &nbsp;|&nbsp; <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td>
+            </tr>
+            <tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr>
+          </table>
+          <table class="print-table">
+            <thead><tr><th>ANTIBIOTICO</th><th style="text-align:center;">SENSIBLE</th><th style="text-align:center;">INTERMEDIO</th><th style="text-align:center;">RESISTENTE</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>`;
+      } else if (tpl.layout === 'frotis') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:8px; text-decoration:underline;">FROTIS DE SANGRE PERIFERICA</h2>
+          <div style="border: 1.5px solid #0f172a; padding: 12px; font-size: 12px; line-height: 1.6;">
+            <p><strong>LINEA ROJA:</strong> ${formatResultValue(f.roja)}</p>
+            <p><strong>LINEA BLANCA:</strong> ${formatResultValue(f.blanca)}</p>
+            <p><strong>LINEA PLAQUETARIA:</strong> ${formatResultValue(f.plaquetaria)}</p>
+          </div>`;
+      } else if (tpl.layout === 'hcg_cuant') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2>
+          <p style="font-size:12px; margin-bottom:6px;"><strong>MUESTRA:</strong> ${f.muestra} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>RESULTADO:</strong> <span style="font-weight:900; color:#163a70;">${formatResultValue(f.resultado)}</span></p>
+          <table class="print-table">
+            <tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr>
+            <tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr>
+            <tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr>
+            <tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr>
+            <tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr>
+            <tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr>
+          </table>`;
+      } else if (tpl.layout === 'espermograma_oms') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:4px; text-decoration:underline;">ESPERMOGRAMA</h2>
+          <p style="font-size:11px; margin-bottom:6px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p>
+          <table class="print-table" style="margin-bottom:6px;">
+            <thead><tr><th>MACROSCOPICOS</th><th>RESULTADO</th><th>REFERENCIA</th><th>MOVILIDAD / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr></thead>
+            <tbody>
+              <tr><td>COLOR / ASPECTO</td><td>${f.color} / ${f.aspecto}</td><td>BLANQ / OPAL</td><td>PROGRESIVA (PR) / (NP)</td><td>${f.mov_pr} / ${f.mov_np}</td><td>PR ≥ 32%</td></tr>
+              <tr><td>VOLUMEN / pH</td><td>${f.volumen} / ${f.ph}</td><td>≥1.5ml / ≥7.2</td><td>MOVILIDAD TOTAL / INMOV.</td><td>${f.mov_tot} / ${f.inmoviles}</td><td>≥ 40%</td></tr>
+              <tr><td>LICUEF. / VISCOS.</td><td>${f.licuefaccion} / ${f.viscosidad}</td><td>NORMAL</td><td>VIVOS / MUERTOS</td><td>${f.vivos} / ${f.muertos}</td><td>≥ 58%</td></tr>
+            </tbody>
+          </table>
+          <div style="border: 1.5px solid #0f172a; padding: 8px; font-size: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <p><strong>MILLONES x ml:</strong> ${f.millones_ml} (Total: ${f.total_eyaculado})</p>
+              <p><strong>MORFOLOGIA NORMAL / ANORMAL:</strong> ${f.morf_normal} / ${f.morf_anormal}</p>
+            </div>
+            <div>
+              <p><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>HEMATIES:</strong> ${f.hematies}</p>
+              <p><strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>BACTERIAS:</strong> ${f.bacterias}</p>
+            </div>
+          </div>`;
+      } else if (tpl.layout === 'espermograma_3h') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:4px; text-decoration:underline;">ESPERMOGRAMA</h2>
+          <p style="font-size:11px; margin-bottom:6px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p>
+          <table class="print-table" style="margin-bottom:6px;">
+            <thead><tr><th>MOVILIDAD (1H / 2H / 3H)</th><th>A LA HORA</th><th>A LAS 2 HORAS</th><th>A LAS 3 HORAS</th></tr></thead>
+            <tbody>
+              <tr><td>RAPIDOS / LENTOS</td><td>${f.rap_1h} / ${f.len_1h}</td><td>${f.rap_2h} / ${f.len_2h}</td><td>${f.rap_3h} / ${f.len_3h}</td></tr>
+              <tr><td>ERRATICOS / MUERTOS</td><td>${f.err_1h} / ${f.mue_1h}</td><td>${f.err_2h} / ${f.mue_2h}</td><td>${f.err_3h} / ${f.mue_3h}</td></tr>
+              <tr><td>MORFOLOGIA (NORM / ANORM)</td><td>${f.nor_1h} / ${f.ano_1h}</td><td>${f.nor_2h} / ${f.ano_2h}</td><td>${f.nor_3h} / ${f.ano_3h}</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:11px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
+      } else if (tpl.layout === 'misc_muestra') {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:8px; text-decoration:underline;">${tpl.title}</h2>
+          <table class="print-table">
+            <tr>
+              <td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td>
+              <td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding: 10px 8px; font-size: 13px;">
+                <strong>RESULTADO:</strong> &nbsp; <span style="font-weight:900; color:#163a70;">${formatResultValue(f.resultado)}</span>
+              </td>
+            </tr>
+          </table>`;
+      } else {
+        bodyHTML = `
+          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">${examTitle}</h2>
+          ${f.subtitleMuestra ? `<p style="font-size:11px; font-weight:bold; margin-bottom:6px;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}
+          <table class="print-table">
+            <thead><tr><th style="width:38%;">EXAMENES</th><th style="width:27%;">RESULTADO</th><th style="width:35%;">VALOR NORMAL</th></tr></thead>
+            <tbody>
+              ${(f.rows || []).map(r => `
+                <tr>
+                  <td><strong>${r.exam}</strong></td>
+                  <td style="font-weight:800; color:#163a70;">${formatResultValue(r.result)}</td>
+                  <td style="white-space:pre-line;">${r.ref}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      }
+
+      // BLOQUE DE SELLOS OFICIALES CON IMÁGENES DATA-URI FIJAS
+      let stampsBlock = '';
+      if (useDigitalStamp) {
+        stampsBlock = `
+          <div style="display:flex; align-items:center; justify-content:flex-end; gap:14px; flex-shrink:0;">
+            <img src="${SELLO_LAB_URI}" alt="Sello Lab ADESCAS" style="height:78px; width:auto; object-fit:contain;" />
+            ${getLicenciadoStampHTML(activeStampKey)}
+          </div>`;
+      } else {
+        stampsBlock = `
+          <div style="display:flex; align-items:flex-end; gap:20px; padding-top:34px; flex-shrink:0;">
+            <div style="width:145px; border-top:1.5px solid #0f172a; padding-top:3px; text-align:center; font-weight:bold; font-size:9.5px;">SELLO DEL LABORATORIO</div>
+            <div style="width:175px; border-top:1.5px solid #0f172a; padding-top:3px; text-align:center; font-weight:bold; font-size:9.5px;">FIRMA Y SELLO DEL LICENCIADO(A)</div>
+          </div>`;
+      }
+
+      const footerHTML = `
+        <div style="width:100%;">
+          ${obs && tpl.layout !== 'ego' ? `<p style="font-size:11px; margin-top:6px;"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</p>` : ''}
+          <div style="margin-top:10px; padding-top:8px; border-top:1.5px solid #cbd5e1; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <img src="${qrImgUrl}" alt="QR" style="width:48px; height:48px; border:1px solid #cbd5e1; padding:2px; border-radius:4px; background:#fff; flex-shrink:0;" crossorigin="anonymous" onerror="this.style.display='none'" />
+              <div style="font-size:8.5px; color:#334155; line-height:1.25; max-width:240px;">
+                <p style="font-weight:900; color:#1b3b6f; margin:0;">SELLO DIGITAL: <span style="font-family:monospace;">${sealCode}</span> ${totalPages > 1 ? `• Pág. ${pageIndex + 1}/${totalPages}` : ''}</p>
+                <p style="margin:2px 0 0 0; font-weight:700; color:#0f172a;">Documento oficial de Laboratorio Clínico "ADESCAS" (Ahuachapán). Cualquier alteración anula su validez legal.</p>
+              </div>
+            </div>
+            ${stampsBlock}
+          </div>
+        </div>`;
+
+      return `
+        <div class="exam-sheet-page" style="padding: 18px 22px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff;">
+          ${headerHTML}
+          <div style="margin: 6px 0;">${bodyHTML}</div>
+          ${footerHTML}
+        </div>`;
+    }
+
+    function buildAllPagesHTML(forceDigitalStamp = null) {
+      return examPages.map((p, idx) => buildSinglePageHTML(p, idx, examPages.length, forceDigitalStamp)).join('');
+    }
+
+    function updateLivePreview() {
+      document.getElementById('live-sheet-content').innerHTML = buildAllPagesHTML();
+    }
+
+    function getCombinedExamsTitle() {
+      const titles = examPages.map(p => {
+        const tpl = EXAM_TEMPLATES[p.templateKey] || EXAM_TEMPLATES.ego;
+        return p.formState?.customTitle || tpl.title;
+      });
+      if (titles.length === 1) return titles[0];
+      return `${titles[0]} (+${titles.length - 1} más)`;
+    }
+
+    // ============================================================================
+    // GUARDAR, IMPRIMIR Y GENERAR PDF DIRECTO CON JSPDF SIN RECORTES NI BUGS EN PC
+    // ============================================================================
+    async function saveCompressedExam() {
+      const prof = getCurrentProfile();
+      if (!prof || prof.role === 'doctora') {
+        alert('Acción permitida únicamente para Licenciados.');
+        return false;
+      }
+      const name = document.getElementById('ed-patient-name').value.trim().toUpperCase();
+      if (!name) {
+        alert('Por favor ingrese el nombre del paciente.');
+        return false;
+      }
+      const age = document.getElementById('ed-patient-age').value.trim().toUpperCase();
+      const email = document.getElementById('ed-patient-email').value.trim();
+      const phone = document.getElementById('ed-patient-phone').value.trim();
+      const status = document.getElementById('ed-status').value;
+      const combinedTitle = getCombinedExamsTitle();
+
+      const btn = document.getElementById('btn-save-exam');
+      btn.textContent = 'Guardando...';
+      btn.disabled = true;
+
+      try {
+        currentRecordStampOwner = prof.stampKey;
+
+        const compressedPayload = compressExamData({
+          examDate: document.getElementById('ed-exam-date').value,
+          patientPhone: phone,
+          stampOwner: currentRecordStampOwner,
+          pages: examPages
+        });
+
+        const contactInfo = [email, phone].filter(Boolean).join(' | ');
+
+        if (editingRecordId) {
+          await supabaseClient.from('examenes_adesca').update({
+            patient_name: name,
+            patient_age: age,
+            patient_email: contactInfo,
+            exam_type: combinedTitle,
+            status: status,
+            exam_data_compressed: compressedPayload,
+            updated_at: getCurrentTime()
+          }).eq('id', editingRecordId);
+        } else {
+          const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
+          const { data } = await supabaseClient.from('examenes_adesca').insert([{
+            code: randomCode,
+            patient_name: name,
+            patient_age: age,
+            patient_email: contactInfo,
+            exam_type: combinedTitle,
+            status: status,
+            exam_data_compressed: compressedPayload,
+            updated_at: getCurrentTime()
+          }]).select();
+          if (data && data[0]) editingRecordId = data[0].id;
+        }
+
+        btn.textContent = '✅ Guardado';
+        await fetchStaffData();
+        return true;
+      } catch (err) {
+        alert('Error al guardar: ' + (err.message || err));
+        return false;
+      } finally {
+        setTimeout(() => {
+          btn.textContent = '💾 1. Guardar Todo';
+          btn.disabled = false;
+        }, 1200);
+      }
+    }
+
+    async function printPhysicalExam() {
+      const ok = await saveCompressedExam();
+      if (!ok) return;
+      const mode = document.getElementById('print-size-mode').value;
+      const printArea = document.getElementById('print-area');
+      printArea.className = mode === 'full' ? 'hidden print:block full-page-print' : 'hidden print:block half-page-print';
+      printArea.innerHTML = buildAllPagesHTML();
+      window.print();
+    }
+
+    // MOTOR DE EXPORTACIÓN DIGITAL CON COORDENADAS EXACTAS EN LA ESQUINA (0,0)
+    // Garantiza que en PC y Celular jamás salga cortado a la izquierda ni encogido
+    async function generatePerfectPDFAndClipboard(name) {
+      document.getElementById('toggle-digital-stamp').checked = true;
+      updateLivePreview();
+
+      const cleanFileName = `Resultados_ADESCAS_${name.replace(/\s+/g, '_')}.pdf`;
+      lastGeneratedPdfName = cleanFileName;
+
+      // Crear contenedor temporal en (0,0) de 820px exactos para que html2canvas no recorte el lado izquierdo
+      const tempStage = document.createElement('div');
+      tempStage.style.cssText = "position:fixed; top:0; left:0; width:820px; padding:20px; background:#ffffff; z-index:99999; pointer-events:none;";
+      tempStage.innerHTML = buildAllPagesHTML(true);
+      document.body.appendChild(tempStage);
+
+      try {
+        await new Promise(r => setTimeout(r, 200));
+        const sheetNodes = Array.from(tempStage.querySelectorAll('.exam-sheet-page'));
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+        const sizeMode = document.getElementById('print-size-mode').value; // 'half' (2 por hoja) o 'full'
+
+        let firstCanvas = null;
+
+        for (let i = 0; i < sheetNodes.length; i++) {
+          const node = sheetNodes[i];
+          const canvas = await html2canvas(node, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            scrollX: 0,
+            scrollY: 0
+          });
+          if (i === 0) firstCanvas = canvas;
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.98);
+          const pageW = 215.9; // Ancho Carta en mm
+          const marginX = 10;
+          const usableW = pageW - (marginX * 2); // 195.9 mm de ancho completo
+          const propH = (canvas.height * usableW) / canvas.width;
+
+          if (sizeMode === 'half') {
+            // 2 exámenes por página Carta (Mitad superior y Mitad inferior)
+            const slot = i % 2;
+            if (i > 0 && slot === 0) pdf.addPage();
+            const startY = slot === 0 ? 8 : 144;
+            const maxH = 126;
+            const finalH = Math.min(propH, maxH);
+            pdf.addImage(imgData, 'JPEG', marginX, startY, usableW, finalH);
+            if (slot === 0) {
+              pdf.setDrawColor(160, 160, 160);
+              pdf.setLineDashPattern([2, 2], 0);
+              pdf.line(marginX, 139, pageW - marginX, 139);
+            }
+          } else {
+            // 1 examen grande por página Carta
+            if (i > 0) pdf.addPage();
+            const finalH = Math.min(propH, 258);
+            pdf.addImage(imgData, 'JPEG', marginX, 10, usableW, finalH);
+          }
+        }
+
+        // Copiar imagen nítida al portapapeles para pegar con Ctrl+V en Gmail o WhatsApp
+        if (firstCanvas && navigator.clipboard && window.ClipboardItem) {
+          try {
+            const blob = await new Promise(res => firstCanvas.toBlob(res, 'image/png'));
+            if (blob) {
+              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            }
+          } catch (clipErr) {}
+        }
+
+        lastGeneratedPdfBlob = pdf.output('blob');
+        pdf.save(cleanFileName);
+      } finally {
+        if (tempStage && tempStage.parentNode) {
+          tempStage.parentNode.removeChild(tempStage);
+        }
+      }
+    }
+
+    async function downloadOnlyPDF() {
+      const ok = await saveCompressedExam();
+      if (!ok) return;
+      const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
+      const btn = document.getElementById('btn-dl-pdf');
+      btn.textContent = 'Generando...';
+      btn.disabled = true;
+
+      try {
+        await generatePerfectPDFAndClipboard(name);
+      } finally {
+        btn.textContent = '📄 3. Bajar PDF';
+        btn.disabled = false;
+      }
+    }
+
+    async function sharePDFOnMobile() {
+      if (!lastGeneratedPdfBlob) {
+        alert('El archivo PDF ya se descargó en su dispositivo.');
+        return;
+      }
+      const file = new File([lastGeneratedPdfBlob], lastGeneratedPdfName, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Resultados Laboratorio Clínico ADESCAS',
+            text: 'Adjuntamos sus resultados oficiales de Laboratorio Clínico ADESCAS.'
+          });
+        } catch (e) {}
+      } else {
+        alert('El PDF ya está en su carpeta de Descargas listo para adjuntar.');
+      }
+    }
+
+    async function sendVisualSheetByGmail() {
+      const email = document.getElementById('ed-patient-email').value.trim();
+      if (!email) {
+        alert('Escriba primero el correo Gmail del paciente en el campo "Correo Gmail Paciente".');
+        switchMobileEditorTab('form');
+        document.getElementById('ed-patient-email').focus();
+        return;
+      }
+
+      const ok = await saveCompressedExam();
+      if (!ok) return;
+
+      const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
+      const examTitle = getCombinedExamsTitle();
+
+      const btn = document.getElementById('btn-gmail-visual');
+      btn.textContent = 'Preparando...';
+      btn.disabled = true;
+
+      try {
+        await generatePerfectPDFAndClipboard(name);
+      } finally {
+        btn.textContent = '📧 4. Gmail';
+        btn.disabled = false;
+      }
+
+      const subject = `Resultados Oficiales de Laboratorio Clínico ADESCAS - ${name}`;
+      const body = `Estimado(a) ${name}, adjuntamos sus resultados oficiales (${examPages.length} examen(es): ${examTitle}) de Laboratorio Clínico "ADESCAS" (Ahuachapán):\n\n`;
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      document.getElementById('send-platform-name').textContent = 'Gmail';
+      document.getElementById('send-btn-platform').textContent = 'Gmail';
+      document.getElementById('send-final-link').href = gmailUrl;
+      document.getElementById('send-guide-modal').classList.remove('hidden');
+    }
+
+    async function sendVisualSheetByWhatsApp() {
+      let phoneRaw = document.getElementById('ed-patient-phone').value.replace(/\D/g, '');
+      if (!phoneRaw) {
+        alert('Escriba primero el número de WhatsApp del paciente (ej. 7895-5220).');
+        switchMobileEditorTab('form');
+        document.getElementById('ed-patient-phone').focus();
+        return;
+      }
+      if (phoneRaw.length === 8) {
+        phoneRaw = '503' + phoneRaw;
+      }
+
+      const ok = await saveCompressedExam();
+      if (!ok) return;
+
+      const name = (document.getElementById('ed-patient-name').value || 'PACIENTE').toUpperCase();
+      const examTitle = getCombinedExamsTitle();
+
+      const btn = document.getElementById('btn-wa-visual');
+      btn.textContent = 'Preparando...';
+      btn.disabled = true;
+
+      try {
+        await generatePerfectPDFAndClipboard(name);
+      } finally {
+        btn.textContent = '💬 5. WhatsApp';
+        btn.disabled = false;
+      }
+
+      const msg = `🏥 *LABORATORIO CLÍNICO "ADESCAS"*\nEstimado(a) *${name}*, le enviamos el reporte oficial de sus estudios (${examPages.length} examen(es)): *${examTitle}*.`;
+      const waUrl = `https://wa.me/${phoneRaw}?text=${encodeURIComponent(msg)}`;
+
+      document.getElementById('send-platform-name').textContent = 'WhatsApp';
+      document.getElementById('send-btn-platform').textContent = 'WhatsApp';
+      document.getElementById('send-final-link').href = waUrl;
+      document.getElementById('send-guide-modal').classList.remove('hidden');
+    }
+
+    supabaseClient.channel('realtime-adesca')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'examenes_adesca' }, () => {
+        if (currentSession) fetchStaffData();
+      })
+      .subscribe();
+  </script>
+</body>
+</html>
