@@ -18,8 +18,10 @@
     body { font-family: 'Inter', sans-serif; }
     
     /* =====================================================================
-       IMPRESIÓN FÍSICA PERFECTA: MITAD DE PÁGINA CARTA (2 POR HOJA) O CARTA
-       Sin márgenes cortados ni textos encogidos en PC
+       IMPRESIÓN FÍSICA:
+       - half-page-print: 1 examen en la MITAD SUPERIOR de CADA página Carta
+         (sin cortar jamás el QR ni los sellos y dejando media hoja libre)
+       - full-page-print: 1 examen grande ocupando toda la página Carta
        ===================================================================== */
     @media print {
       html, body {
@@ -39,34 +41,32 @@
         padding: 0 !important;
         background: white !important;
       }
+      /* 1 Examen en la Mitad Superior de CADA Hoja Carta */
       .half-page-print .exam-sheet-page {
         width: 100% !important;
         max-width: 100% !important;
-        height: 132mm !important;
-        max-height: 132mm !important;
-        padding: 5mm 10mm !important;
+        max-height: 136mm !important;
+        padding: 4mm 8mm 5mm 8mm !important;
         margin: 0 !important;
         box-sizing: border-box !important;
         border: none !important;
-        border-bottom: 1px dashed #64748b !important;
+        border-bottom: 1.5px dashed #64748b !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        overflow: hidden !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-      }
-      .half-page-print .exam-sheet-page:nth-child(2n) {
         page-break-after: always !important;
         break-after: page !important;
-        border-bottom: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
+      .half-page-print .exam-sheet-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      /* 1 Examen en Página Completa Carta */
       .full-page-print .exam-sheet-page {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 10mm 12mm !important;
+        padding: 8mm 10mm !important;
         margin: 0 !important;
         box-sizing: border-box !important;
         border: none !important;
@@ -74,12 +74,15 @@
         border-radius: 0 !important;
         page-break-after: always !important;
         break-after: page !important;
+      }
+      .full-page-print .exam-sheet-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
       }
       .no-print { display: none !important; }
       @page { size: letter portrait; margin: 4mm; }
     }
 
-    /* Estilos de la Boleta Oficial con márgenes garantizados */
     .exam-sheet-page {
       width: 100%;
       box-sizing: border-box;
@@ -92,10 +95,10 @@
       table-layout: fixed;
     }
     .print-table th, .print-table td {
-      border: 1.5px solid #0f172a;
-      padding: 4px 8px;
-      font-size: 11.5px;
-      line-height: 1.25;
+      border: 1.4px solid #0f172a;
+      padding: 2.5px 6px;
+      font-size: 10.5px;
+      line-height: 1.18;
       color: #0f172a;
       word-wrap: break-word;
       overflow-wrap: break-word;
@@ -181,7 +184,7 @@
   </main>
 
   <!-- ========================================================= -->
-  <!-- VISTA 2: PANEL INTERNO (LICENCIADOS Y DOCTORA)            -->
+  <!-- VISTA 2: PANEL INTERNO (LICENCIADOS Y DOCTORA SANDOVAL)   -->
   <!-- ========================================================= -->
   <main id="view-staff" class="hidden flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-5 no-print">
     <!-- CAJA DE LOGIN -->
@@ -219,17 +222,26 @@
           <span id="inactivity-countdown" class="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg">
             ⏱️ Auto-cierre: 20:00
           </span>
+          <span class="text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg" title="Cada 1,000 exámenes ocupan apenas 1.5 MB de tus 500 MB gratuitos">
+            💾 Uso estimado de exámenes: <span id="db-space-estimate">0.01 MB</span> / 473 MB libres
+          </span>
         </div>
+
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <div id="staff-only-actions" class="flex flex-wrap items-center gap-2 flex-1 sm:flex-initial">
             <button type="button" onclick="openExamEditor(null)" class="flex-1 sm:flex-initial justify-center bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5">
-              📝 + Redactar Exámenes (1 o Varios)
+              📝 + Redactar Exámenes
             </button>
-            <button type="button" onclick="downloadDailyBackup()" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-2.5 rounded-xl">
-              📥 Descargar Día
+            <button type="button" onclick="downloadFilteredBackup()" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-2.5 rounded-xl" title="Descarga en un archivo JSON ligero los exámenes que están en pantalla (del día, semana o mes)">
+              📥 Descargar JSON
             </button>
+            <!-- BOTÓN NUEVO: SUBIR ARCHIVO JSON DESCARGADO PARA RECREAR E IMPRIMIR EXÁMENES SIN OCUPAR BASE -->
+            <label class="cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs px-3 py-2.5 rounded-xl flex items-center gap-1" title="Cargue un archivo JSON descargado de semanas o meses anteriores para ver y volver a imprimir sus exámenes sin gastar base de datos">
+              📤 Subir JSON y Recrear
+              <input type="file" accept=".json,application/json" onchange="handleImportJsonBackup(event)" class="hidden" />
+            </label>
             <button type="button" onclick="openCleanDayModal()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs px-3 py-2.5 rounded-xl">
-              🧹 Cerrar Día (<span id="count-delivered">0</span>/<span id="count-total">0</span>)
+              🧹 Limpiar Base (<span id="count-total">0</span>)
             </button>
           </div>
           <button type="button" onclick="handleLogout()" class="bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-bold text-xs px-3.5 py-2.5 rounded-xl">
@@ -238,11 +250,21 @@
         </div>
       </div>
 
+      <!-- BANNER SI SE CARGÓ UN ARCHIVO JSON EXTERNO EN MEMORIA -->
+      <div id="json-imported-banner" class="hidden bg-emerald-600 text-white rounded-2xl p-3.5 shadow-md flex flex-wrap items-center justify-between gap-2">
+        <div class="text-xs">
+          <strong>📂 Modo Archivo JSON Cargado en Memoria:</strong> Viendo <span id="json-imported-count" class="font-black underline">0</span> exámenes recuperados del archivo JSON (no ocupan espacio en Supabase). Puede abrirlos, editarlos y volverlos a imprimir o descargar en PDF.
+        </div>
+        <button type="button" onclick="clearImportedJsonRecords()" class="bg-white text-emerald-900 font-extrabold text-xs px-3 py-1.5 rounded-lg shadow">
+          ✕ Volver a la Base en Vivo
+        </button>
+      </div>
+
       <!-- BANNER INFORMATIVO EXCLUSIVO PARA DOCTORA SANDOVAL -->
       <div id="doctor-welcome-banner" class="hidden bg-blue-50 border-2 border-[#163a70] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 class="text-sm font-extrabold text-[#163a70]">👩‍⚕️ Modo Consulta Médica — Dra. Sandoval (Solo Lectura)</h3>
-          <p class="text-xs text-slate-600">Busque al paciente por su nombre abajo y presione <strong>"👁️ Ver Resultados del Examen"</strong> para revisar sus boletas del día en pantalla sin necesidad de imprimirlas.</p>
+          <p class="text-xs text-slate-600">Puede filtrar por fecha (Hoy, Últimos 7 días, Este Mes) o buscar al paciente por su nombre abajo y presionar <strong>"👁️ Ver Resultados del Examen"</strong> para revisar sus boletas en pantalla.</p>
         </div>
       </div>
 
@@ -329,17 +351,29 @@
           </div>
         </div>
 
-        <!-- COLUMNA DERECHA: LISTA NUMERADA DE PACIENTES DEL DÍA -->
+        <!-- COLUMNA DERECHA: LISTA NUMERADA CON FILTRO POR FECHA (HOY / SEMANA / MES) -->
         <div id="staff-right-column" class="lg:col-span-8">
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
-              <div>
-                <h3 class="font-extrabold text-sm text-[#163a70]">Pacientes y Exámenes del Día (Numerados por Orden)</h3>
-                <p class="text-[11px] text-slate-400">Cada paciente recibe su número correlativo (#1, #2, #3...) según el orden en que se registra</p>
-              </div>
-              <div class="flex items-center gap-2 w-full sm:w-auto">
-                <input id="staff-filter-input" oninput="renderStaffRecords()" type="text" placeholder="🔍 Buscar paciente por nombre..." class="flex-1 sm:w-56 px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold" />
+            <div class="p-4 border-b border-slate-200 space-y-3">
+              <div class="flex flex-wrap justify-between items-center gap-2">
+                <div>
+                  <h3 class="font-extrabold text-sm text-[#163a70]">Pacientes y Exámenes Guardados (Con Fecha y Orden)</h3>
+                  <p class="text-[11px] text-slate-400">Puede consultar exámenes de Hoy, de la Semana o de todo el Mes (1 mes entero ocupa menos de 2 MB)</p>
+                </div>
                 <button type="button" onclick="fetchStaffData()" class="text-xs font-bold text-[#163a70] hover:underline px-2">↻ Actualizar</button>
+              </div>
+
+              <!-- BARRA DE FILTROS POR RANGO DE FECHAS Y BÚSQUEDA -->
+              <div class="flex flex-wrap items-center gap-2">
+                <select id="staff-date-range" onchange="renderStaffRecords()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-[#163a70] bg-slate-50">
+                  <option value="all">📅 Todos los Guardados (Mes / Semana)</option>
+                  <option value="today">📍 Solo Hoy</option>
+                  <option value="7days">🗓️ Últimos 7 Días (1 Semana)</option>
+                  <option value="30days">📆 Últimos 30 Días (1 Mes)</option>
+                </select>
+                <input id="staff-exact-date" type="date" onchange="renderStaffRecords()" class="px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs text-slate-700" title="Filtrar por un día específico" />
+                <button type="button" onclick="document.getElementById('staff-exact-date').value=''; renderStaffRecords();" class="text-[11px] text-slate-500 hover:text-slate-800 underline">Ver todas las fechas</button>
+                <input id="staff-filter-input" oninput="renderStaffRecords()" type="text" placeholder="🔍 Buscar por nombre, orden o #..." class="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold" />
               </div>
             </div>
             <div id="staff-records-list" class="divide-y divide-slate-100"></div>
@@ -350,30 +384,38 @@
   </main>
 
   <!-- ========================================================= -->
-  <!-- MODAL DE SEGURIDAD CON CONTRASEÑA PARA CERRAR DÍA/LIMPIAR -->
+  <!-- MODAL DE SEGURIDAD CON CONTRASEÑA PARA LIMPIAR BASE       -->
   <!-- ========================================================= -->
   <div id="clean-security-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl border-2 border-rose-500 overflow-hidden">
       <div class="bg-rose-600 text-white px-5 py-4">
-        <h3 class="text-base font-extrabold">⚠️ Confirmación de Seguridad para Borrar</h3>
-        <p class="text-xs text-rose-100 mt-0.5">Los códigos QR de las boletas seguirán funcionando aunque borre la base.</p>
+        <h3 class="text-base font-extrabold">⚠️ Confirmación de Seguridad para Limpiar Base</h3>
+        <p class="text-xs text-rose-100 mt-0.5">Recuerde que puede descargar primero el archivo JSON para recrearlos cuando quiera.</p>
       </div>
       <form onsubmit="confirmAndExecuteClean(event)" class="p-5 space-y-4">
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
-          <p class="font-bold mb-1">¿Qué registros desea limpiar de la base de datos?</p>
-          <label class="flex items-center gap-2 mt-2 cursor-pointer font-semibold">
-            <input type="radio" name="clean-mode" value="delivered" checked class="accent-rose-600" />
-            <span>Solo los marcados como <strong>ENTREGADOS</strong> (<span id="modal-delivered-count">0</span> registros)</span>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-2">
+          <p class="font-bold">¿Qué exámenes desea limpiar de Supabase?</p>
+          <label class="flex items-center gap-2 cursor-pointer font-semibold text-emerald-900">
+            <input type="radio" name="clean-mode" value="older30" checked class="accent-rose-600" />
+            <span>Solo exámenes antiguos de <strong>hace más de 30 días</strong> (Conservar todo el mes actual)</span>
           </label>
-          <label class="flex items-center gap-2 mt-1.5 cursor-pointer font-semibold text-rose-700">
+          <label class="flex items-center gap-2 cursor-pointer font-semibold">
+            <input type="radio" name="clean-mode" value="older7" class="accent-rose-600" />
+            <span>Solo exámenes de <strong>hace más de 7 días</strong> (Conservar toda la semana actual)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer font-semibold">
+            <input type="radio" name="clean-mode" value="delivered" class="accent-rose-600" />
+            <span>Todos los marcados como <strong>ENTREGADOS</strong> (<span id="modal-delivered-count">0</span> registros)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer font-semibold text-rose-700">
             <input type="radio" name="clean-mode" value="all" class="accent-rose-600" />
-            <span><strong>TODOS</strong> los exámenes actuales del día (<span id="modal-total-count">0</span> registros)</span>
+            <span><strong>TODOS</strong> los exámenes de la base (<span id="modal-total-count">0</span> registros)</span>
           </label>
         </div>
 
         <label class="flex items-start gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
           <input id="clean-confirm-check" type="checkbox" required class="mt-0.5 accent-rose-600 w-4 h-4 shrink-0" />
-          <span>Sí, estoy 100% seguro de borrar estos exámenes de la base de datos y guardar únicamente el conteo en el historial.</span>
+          <span>Sí, estoy 100% seguro de limpiar los registros seleccionados.</span>
         </label>
 
         <div>
@@ -390,7 +432,7 @@
             Cancelar
           </button>
           <button id="btn-confirm-clean" type="submit" class="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md">
-            Autorizar y Limpiar Base
+            Autorizar y Limpiar
           </button>
         </div>
       </form>
@@ -404,7 +446,7 @@
     <div class="max-w-lg w-full bg-white rounded-2xl shadow-2xl border-2 border-emerald-500 overflow-hidden">
       <div class="bg-emerald-600 text-white px-5 py-4">
         <h3 class="text-base font-extrabold">✅ ¡Reporte Oficial Listo con Sellos y Firma!</h3>
-        <p class="text-xs text-emerald-100 mt-0.5">Se descargó el PDF a página completa sin recortes y se copió la imagen al portapapeles</p>
+        <p class="text-xs text-emerald-100 mt-0.5">Se descargó el PDF sin recortes y se copió la imagen al portapapeles</p>
       </div>
       <div class="p-5 space-y-4 text-xs text-slate-700">
         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
@@ -436,7 +478,7 @@
       <div class="bg-[#163a70] text-white px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 id="modal-header-title" class="text-sm sm:text-lg font-extrabold">Redactor Multi-Examen — Laboratorio Clínico "ADESCAS"</h2>
-          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Márgenes completos verificados en PC y Celular • Sello Lab ADESCAS + Firma Real</p>
+          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Mitad de Página Carta (1 Examen en la mitad de cada hoja) • QR Grande + Sellos Oficiales</p>
         </div>
         <button type="button" onclick="closeExamEditor()" class="bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg text-xs font-bold">
           ✕ Cerrar
@@ -526,7 +568,7 @@
 
           <div class="bg-white p-3.5 rounded-xl border border-slate-200">
             <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">OBSERVACIONES DE ESTA PÁGINA:</label>
-            <textarea id="ed-observations" oninput="onObservationsInput(this.value)" rows="2" placeholder="Opcional (si lo deja vacío no aparecerá nada raro en la boleta)..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"></textarea>
+            <textarea id="ed-observations" oninput="onObservationsInput(this.value)" rows="2" placeholder="Opcional..." class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"></textarea>
           </div>
 
           <!-- CONTROL DE SELLOS Y FIRMA REAL + MODO IMPRESIÓN -->
@@ -550,8 +592,8 @@
             <div class="pt-1">
               <label class="block text-[10px] font-bold uppercase text-slate-600 mb-1">FORMATO AL IMPRIMIR O BAJAR PDF:</label>
               <select id="print-size-mode" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-[#163a70] bg-white">
-                <option value="half">📄 Mitad de Página Carta (2 Exámenes por Hoja como en Word)</option>
-                <option value="full">📄 Página Carta Completa (1 Examen Grande por Hoja)</option>
+                <option value="half">📄 Mitad de Página Carta (1 Examen en la Mitad de Cada Hoja)</option>
+                <option value="full">📄 Página Carta Completa (1 Examen Grande en Toda la Hoja)</option>
               </select>
             </div>
           </div>
@@ -570,11 +612,11 @@
         <div id="editor-right-col" class="hidden lg:flex lg:col-span-7 p-3 sm:p-4 flex-col bg-slate-200/80 max-h-[82vh] overflow-y-auto">
           <div id="editor-action-toolbar" class="bg-white p-3 rounded-xl border border-slate-200 mb-3 flex flex-wrap items-center justify-between gap-1.5 shadow-sm sticky top-0 z-10">
             <button type="button" onclick="saveCompressedExam()" id="btn-save-exam" class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
-              💾 1. Guardar Todo
+              💾 1. Guardar en Base
             </button>
             <div class="flex flex-wrap items-center gap-1.5">
-              <button type="button" onclick="printPhysicalExam()" id="btn-print-paper" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
-                🖨️ 2. Imprimir Papel
+              <button type="button" onclick="printPhysicalExam()" id="btn-print-paper" class="bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow" title="Imprime cada examen en la mitad superior de su propia página">
+                🖨️ 2. Imprimir (Mitad de Pág.)
               </button>
               <button type="button" onclick="downloadOnlyPDF()" id="btn-dl-pdf" class="bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow">
                 📄 3. Bajar PDF
@@ -601,10 +643,11 @@
 
   <script>
     // ============================================================================
-    // PERFILES OFICIALES AUTORIZADOS (3 LICENCIADOS + 1 DOCTORA SOLO LECTURA)
+    // PERFILES OFICIALES AUTORIZADOS POR CORREO Y POR UID EXACTO DE SUPABASE
     // ============================================================================
     const STAFF_PROFILES = {
       "licpineda@adesca.com": {
+        uid: "1936629c-26ab-430d-b967-9f4199e0a809",
         role: "licenciado",
         displayName: "Lic. Ernesto Alexander Pineda Recinos",
         jvplc: "5080",
@@ -613,6 +656,7 @@
         imgFile: "/sello-pineda.png"
       },
       "lickarla@adesca.com": {
+        uid: "69857d16-e89e-4c68-8938-176874dec676",
         role: "licenciado",
         displayName: "Licda. Karla Johanna Quintanilla Aguilar",
         jvplc: "7307",
@@ -621,6 +665,7 @@
         imgFile: "/sello-karla.png"
       },
       "liccalderon@adesca.com": {
+        uid: "65dc0b32-0b72-4237-9f0d-5b0b6fb7cf32",
         role: "licenciado",
         displayName: "Licda. Verónica Vanessa Calderón Erazo",
         jvplc: "1432",
@@ -629,6 +674,7 @@
         imgFile: "/sello-calderon.png"
       },
       "docsandoval@adesca.com": {
+        uid: "5323d092-67c4-4490-83bf-e19ef94fee16",
         role: "doctora",
         displayName: "Dra. Sandoval (Consulta Médica)",
         jvplc: "",
@@ -638,9 +684,18 @@
       }
     };
 
+    const ALLOWED_UIDS = {
+      "1936629c-26ab-430d-b967-9f4199e0a809": STAFF_PROFILES["licpineda@adesca.com"],
+      "69857d16-e89e-4c68-8938-176874dec676": STAFF_PROFILES["lickarla@adesca.com"],
+      "65dc0b32-0b72-4237-9f0d-5b0b6fb7cf32": STAFF_PROFILES["liccalderon@adesca.com"],
+      "5323d092-67c4-4490-83bf-e19ef94fee16": STAFF_PROFILES["docsandoval@adesca.com"]
+    };
+
     function getCurrentProfile() {
-      if (!currentSession || !currentSession.user || !currentSession.user.email) return null;
-      const email = currentSession.user.email.trim().toLowerCase();
+      if (!currentSession || !currentSession.user) return null;
+      const uid = currentSession.user.id || '';
+      if (ALLOWED_UIDS[uid]) return ALLOWED_UIDS[uid];
+      const email = (currentSession.user.email || '').trim().toLowerCase();
       return STAFF_PROFILES[email] || null;
     }
 
@@ -649,8 +704,6 @@
       return prof && prof.role === "doctora";
     }
 
-    // Convierte una foto subida con fondo blanco en un PNG con fondo 100% transparente
-    // para que html2canvas en PC y Celular jamás la borre ni la corte
     function handleUserStampUpload(event) {
       const file = event.target.files[0];
       const prof = getCurrentProfile();
@@ -667,7 +720,6 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          // Hacer transparente el papel blanco automáticamente
           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const d = imgData.data;
           for (let i = 0; i < d.length; i += 4) {
@@ -694,16 +746,15 @@
     }
 
     // ============================================================================
-    // LOGOS Y SELLOS EN BASE64 DATA-URI CON DIMENSIONES FIJAS EN PÍXELES
-    // (Al ser <img src="data:image/svg+xml;base64,..."> con width/height fijos,
-    //  nunca desaparecen ni se desconfiguran en PC ni en PDF)
+    // LOGOS Y SELLOS EN BASE64 DATA-URI (CON LIENZO AMPLIADO PARA QUE NUNCA SE CORTE
+    // LA "O" DE "Laboratorio Clínico")
     // ============================================================================
     function svgToDataUri(svgString) {
       return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString.trim())));
     }
 
     const LOGO_MICRO_URI = svgToDataUri(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="210" height="85" viewBox="0 0 430 175">
+      <svg xmlns="http://www.w3.org/2000/svg" width="240" height="88" viewBox="0 0 480 175">
         <path d="M 65,138 A 48,48 0 0,1 65,45" fill="none" stroke="#1b3b6f" stroke-width="24" stroke-linecap="round"/>
         <rect x="62" y="96" width="52" height="8" rx="4" fill="#1b3b6f" transform="rotate(-18 85 100)"/>
         <g transform="translate(76, 48) rotate(-35)">
@@ -716,13 +767,13 @@
         <circle cx="73" cy="138" r="14" fill="#5b87c6"/>
         <path d="M 30,168 C 35,148 111,148 116,168 Z" fill="#1b3b6f"/>
         <rect x="24" y="163" width="98" height="9" rx="4.5" fill="#1b3b6f"/>
-        <text x="115" y="102" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="60" fill="#1b3b6f" letter-spacing="1">ADESCAS</text>
-        <line x1="78" y1="115" x2="422" y2="115" stroke="#5b87c6" stroke-width="4" stroke-linecap="round"/>
-        <text x="136" y="156" font-family="Arial, sans-serif" font-weight="700" font-size="35" fill="#5b87c6">Laboratorio Clínico</text>
+        <text x="275" y="102" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="58" fill="#1b3b6f" letter-spacing="1">ADESCAS</text>
+        <line x1="78" y1="115" x2="465" y2="115" stroke="#5b87c6" stroke-width="4" stroke-linecap="round"/>
+        <text x="275" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="31" fill="#5b87c6">Laboratorio Clínico</text>
       </svg>`);
 
     const SELLO_LAB_URI = svgToDataUri(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="175" height="90" viewBox="0 0 260 135">
+      <svg xmlns="http://www.w3.org/2000/svg" width="165" height="85" viewBox="0 0 260 135">
         <g transform="rotate(-1.2 130 67)" fill="#1b365d">
           <rect x="4" y="4" width="252" height="126" rx="4" fill="none" stroke="#1b365d" stroke-width="2.5"/>
           <text x="130" y="21" text-anchor="middle" font-family="Times New Roman, serif" font-size="12.5" font-weight="bold">República de El Salvador</text>
@@ -737,7 +788,7 @@
       </svg>`);
 
     const SELLO_PINEDA_URI = svgToDataUri(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="205" height="98" viewBox="0 0 320 155">
+      <svg xmlns="http://www.w3.org/2000/svg" width="195" height="92" viewBox="0 0 320 155">
         <g fill="none" stroke="#001a80" stroke-linecap="round" stroke-linejoin="round">
           <path d="M 134,26 C 118,25 114,22 126,18 C 165,6 245,2 292,5 C 298,6 301,8 302,10" stroke-width="2.2"/>
           <path d="M 122,64 C 142,46 158,32 170,18 C 162,34 156,48 158,56 C 161,63 192,64 202,60 C 205,58 205,55 204,54" stroke-width="2.6"/>
@@ -754,7 +805,7 @@
       </svg>`);
 
     const SELLO_KARLA_URI = svgToDataUri(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="205" height="105" viewBox="0 0 320 165">
+      <svg xmlns="http://www.w3.org/2000/svg" width="195" height="98" viewBox="0 0 320 165">
         <g fill="none" stroke="#0018a8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M 88,24 C 86,14 78,12 73,26 C 68,44 71,72 82,78 C 89,80 93,48 93,18 L 94,118" stroke-width="2.5"/>
           <path d="M 93,52 C 94,76 62,108 55,105 C 49,102 54,68 72,48 C 98,22 142,20 165,46 C 176,58 175,80 167,82 C 158,83 151,42 150,8 L 166,94" stroke-width="2.5"/>
@@ -774,7 +825,7 @@
       </svg>`);
 
     const SELLO_CALDERON_URI = svgToDataUri(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="205" height="98" viewBox="0 0 320 155">
+      <svg xmlns="http://www.w3.org/2000/svg" width="195" height="92" viewBox="0 0 320 155">
         <g transform="translate(22, 56)">
           <rect x="0" y="0" width="276" height="82" fill="none" stroke="#162660" stroke-width="2.3"/>
           <circle cx="8" cy="6" r="1.4" fill="#162660"/>
@@ -795,15 +846,15 @@
         if (stampKey === 'karla') {
           return `
             <div style="text-align:center; display:inline-block;">
-              <img src="${customUploaded}" alt="Firma" style="height:55px; width:auto; display:block; margin:0 auto -4px auto;" />
+              <img src="${customUploaded}" alt="Firma" style="height:50px; width:auto; display:block; margin:0 auto -4px auto;" />
               <div style="border:1.5px solid #0b2265; padding:2px 6px; color:#0b2265; line-height:1.1;">
-                <div style="font-family:Georgia,serif; font-style:italic; font-weight:bold; font-size:9.5px;">Licda. Karla Johanna Quintanilla Aguilar</div>
-                <div style="font-weight:800; font-size:8px;">LICENCIADA EN LABORATORIO CLINICO</div>
-                <div style="font-weight:900; font-size:9px;">J.V.P.L.C. No. 7307</div>
+                <div style="font-family:Georgia,serif; font-style:italic; font-weight:bold; font-size:9px;">Licda. Karla Johanna Quintanilla Aguilar</div>
+                <div style="font-weight:800; font-size:7.5px;">LICENCIADA EN LABORATORIO CLINICO</div>
+                <div style="font-weight:900; font-size:8.5px;">J.V.P.L.C. No. 7307</div>
               </div>
             </div>`;
         }
-        return `<img src="${customUploaded}" alt="Firma y Sello" style="height:82px; width:auto; object-fit:contain;" />`;
+        return `<img src="${customUploaded}" alt="Firma y Sello" style="height:76px; width:auto; object-fit:contain;" />`;
       }
 
       const fallbackUri = stampKey === 'karla'
@@ -817,7 +868,7 @@
       };
       const fileUrl = fileMap[stampKey] || '/sello-pineda.png';
 
-      return `<img src="${fileUrl}" alt="Sello Licenciado" style="height:82px; width:auto; object-fit:contain;" onerror="this.onerror=null; this.src='${fallbackUri}';" />`;
+      return `<img src="${fileUrl}" alt="Sello Licenciado" style="height:76px; width:auto; object-fit:contain;" onerror="this.onerror=null; this.src='${fallbackUri}';" />`;
     }
 
     // ============================================================================
@@ -881,13 +932,13 @@
     function formatResultValue(val) {
       const str = String(val || '');
       if (str.includes('*')) {
-        return `<span style="font-weight:900; color:#be123c; background:#fff1f2; padding:1px 4px; border-radius:4px; border:1px solid #fda4af;">${str} <span style="font-size:8.5px; text-transform:uppercase;">[CONTROLADO]</span></span>`;
+        return `<span style="font-weight:900; color:#be123c; background:#fff1f2; padding:1px 4px; border-radius:4px; border:1px solid #fda4af;">${str} <span style="font-size:8px; text-transform:uppercase;">[CONTROLADO]</span></span>`;
       }
       return str;
     }
 
     // ============================================================================
-    // CONEXIÓN A SUPABASE Y AUTO-CIERRE REAL DE 20 MINUTOS
+    // CONEXIÓN A SUPABASE, IMPORTADOR JSON Y AUTO-CIERRE REAL DE 20 MINUTOS
     // ============================================================================
     const SUPABASE_URL = "https://cdacldhkhfmlmwbizinu.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VaaLx_zZuGOlgFwwdN2voQ_6QyGAVR5";
@@ -895,6 +946,7 @@
 
     let currentSession = null;
     let allRecords = [];
+    let importedJsonRecords = null; // Si se sube un JSON externo, se muestra aquí sin gastar base
     let editingRecordId = null;
 
     let examPages = [];
@@ -1405,6 +1457,16 @@
       return new Date().toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
     }
 
+    function formatShortDate(isoStr) {
+      if (!isoStr) return 'Hoy';
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch (e) {
+        return 'Hoy';
+      }
+    }
+
     function switchView(view) {
       document.getElementById('view-patient').classList.toggle('hidden', view !== 'patient');
       document.getElementById('view-staff').classList.toggle('hidden', view !== 'staff');
@@ -1515,7 +1577,7 @@
     }
 
     // ============================================================================
-    // AUTENTICACIÓN MULTIUSUARIO (3 LICENCIADOS + DOCTORA SANDOVAL)
+    // AUTENTICACIÓN MULTIUSUARIO (POR UID EXACTO Y CORREO DE LOS 4 USUARIOS)
     // ============================================================================
     async function handleStaffLogin(e) {
       e.preventDefault();
@@ -1524,12 +1586,6 @@
       const errBox = document.getElementById('login-error');
       const btn = document.getElementById('btn-login');
       errBox.classList.add('hidden');
-
-      if (!STAFF_PROFILES[email]) {
-        errBox.textContent = 'Usuario no autorizado.';
-        errBox.classList.remove('hidden');
-        return;
-      }
 
       btn.textContent = 'Verificando...';
       btn.disabled = true;
@@ -1541,6 +1597,16 @@
           errBox.classList.remove('hidden');
           return;
         }
+
+        const uid = data.session.user?.id || '';
+        const sessionEmail = (data.session.user?.email || '').trim().toLowerCase();
+        if (!ALLOWED_UIDS[uid] && !STAFF_PROFILES[sessionEmail]) {
+          await supabaseClient.auth.signOut();
+          errBox.textContent = 'Acceso no autorizado.';
+          errBox.classList.remove('hidden');
+          return;
+        }
+
         localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
         document.getElementById('staff-password').value = '';
       } finally {
@@ -1551,6 +1617,7 @@
 
     async function handleLogout() {
       localStorage.removeItem(LAST_ACTIVITY_KEY);
+      importedJsonRecords = null;
       await supabaseClient.auth.signOut();
       switchView('patient');
     }
@@ -1584,8 +1651,9 @@
 
     supabaseClient.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
+        const uid = session.user?.id || '';
         const email = (session.user?.email || '').trim().toLowerCase();
-        if (!STAFF_PROFILES[email]) {
+        if (!ALLOWED_UIDS[uid] && !STAFF_PROFILES[email]) {
           await supabaseClient.auth.signOut();
           currentSession = null;
           return;
@@ -1610,6 +1678,7 @@
 
     function decompressExamData(str) {
       if (!str) return null;
+      if (typeof str === 'object') return str;
       try {
         const decomp = LZString.decompressFromUTF16(str);
         if (decomp && decomp.startsWith('{')) return JSON.parse(decomp);
@@ -1629,6 +1698,12 @@
         dailyNumber: idx + 1
       }));
       allRecords = numbered.reverse();
+
+      // Calcular el peso real en MB que ocupan todos los exámenes actuales (~1.5 KB por examen)
+      const mbUsed = Math.max(0.01, (allRecords.length * 1.5) / 1024).toFixed(2);
+      const spaceBadge = document.getElementById('db-space-estimate');
+      if (spaceBadge) spaceBadge.textContent = `${mbUsed} MB (${allRecords.length} ex.)`;
+
       renderStaffRecords();
 
       if (!isDoctorReadOnly()) {
@@ -1646,12 +1721,48 @@
       }
     }
 
+    function getActiveSourceList() {
+      return importedJsonRecords !== null ? importedJsonRecords : allRecords;
+    }
+
+    function filterRecordsByDateAndQuery() {
+      const source = getActiveSourceList();
+      const rangeMode = document.getElementById('staff-date-range')?.value || 'all';
+      const exactDate = document.getElementById('staff-exact-date')?.value || '';
+      const q = (document.getElementById('staff-filter-input')?.value || '').toLowerCase().trim();
+
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      return source.filter(r => {
+        const createdMs = r.created_at ? new Date(r.created_at).getTime() : Date.now();
+        if (exactDate) {
+          const d = new Date(createdMs);
+          const isoDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          if (isoDay !== exactDate) return false;
+        } else if (rangeMode === 'today') {
+          if (createdMs < startOfToday) return false;
+        } else if (rangeMode === '7days') {
+          if (createdMs < (Date.now() - 7 * 24 * 60 * 60 * 1000)) return false;
+        } else if (rangeMode === '30days') {
+          if (createdMs < (Date.now() - 30 * 24 * 60 * 60 * 1000)) return false;
+        }
+
+        if (!q) return true;
+        return (
+          (r.patient_name || '').toLowerCase().includes(q) ||
+          (r.code || '').toLowerCase().includes(q) ||
+          (r.exam_type || '').toLowerCase().includes(q) ||
+          String(r.dailyNumber) === q.replace('#', '')
+        );
+      });
+    }
+
     function renderStaffRecords() {
       const isDoc = isDoctorReadOnly();
       const requestedCount = allRecords.filter(r => r.status === 'requested').length;
       const deliveredCount = allRecords.filter(r => r.status === 'delivered').length;
 
-      document.getElementById('count-delivered').textContent = deliveredCount;
       document.getElementById('count-total').textContent = allRecords.length;
       document.getElementById('window-alert').classList.toggle('hidden', isDoc || requestedCount === 0);
 
@@ -1659,17 +1770,11 @@
       badge.textContent = requestedCount;
       badge.classList.toggle('hidden', requestedCount === 0);
 
-      const q = (document.getElementById('staff-filter-input')?.value || '').toLowerCase();
-      const filtered = allRecords.filter(r =>
-        r.patient_name.toLowerCase().includes(q) ||
-        r.code.toLowerCase().includes(q) ||
-        r.exam_type.toLowerCase().includes(q) ||
-        String(r.dailyNumber) === q.replace('#', '')
-      );
-
+      const filtered = filterRecordsByDateAndQuery();
       const list = document.getElementById('staff-records-list');
+
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No se encontraron exámenes registrados hoy con ese nombre.</div>`;
+        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No se encontraron exámenes en este rango de fechas o con ese filtro.</div>`;
         return;
       }
 
@@ -1682,6 +1787,7 @@
 
         const savedObj = decompressExamData(item.exam_data_compressed);
         const pageCount = savedObj?.pages?.length || (savedObj ? 1 : 0);
+        const dateBadge = savedObj?.examDate || formatShortDate(item.created_at);
 
         if (isDoc) {
           return `
@@ -1693,6 +1799,7 @@
                 <div>
                   <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span>
+                    <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>
                     ${statusTag}
                     ${pageCount > 0 ? `<span class="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">📄 ${pageCount} Boleta(s) Digital(es)</span>` : '<span class="text-[10px] text-slate-400">Sin boleta digitada aún</span>'}
                   </div>
@@ -1712,23 +1819,27 @@
         }
 
         let actionBtns = '';
-        if (item.status === 'processing') {
-          actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Poner Listo</button>`;
-        } else if (item.status === 'ready' || item.status === 'requested') {
-          actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'delivered')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Entregado</button>`;
+        if (!item.isImportedJson) {
+          if (item.status === 'processing') {
+            actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Poner Listo</button>`;
+          } else if (item.status === 'ready' || item.status === 'requested') {
+            actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'delivered')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Entregado</button>`;
+          }
         }
 
         return `
           <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80">
             <div class="flex items-start gap-3">
-              <div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm" title="Paciente #${item.dailyNumber} del día">
+              <div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm" title="Paciente #${item.dailyNumber}">
                 #${item.dailyNumber}
               </div>
               <div>
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span>
+                  <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>
                   ${statusTag}
-                  ${pageCount > 0 ? `<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 ${pageCount} Página(s) Lista(s)</span>` : ''}
+                  ${pageCount > 0 ? `<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 ${pageCount} Página(s)</span>` : ''}
+                  ${item.isImportedJson ? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">📂 Recuperado de JSON</span>` : ''}
                 </div>
                 <h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4>
                 <p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ${item.patient_email}` : ''}</p>
@@ -1736,13 +1847,86 @@
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
               <button type="button" onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">
-                ${pageCount > 0 ? '🖨️ Ver / Agregar Examen / Enviar' : '📝 Redactar Exámenes'}
+                ${pageCount > 0 ? '🖨️ Abrir / Imprimir / PDF' : '📝 Redactar Exámenes'}
               </button>
               ${actionBtns}
-              <button type="button" onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>
+              ${!item.isImportedJson ? `<button type="button" onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>` : ''}
             </div>
           </div>`;
       }).join('');
+    }
+
+    // ============================================================================
+    // DESCARGAR JSON Y SUBIR JSON PARA RECREAR EXÁMENES SIN OCUPAR BASE DE DATOS
+    // ============================================================================
+    function downloadFilteredBackup() {
+      const listToExport = filterRecordsByDateAndQuery();
+      if (listToExport.length === 0) {
+        alert('No hay exámenes en la vista actual para descargar.');
+        return;
+      }
+      const exportList = listToExport.map(r => ({
+        numero_dia: r.dailyNumber,
+        codigo: r.code,
+        paciente: r.patient_name,
+        edad: r.patient_age || '',
+        contacto: r.patient_email || '',
+        examen: r.exam_type,
+        estado: r.status,
+        fecha_creacion: r.created_at || new Date().toISOString(),
+        resultados: decompressExamData(r.exam_data_compressed)
+      }));
+
+      const blob = new Blob([JSON.stringify(exportList, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Respaldo_ADESCAS_${getFormattedTodayUpper().replace(/\//g, '-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function handleImportJsonBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed)) {
+            alert('El archivo JSON no tiene el formato de respaldo de ADESCAS.');
+            return;
+          }
+          importedJsonRecords = parsed.map((item, idx) => ({
+            id: 'json-import-' + idx,
+            dailyNumber: item.numero_dia || (idx + 1),
+            code: item.codigo || ('AD-' + (100 + idx)),
+            patient_name: (item.paciente || 'PACIENTE').toUpperCase(),
+            patient_age: item.edad || '',
+            patient_email: item.contacto || '',
+            exam_type: item.examen || 'EXAMEN DE LABORATORIO',
+            status: item.estado || 'delivered',
+            created_at: item.fecha_creacion || new Date().toISOString(),
+            exam_data_compressed: item.resultados ? compressExamData(item.resultados) : null,
+            isImportedJson: true
+          }));
+
+          document.getElementById('json-imported-count').textContent = String(importedJsonRecords.length);
+          document.getElementById('json-imported-banner').classList.remove('hidden');
+          document.getElementById('staff-date-range').value = 'all';
+          renderStaffRecords();
+        } catch (err) {
+          alert('No se pudo leer el archivo JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function clearImportedJsonRecords() {
+      importedJsonRecords = null;
+      document.getElementById('json-imported-banner').classList.add('hidden');
+      renderStaffRecords();
     }
 
     async function handleQuickAddRecord(e) {
@@ -1803,33 +1987,8 @@
       fetchStaffData();
     }
 
-    function downloadDailyBackup() {
-      if (allRecords.length === 0) {
-        alert('No hay exámenes registrados hoy para descargar.');
-        return;
-      }
-      const exportList = allRecords.map(r => ({
-        numero_dia: r.dailyNumber,
-        codigo: r.code,
-        paciente: r.patient_name,
-        edad: r.patient_age || '',
-        contacto: r.patient_email || '',
-        examen: r.exam_type,
-        estado: r.status,
-        resultados: decompressExamData(r.exam_data_compressed)
-      }));
-
-      const blob = new Blob([JSON.stringify(exportList, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Respaldo_ADESCAS_${getFormattedTodayUpper().replace(/\//g, '-')}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
     // ============================================================================
-    // CIERRE DEL DÍA Y LIMPIEZA DE BASE CON CONFIRMACIÓN Y CONTRASEÑA
+    // LIMPIEZA DE BASE CON OPCIÓN DE CONSERVAR SEMANA O MES
     // ============================================================================
     function openCleanDayModal() {
       if (isDoctorReadOnly()) return;
@@ -1843,14 +2002,6 @@
       document.getElementById('clean-auth-password').value = '';
       document.getElementById('clean-confirm-check').checked = false;
       document.getElementById('clean-modal-error').classList.add('hidden');
-
-      const radios = document.getElementsByName('clean-mode');
-      if (deliveredCount === 0) {
-        radios[1].checked = true;
-      } else {
-        radios[0].checked = true;
-      }
-
       document.getElementById('clean-security-modal').classList.remove('hidden');
     }
 
@@ -1865,11 +2016,22 @@
       errBox.classList.add('hidden');
 
       const password = document.getElementById('clean-auth-password').value;
-      const mode = Array.from(document.getElementsByName('clean-mode')).find(r => r.checked)?.value || 'delivered';
-      const deliveredList = allRecords.filter(r => r.status === 'delivered');
+      const mode = Array.from(document.getElementsByName('clean-mode')).find(r => r.checked)?.value || 'older30';
 
-      if (mode === 'delivered' && deliveredList.length === 0) {
-        errBox.textContent = 'No hay exámenes marcados como ENTREGADOS. Seleccione la segunda opción ("TODOS los exámenes actuales del día").';
+      let targetRecords = [];
+      const now = Date.now();
+      if (mode === 'older30') {
+        targetRecords = allRecords.filter(r => new Date(r.created_at).getTime() < (now - 30 * 24 * 60 * 60 * 1000));
+      } else if (mode === 'older7') {
+        targetRecords = allRecords.filter(r => new Date(r.created_at).getTime() < (now - 7 * 24 * 60 * 60 * 1000));
+      } else if (mode === 'delivered') {
+        targetRecords = allRecords.filter(r => r.status === 'delivered');
+      } else {
+        targetRecords = allRecords;
+      }
+
+      if (targetRecords.length === 0) {
+        errBox.textContent = 'No hay ningún examen que cumpla con esa antigüedad o filtro para borrar.';
         errBox.classList.remove('hidden');
         return;
       }
@@ -1890,24 +2052,15 @@
           return;
         }
 
-        const countToDelete = mode === 'delivered' ? deliveredList.length : allRecords.length;
         const todayStr = new Date().toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
-
         await supabaseClient.from('cierres_adesca').insert([{
           fecha: todayStr,
-          total_entregados: countToDelete,
+          total_entregados: targetRecords.length,
           cerrado_por: currentSession.user.email
         }]);
 
-        let delError = null;
-        if (mode === 'delivered') {
-          const { error } = await supabaseClient.from('examenes_adesca').delete().eq('status', 'delivered');
-          delError = error;
-        } else {
-          const ids = allRecords.map(r => r.id);
-          const { error } = await supabaseClient.from('examenes_adesca').delete().in('id', ids);
-          delError = error;
-        }
+        const ids = targetRecords.map(r => r.id);
+        const { error: delError } = await supabaseClient.from('examenes_adesca').delete().in('id', ids);
 
         if (delError) {
           errBox.textContent = 'Error al limpiar: ' + delError.message;
@@ -1917,15 +2070,15 @@
 
         closeCleanDayModal();
         await fetchStaffData();
-        alert(`✅ ¡Base de datos limpiada con éxito! Se eliminaron ${countToDelete} registros.`);
+        alert(`✅ ¡Limpieza completada! Se eliminaron ${targetRecords.length} registros.`);
       } finally {
-        btn.textContent = 'Autorizar y Limpiar Base';
+        btn.textContent = 'Autorizar y Limpiar';
         btn.disabled = false;
       }
     }
 
     // ============================================================================
-    // MOTOR MULTI-PÁGINA / MULTI-EXAMEN + MODO VISOR DOCTORA
+    // MOTOR MULTI-PÁGINA / MULTI-EXAMEN + SOPORTE JSON IMPORTADO
     // ============================================================================
     function createBlankPageObject(templateKey = 'ego') {
       const tpl = EXAM_TEMPLATES[templateKey];
@@ -1951,7 +2104,7 @@
       if (!prof) return;
       const isDoc = prof.role === 'doctora';
 
-      editingRecordId = recordId;
+      editingRecordId = (recordId && !String(recordId).startsWith('json-import-')) ? recordId : null;
       document.getElementById('exam-modal').classList.remove('hidden');
 
       const leftCol = document.getElementById('editor-left-col');
@@ -1984,7 +2137,8 @@
       currentRecordStampOwner = prof.stampKey !== 'none' ? prof.stampKey : 'pineda';
 
       if (recordId) {
-        const rec = allRecords.find(r => r.id === recordId);
+        const sourceList = getActiveSourceList();
+        const rec = sourceList.find(r => r.id === recordId);
         if (rec) {
           document.getElementById('ed-patient-name').value = rec.patient_name || '';
           document.getElementById('ed-patient-age').value = rec.patient_age || '';
@@ -2179,7 +2333,10 @@
     }
 
     // ============================================================================
-    // RENDERIZADO DE BOLETAS OFICIALES CON MÁRGENES GARANTIZADOS AL 100%
+    // RENDERIZADO DE BOLETAS OFICIALES:
+    // - Logo ADESCAS completo sin cortar la "o"
+    // - Código QR GRANDE (74x74px) para fácil escaneo con cámara
+    // - Sello Digital con salto de línea (Enter) y letra más chica a un lado
     // ============================================================================
     function buildSinglePageHTML(pageObj, pageIndex, totalPages, forceDigitalStamp = null) {
       const rawName = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
@@ -2198,7 +2355,7 @@
         s: sealCode
       }));
       const verifyUrl = `${window.location.origin}/?verificar=${tokenPayload}`;
-      const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=2&data=${encodeURIComponent(verifyUrl)}`;
+      const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=${encodeURIComponent(verifyUrl)}`;
 
       const useDigitalStamp = forceDigitalStamp !== null
         ? forceDigitalStamp
@@ -2209,18 +2366,18 @@
 
       const headerHTML = `
         <div style="width:100%;">
-          <div style="border-bottom: 2px solid #1b3b6f; padding-bottom: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="border-bottom: 2px solid #1b3b6f; padding-bottom: 6px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
             <div style="flex-shrink: 0;">
-              <img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height: 54px; width: auto; display: block;" />
+              <img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height: 52px; width: auto; display: block;" />
             </div>
             <div style="text-align: center; flex: 1;">
-              <h1 style="font-size: 16px; font-weight: 900; color: #1b3b6f; margin: 0; line-height: 1.15;">LABORATORIO CLINICO “ADESCAS”</h1>
-              <p style="font-size: 10.5px; font-weight: 700; color: #1e293b; margin: 2px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p>
-              <p style="font-size: 10px; color: #334155; margin: 1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p>
-              <p style="font-size: 10.5px; font-weight: 800; color: #0f172a; margin: 1px 0 0 0;">Tel: 2413-4125 &nbsp;&nbsp;&nbsp;&nbsp; WhatsApp: 7895-5220</p>
+              <h1 style="font-size: 15.5px; font-weight: 900; color: #1b3b6f; margin: 0; line-height: 1.15;">LABORATORIO CLINICO “ADESCAS”</h1>
+              <p style="font-size: 10px; font-weight: 700; color: #1e293b; margin: 1px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p>
+              <p style="font-size: 9.5px; color: #334155; margin: 1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p>
+              <p style="font-size: 10px; font-weight: 800; color: #0f172a; margin: 1px 0 0 0;">Tel: 2413-4125 &nbsp;&nbsp;&nbsp;&nbsp; WhatsApp: 7895-5220</p>
             </div>
           </div>
-          <table class="print-table" style="margin-bottom: 10px;">
+          <table class="print-table" style="margin-bottom: 6px;">
             <tr>
               <td style="width: 52%;"><strong>NOMBRE:</strong> ${rawName}</td>
               <td style="width: 20%;"><strong>EDAD:</strong> ${age}</td>
@@ -2233,7 +2390,7 @@
 
       if (tpl.layout === 'ego') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">EXAMEN GENERAL DE ORINA</h2>
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">EXAMEN GENERAL DE ORINA</h2>
           <table class="print-table">
             <thead>
               <tr><th colspan="2">EXAMEN FISICO - QUIMICO</th><th colspan="2">EXAMEN MICROSCOPICO</th></tr>
@@ -2255,8 +2412,8 @@
           </table>`;
       } else if (tpl.layout === 'egh') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">EXAMEN GENERAL DE HECES</h2>
-          <table class="print-table" style="margin-bottom:8px;">
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">EXAMEN GENERAL DE HECES</h2>
+          <table class="print-table" style="margin-bottom:5px;">
             <tbody>
               <tr><td><strong>COLOR:</strong> ${formatResultValue(f.color)}</td><td><strong>LEVADURAS:</strong> ${formatResultValue(f.levaduras)}</td></tr>
               <tr><td><strong>CONSISTENCIA:</strong> ${formatResultValue(f.consistencia)}</td><td><strong>LEUCOCITOS:</strong> ${formatResultValue(f.leucocitos)}</td></tr>
@@ -2274,7 +2431,7 @@
           </table>`;
       } else if (tpl.layout === 'hemograma') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">HEMOGRAMA</h2>
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">HEMOGRAMA</h2>
           <table class="print-table">
             <tbody>
               <tr><td><strong>GLOBULOS ROJOS</strong></td><td>${formatResultValue(f.gr)}</td><td><strong>GLOBULOS BLANCOS</strong></td><td>${formatResultValue(f.gb)}</td></tr>
@@ -2289,7 +2446,7 @@
           </table>`;
       } else if (tpl.layout === 'quimica') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">QUIMICA SANGUINEA</h2>
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">QUIMICA SANGUINEA</h2>
           <table class="print-table">
             <thead>
               <tr>
@@ -2321,7 +2478,7 @@
           }
         }
         bodyHTML = `
-          <table class="print-table" style="margin-bottom:8px;">
+          <table class="print-table" style="margin-bottom:5px;">
             <tr>
               <td><strong>MUESTRA:</strong> ${f.muestra}</td>
               <td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)} &nbsp;|&nbsp; <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td>
@@ -2334,16 +2491,16 @@
           </table>`;
       } else if (tpl.layout === 'frotis') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:8px; text-decoration:underline;">FROTIS DE SANGRE PERIFERICA</h2>
-          <div style="border: 1.5px solid #0f172a; padding: 12px; font-size: 12px; line-height: 1.6;">
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:6px; text-decoration:underline;">FROTIS DE SANGRE PERIFERICA</h2>
+          <div style="border: 1.5px solid #0f172a; padding: 10px; font-size: 11.5px; line-height: 1.5;">
             <p><strong>LINEA ROJA:</strong> ${formatResultValue(f.roja)}</p>
             <p><strong>LINEA BLANCA:</strong> ${formatResultValue(f.blanca)}</p>
             <p><strong>LINEA PLAQUETARIA:</strong> ${formatResultValue(f.plaquetaria)}</p>
           </div>`;
       } else if (tpl.layout === 'hcg_cuant') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2>
-          <p style="font-size:12px; margin-bottom:6px;"><strong>MUESTRA:</strong> ${f.muestra} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>RESULTADO:</strong> <span style="font-weight:900; color:#163a70;">${formatResultValue(f.resultado)}</span></p>
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2>
+          <p style="font-size:11.5px; margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>RESULTADO:</strong> <span style="font-weight:900; color:#163a70;">${formatResultValue(f.resultado)}</span></p>
           <table class="print-table">
             <tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr>
             <tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr>
@@ -2354,9 +2511,9 @@
           </table>`;
       } else if (tpl.layout === 'espermograma_oms') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:4px; text-decoration:underline;">ESPERMOGRAMA</h2>
-          <p style="font-size:11px; margin-bottom:6px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p>
-          <table class="print-table" style="margin-bottom:6px;">
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">ESPERMOGRAMA</h2>
+          <p style="font-size:10.5px; margin-bottom:4px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p>
+          <table class="print-table" style="margin-bottom:5px;">
             <thead><tr><th>MACROSCOPICOS</th><th>RESULTADO</th><th>REFERENCIA</th><th>MOVILIDAD / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr></thead>
             <tbody>
               <tr><td>COLOR / ASPECTO</td><td>${f.color} / ${f.aspecto}</td><td>BLANQ / OPAL</td><td>PROGRESIVA (PR) / (NP)</td><td>${f.mov_pr} / ${f.mov_np}</td><td>PR ≥ 32%</td></tr>
@@ -2364,7 +2521,7 @@
               <tr><td>LICUEF. / VISCOS.</td><td>${f.licuefaccion} / ${f.viscosidad}</td><td>NORMAL</td><td>VIVOS / MUERTOS</td><td>${f.vivos} / ${f.muertos}</td><td>≥ 58%</td></tr>
             </tbody>
           </table>
-          <div style="border: 1.5px solid #0f172a; padding: 8px; font-size: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div style="border: 1.4px solid #0f172a; padding: 6px; font-size: 10.5px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
             <div>
               <p><strong>MILLONES x ml:</strong> ${f.millones_ml} (Total: ${f.total_eyaculado})</p>
               <p><strong>MORFOLOGIA NORMAL / ANORMAL:</strong> ${f.morf_normal} / ${f.morf_anormal}</p>
@@ -2376,9 +2533,9 @@
           </div>`;
       } else if (tpl.layout === 'espermograma_3h') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:4px; text-decoration:underline;">ESPERMOGRAMA</h2>
-          <p style="font-size:11px; margin-bottom:6px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p>
-          <table class="print-table" style="margin-bottom:6px;">
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">ESPERMOGRAMA</h2>
+          <p style="font-size:10.5px; margin-bottom:4px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p>
+          <table class="print-table" style="margin-bottom:5px;">
             <thead><tr><th>MOVILIDAD (1H / 2H / 3H)</th><th>A LA HORA</th><th>A LAS 2 HORAS</th><th>A LAS 3 HORAS</th></tr></thead>
             <tbody>
               <tr><td>RAPIDOS / LENTOS</td><td>${f.rap_1h} / ${f.len_1h}</td><td>${f.rap_2h} / ${f.len_2h}</td><td>${f.rap_3h} / ${f.len_3h}</td></tr>
@@ -2386,25 +2543,25 @@
               <tr><td>MORFOLOGIA (NORM / ANORM)</td><td>${f.nor_1h} / ${f.ano_1h}</td><td>${f.nor_2h} / ${f.ano_2h}</td><td>${f.nor_3h} / ${f.ano_3h}</td></tr>
             </tbody>
           </table>
-          <p style="font-size:11px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
+          <p style="font-size:10.5px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
       } else if (tpl.layout === 'misc_muestra') {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:8px; text-decoration:underline;">${tpl.title}</h2>
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:6px; text-decoration:underline;">${tpl.title}</h2>
           <table class="print-table">
             <tr>
               <td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td>
               <td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td>
             </tr>
             <tr>
-              <td colspan="2" style="padding: 10px 8px; font-size: 13px;">
+              <td colspan="2" style="padding: 8px; font-size: 12.5px;">
                 <strong>RESULTADO:</strong> &nbsp; <span style="font-weight:900; color:#163a70;">${formatResultValue(f.resultado)}</span>
               </td>
             </tr>
           </table>`;
       } else {
         bodyHTML = `
-          <h2 style="text-align:center; font-weight:900; font-size:13px; color:#163a70; margin-bottom:6px; text-decoration:underline;">${examTitle}</h2>
-          ${f.subtitleMuestra ? `<p style="font-size:11px; font-weight:bold; margin-bottom:6px;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}
+          <h2 style="text-align:center; font-weight:900; font-size:12px; color:#163a70; margin-bottom:4px; text-decoration:underline;">${examTitle}</h2>
+          ${f.subtitleMuestra ? `<p style="font-size:10.5px; font-weight:bold; margin-bottom:4px;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}
           <table class="print-table">
             <thead><tr><th style="width:38%;">EXAMENES</th><th style="width:27%;">RESULTADO</th><th style="width:35%;">VALOR NORMAL</th></tr></thead>
             <tbody>
@@ -2418,31 +2575,32 @@
           </table>`;
       }
 
-      // BLOQUE DE SELLOS OFICIALES CON IMÁGENES DATA-URI FIJAS
       let stampsBlock = '';
       if (useDigitalStamp) {
         stampsBlock = `
-          <div style="display:flex; align-items:center; justify-content:flex-end; gap:14px; flex-shrink:0;">
-            <img src="${SELLO_LAB_URI}" alt="Sello Lab ADESCAS" style="height:78px; width:auto; object-fit:contain;" />
+          <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-shrink:0;">
+            <img src="${SELLO_LAB_URI}" alt="Sello Lab ADESCAS" style="height:72px; width:auto; object-fit:contain;" />
             ${getLicenciadoStampHTML(activeStampKey)}
           </div>`;
       } else {
         stampsBlock = `
-          <div style="display:flex; align-items:flex-end; gap:20px; padding-top:34px; flex-shrink:0;">
-            <div style="width:145px; border-top:1.5px solid #0f172a; padding-top:3px; text-align:center; font-weight:bold; font-size:9.5px;">SELLO DEL LABORATORIO</div>
-            <div style="width:175px; border-top:1.5px solid #0f172a; padding-top:3px; text-align:center; font-weight:bold; font-size:9.5px;">FIRMA Y SELLO DEL LICENCIADO(A)</div>
+          <div style="display:flex; align-items:flex-end; gap:18px; padding-top:30px; flex-shrink:0;">
+            <div style="width:135px; border-top:1.4px solid #0f172a; padding-top:2px; text-align:center; font-weight:bold; font-size:9px;">SELLO DEL LABORATORIO</div>
+            <div style="width:165px; border-top:1.4px solid #0f172a; padding-top:2px; text-align:center; font-weight:bold; font-size:9px;">FIRMA Y SELLO DEL LICENCIADO(A)</div>
           </div>`;
       }
 
+      // PIE DE BOLETA CON QR MÁS GRANDE (74x74px) Y TEXTO DE SELLO DIGITAL MÁS PEQUEÑO Y CON SALTO DE LÍNEA (ENTER)
       const footerHTML = `
         <div style="width:100%;">
-          ${obs && tpl.layout !== 'ego' ? `<p style="font-size:11px; margin-top:6px;"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</p>` : ''}
-          <div style="margin-top:10px; padding-top:8px; border-top:1.5px solid #cbd5e1; display:flex; align-items:center; justify-content:space-between; gap:10px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <img src="${qrImgUrl}" alt="QR" style="width:48px; height:48px; border:1px solid #cbd5e1; padding:2px; border-radius:4px; background:#fff; flex-shrink:0;" crossorigin="anonymous" onerror="this.style.display='none'" />
-              <div style="font-size:8.5px; color:#334155; line-height:1.25; max-width:240px;">
-                <p style="font-weight:900; color:#1b3b6f; margin:0;">SELLO DIGITAL: <span style="font-family:monospace;">${sealCode}</span> ${totalPages > 1 ? `• Pág. ${pageIndex + 1}/${totalPages}` : ''}</p>
-                <p style="margin:2px 0 0 0; font-weight:700; color:#0f172a;">Documento oficial de Laboratorio Clínico "ADESCAS" (Ahuachapán). Cualquier alteración anula su validez legal.</p>
+          ${obs && tpl.layout !== 'ego' ? `<p style="font-size:10px; margin-top:4px;"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</p>` : ''}
+          <div style="margin-top:6px; padding-top:6px; border-top:1.4px solid #cbd5e1; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="${qrImgUrl}" alt="QR" style="width:74px; height:74px; border:1px solid #94a3b8; padding:2px; border-radius:4px; background:#ffffff; flex-shrink:0; image-rendering:pixelated;" crossorigin="anonymous" onerror="this.style.display='none'" />
+              <div style="font-size:7.2px; color:#475569; line-height:1.25; max-width:185px; padding-left:2px;">
+                <p style="font-weight:900; font-size:7.5px; color:#1b3b6f; margin:0;">SELLO DIGITAL:</p>
+                <p style="font-family:monospace; font-weight:900; font-size:8px; color:#0f172a; margin:1px 0 4px 0;">${sealCode} ${totalPages > 1 ? `(${pageIndex + 1}/${totalPages})` : ''}</p>
+                <p style="margin:0; font-weight:600; color:#334155;">Documento oficial emitido por Laboratorio Clínico "ADESCAS" (Ahuachapán). Cualquier alteración anula su validez legal.</p>
               </div>
             </div>
             ${stampsBlock}
@@ -2450,9 +2608,9 @@
         </div>`;
 
       return `
-        <div class="exam-sheet-page" style="padding: 18px 22px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff;">
+        <div class="exam-sheet-page" style="padding: 14px 18px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff;">
           ${headerHTML}
-          <div style="margin: 6px 0;">${bodyHTML}</div>
+          <div style="margin: 4px 0;">${bodyHTML}</div>
           ${footerHTML}
         </div>`;
     }
@@ -2475,7 +2633,7 @@
     }
 
     // ============================================================================
-    // GUARDAR, IMPRIMIR Y GENERAR PDF DIRECTO CON JSPDF SIN RECORTES NI BUGS EN PC
+    // GUARDAR, IMPRIMIR (1 EXAMEN EN LA MITAD DE CADA HOJA) Y EXPORTAR PDF
     // ============================================================================
     async function saveCompressedExam() {
       const prof = getCurrentProfile();
@@ -2488,6 +2646,8 @@
         alert('Por favor ingrese el nombre del paciente.');
         return false;
       }
+
+      // Si estamos viendo un JSON importado y el licenciado solo quiere imprimir/PDF, permitirlo sin forzar subida si no quiere
       const age = document.getElementById('ed-patient-age').value.trim().toUpperCase();
       const email = document.getElementById('ed-patient-email').value.trim();
       const phone = document.getElementById('ed-patient-phone').value.trim();
@@ -2520,7 +2680,7 @@
             exam_data_compressed: compressedPayload,
             updated_at: getCurrentTime()
           }).eq('id', editingRecordId);
-        } else {
+        } else if (importedJsonRecords === null) {
           const randomCode = 'AD-' + Math.floor(100 + Math.random() * 900);
           const { data } = await supabaseClient.from('examenes_adesca').insert([{
             code: randomCode,
@@ -2535,17 +2695,17 @@
           if (data && data[0]) editingRecordId = data[0].id;
         }
 
-        btn.textContent = '✅ Guardado';
-        await fetchStaffData();
+        btn.textContent = '✅ Listo';
+        if (importedJsonRecords === null) await fetchStaffData();
         return true;
       } catch (err) {
         alert('Error al guardar: ' + (err.message || err));
         return false;
       } finally {
         setTimeout(() => {
-          btn.textContent = '💾 1. Guardar Todo';
+          btn.textContent = '💾 1. Guardar en Base';
           btn.disabled = false;
-        }, 1200);
+        }, 1000);
       }
     }
 
@@ -2559,8 +2719,8 @@
       window.print();
     }
 
-    // MOTOR DE EXPORTACIÓN DIGITAL CON COORDENADAS EXACTAS EN LA ESQUINA (0,0)
-    // Garantiza que en PC y Celular jamás salga cortado a la izquierda ni encogido
+    // MOTOR DE EXPORTACIÓN PDF E IMAGEN:
+    // En modo "half" (Mitad de Página Carta) coloca 1 examen en la MITAD SUPERIOR de CADA página Carta
     async function generatePerfectPDFAndClipboard(name) {
       document.getElementById('toggle-digital-stamp').checked = true;
       updateLivePreview();
@@ -2568,22 +2728,22 @@
       const cleanFileName = `Resultados_ADESCAS_${name.replace(/\s+/g, '_')}.pdf`;
       lastGeneratedPdfName = cleanFileName;
 
-      // Crear contenedor temporal en (0,0) de 820px exactos para que html2canvas no recorte el lado izquierdo
       const tempStage = document.createElement('div');
-      tempStage.style.cssText = "position:fixed; top:0; left:0; width:820px; padding:20px; background:#ffffff; z-index:99999; pointer-events:none;";
+      tempStage.style.cssText = "position:fixed; top:0; left:0; width:820px; padding:16px; background:#ffffff; z-index:99999; pointer-events:none;";
       tempStage.innerHTML = buildAllPagesHTML(true);
       document.body.appendChild(tempStage);
 
       try {
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 250));
         const sheetNodes = Array.from(tempStage.querySelectorAll('.exam-sheet-page'));
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-        const sizeMode = document.getElementById('print-size-mode').value; // 'half' (2 por hoja) o 'full'
+        const sizeMode = document.getElementById('print-size-mode').value;
 
         let firstCanvas = null;
 
         for (let i = 0; i < sheetNodes.length; i++) {
+          if (i > 0) pdf.addPage(); // Cada examen va en su propia página
           const node = sheetNodes[i];
           const canvas = await html2canvas(node, {
             scale: 2,
@@ -2598,31 +2758,32 @@
           const imgData = canvas.toDataURL('image/jpeg', 0.98);
           const pageW = 215.9; // Ancho Carta en mm
           const marginX = 10;
-          const usableW = pageW - (marginX * 2); // 195.9 mm de ancho completo
+          const usableW = pageW - (marginX * 2);
           const propH = (canvas.height * usableW) / canvas.width;
 
           if (sizeMode === 'half') {
-            // 2 exámenes por página Carta (Mitad superior y Mitad inferior)
-            const slot = i % 2;
-            if (i > 0 && slot === 0) pdf.addPage();
-            const startY = slot === 0 ? 8 : 144;
-            const maxH = 126;
-            const finalH = Math.min(propH, maxH);
-            pdf.addImage(imgData, 'JPEG', marginX, startY, usableW, finalH);
-            if (slot === 0) {
-              pdf.setDrawColor(160, 160, 160);
-              pdf.setLineDashPattern([2, 2], 0);
-              pdf.line(marginX, 139, pageW - marginX, 139);
+            // 1 Examen ubicado en la MITAD SUPERIOR de cada hoja Carta (máximo 130mm de alto)
+            const maxHalfH = 130;
+            let drawW = usableW;
+            let drawH = propH;
+            if (drawH > maxHalfH) {
+              const ratio = maxHalfH / drawH;
+              drawH = maxHalfH;
+              drawW = usableW * ratio;
             }
+            const centeredX = (pageW - drawW) / 2;
+            pdf.addImage(imgData, 'JPEG', centeredX, 6, drawW, drawH);
+            // Línea punteada a mitad de página (139.7 mm) para corte de media carta
+            pdf.setDrawColor(150, 150, 150);
+            pdf.setLineDashPattern([2, 2], 0);
+            pdf.line(8, 139.7, pageW - 8, 139.7);
           } else {
-            // 1 examen grande por página Carta
-            if (i > 0) pdf.addPage();
+            // Página completa
             const finalH = Math.min(propH, 258);
             pdf.addImage(imgData, 'JPEG', marginX, 10, usableW, finalH);
           }
         }
 
-        // Copiar imagen nítida al portapapeles para pegar con Ctrl+V en Gmail o WhatsApp
         if (firstCanvas && navigator.clipboard && window.ClipboardItem) {
           try {
             const blob = await new Promise(res => firstCanvas.toBlob(res, 'image/png'));
@@ -2752,7 +2913,7 @@
 
     supabaseClient.channel('realtime-adesca')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'examenes_adesca' }, () => {
-        if (currentSession) fetchStaffData();
+        if (currentSession && importedJsonRecords === null) fetchStaffData();
       })
       .subscribe();
   </script>
