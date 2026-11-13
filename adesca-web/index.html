@@ -1901,7 +1901,7 @@
       btn.textContent = 'Preparando...'; btn.disabled = true;
       try { await generatePerfectPDFAndClipboard(name); }
       finally { btn.textContent = '💬 5. WhatsApp'; btn.disabled = false; }
-      const msg = `🏥 *LABORATORIO CLÍNICO "ADESCAS"*\nEstimado(a) *${name}*, le enviamos el reporte oficial de sus estudios (${examPages.length} examen(es)): *${examTitle}*.`;
+      const msg = `*LABORATORIO CLÍNICO "ADESCAS"*\nEstimado(a) *${name}*, le enviamos el reporte oficial de sus estudios (${examPages.length} examen(es)): *${examTitle}*.`;
       document.getElementById('send-platform-name').textContent = 'WhatsApp';
       document.getElementById('send-btn-platform').textContent = 'WhatsApp';
       document.getElementById('send-final-link').href = `https://wa.me/${phoneRaw}?text=${encodeURIComponent(msg)}`;
