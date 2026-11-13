@@ -14,7 +14,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', Arial, sans-serif; }
     @media print {
       html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
       body * { visibility: hidden !important; }
@@ -36,10 +36,32 @@
       .no-print { display: none !important; }
       @page { size: letter portrait; margin: 4mm; }
     }
-    .exam-sheet-page { width: 100%; box-sizing: border-box; background: #fff; color: #0f172a; }
+    .exam-sheet-page { width: 100%; box-sizing: border-box; background: #fff; color: #0f172a; font-family: Arial, Helvetica, sans-serif; }
     .print-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    .print-table th, .print-table td { border: 1.4px solid #0f172a; padding: 2.5px 6px; font-size: 10.5px; line-height: 1.18; color: #0f172a; word-wrap: break-word; overflow-wrap: break-word; }
-    .print-table th { background: #f1f5f9; font-weight: 800; text-transform: uppercase; }
+    .print-table th, .print-table td {
+      border: 1.4px solid #0f172a;
+      padding: 3.5px 6px;
+      font-size: 10.5px;
+      line-height: 1.3;
+      vertical-align: middle;
+      color: #0f172a;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    .print-table th { background: #f1f5f9; font-weight: 800; text-transform: uppercase; text-align: left; }
+    /* Compensación exacta para evitar que html2canvas baje las letras al exportar a WhatsApp/PDF */
+    .html2canvas-stage .print-table th,
+    .html2canvas-stage .print-table td {
+      padding-top: 1px !important;
+      padding-bottom: 6px !important;
+      line-height: 1.25 !important;
+      vertical-align: middle !important;
+    }
+    .html2canvas-stage h1,
+    .html2canvas-stage h2,
+    .html2canvas-stage p {
+      transform: translateY(-2px);
+    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
@@ -139,7 +161,7 @@
 
       <div id="doctor-welcome-banner" class="hidden bg-blue-50 border-2 border-[#163a70] rounded-2xl p-4">
         <h3 class="text-sm font-extrabold text-[#163a70]">👩‍⚕️ Modo Consulta Médica — Dra. Sandoval (Solo Lectura)</h3>
-        <p class="text-xs text-slate-600">Puede ver los pacientes separados por día (iniciando desde el #1 en cada fecha) o buscar al paciente por nombre.</p>
+        <p class="text-xs text-slate-600">Cada paciente muestra si es <strong>🏥 EXAMEN DE ADESCA</strong> o <strong>👤 EXAMEN PARTICULAR</strong>. Presione <strong>"👁️ Ver Resultados"</strong> para abrir la boleta.</p>
       </div>
 
       <div id="window-alert" class="hidden bg-rose-600 text-white rounded-2xl p-4 shadow-lg flex items-center justify-between">
@@ -171,6 +193,14 @@
                   <label class="block text-[10px] font-bold uppercase text-emerald-700 mb-1">Teléfono / WA</label>
                   <input id="quick-patient-phone" type="tel" placeholder="7895-5220" class="w-full px-2.5 py-2 rounded-xl border border-emerald-300 text-xs font-semibold" />
                 </div>
+              </div>
+              <!-- NUEVA OPCIÓN: EXAMEN DE ADESCA O EXAMEN PARTICULAR -->
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-[#163a70] mb-1">Tipo de Procedencia (Para Dra. Sandoval)</label>
+                <select id="quick-origin-type" class="w-full px-3 py-2 rounded-xl border-2 border-blue-200 text-xs font-extrabold text-[#163a70] bg-blue-50/50">
+                  <option value="EXAMEN DE ADESCA">🏥 EXAMEN DE ADESCA</option>
+                  <option value="EXAMEN PARTICULAR">👤 EXAMEN PARTICULAR</option>
+                </select>
               </div>
               <div>
                 <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Estudio(s) Realizado(s)</label>
@@ -319,7 +349,7 @@
     <div class="max-w-lg w-full bg-white rounded-2xl shadow-2xl border-2 border-emerald-500 overflow-hidden">
       <div class="bg-emerald-600 text-white px-5 py-4">
         <h3 class="text-base font-extrabold">✅ ¡Reporte Oficial Listo con Sellos y Firma!</h3>
-        <p class="text-xs text-emerald-100 mt-0.5">Se descargó el PDF y se copió la imagen al portapapeles</p>
+        <p class="text-xs text-emerald-100 mt-0.5">Se descargó el PDF y se copió la imagen perfectamente alineada al portapapeles</p>
       </div>
       <div class="p-5 space-y-4 text-xs text-slate-700">
         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2">
@@ -339,9 +369,13 @@
   <div id="exam-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm overflow-y-auto p-1.5 sm:p-4 no-print">
     <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-1 sm:my-2">
       <div class="bg-[#163a70] text-white px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 id="modal-header-title" class="text-sm sm:text-lg font-extrabold">Redactor Multi-Examen — Laboratorio Clínico "ADESCAS"</h2>
-          <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Mitad de Página Carta (1 Examen en la mitad superior de cada hoja) • QR Grande + Sellos</p>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div>
+            <h2 id="modal-header-title" class="text-sm sm:text-lg font-extrabold">Redactor Multi-Examen — Laboratorio Clínico "ADESCAS"</h2>
+            <p id="modal-header-subtitle" class="text-[10px] sm:text-[11px] text-blue-200">Mitad de Página Carta (1 Examen en la mitad superior de cada hoja) • QR Grande + Sellos</p>
+          </div>
+          <!-- INSIGNIA DE PROCEDENCIA PARA LA DOCTORA SANDOVAL (SOLO EN VISOR, NO SALE EN EL EXAMEN ORIGINAL) -->
+          <span id="modal-origin-badge" class="hidden px-3 py-1 rounded-full text-xs font-black shadow-sm"></span>
         </div>
         <button type="button" onclick="closeExamEditor()" class="bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg text-xs font-bold">✕ Cerrar</button>
       </div>
@@ -384,14 +418,24 @@
                 <input id="ed-patient-phone" type="tel" placeholder="Ej. 7895-5220" class="w-full px-2.5 py-1.5 rounded-lg border border-emerald-300 text-xs font-semibold" />
               </div>
             </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-600">ESTADO EN WEB:</label>
-              <select id="ed-status" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-emerald-700">
-                <option value="ready">✅ LISTO (Verde)</option>
-                <option value="processing">⏳ EN PROCESO</option>
-                <option value="delivered">✔️ ENTREGADO</option>
-              </select>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-[#163a70]">PROCEDENCIA (INTERNO):</label>
+                <select id="ed-origin-type" class="w-full px-2 py-1.5 rounded-lg border-2 border-blue-200 text-xs font-extrabold text-[#163a70] bg-blue-50/40">
+                  <option value="EXAMEN DE ADESCA">🏥 EXAMEN DE ADESCA</option>
+                  <option value="EXAMEN PARTICULAR">👤 EXAMEN PARTICULAR</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600">ESTADO EN WEB:</label>
+                <select id="ed-status" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-emerald-700">
+                  <option value="ready">✅ LISTO (Verde)</option>
+                  <option value="processing">⏳ EN PROCESO</option>
+                  <option value="delivered">✔️ ENTREGADO</option>
+                </select>
+              </div>
             </div>
+            <p class="text-[9.5px] text-slate-400">🔒 La etiqueta "Examen de ADESCA / Particular" solo la ve la Dra. Sandoval y el personal en el panel, jamás sale impresa en la boleta.</p>
           </div>
 
           <div class="bg-blue-50/70 p-3.5 rounded-xl border-2 border-[#163a70] space-y-2">
@@ -671,10 +715,27 @@
       card.innerHTML = `<div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">✕</div><h3 class="text-lg font-black text-rose-700 uppercase">Alerta: Documento No Válido o Alterado</h3><p class="text-xs text-slate-600">El sello no coincide con los registros oficiales de Laboratorio Clínico "ADESCAS".</p><button type="button" onclick="window.history.replaceState({}, '', window.location.pathname); document.getElementById('qr-verification-modal').classList.add('hidden');" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs">Cerrar</button>`;
     }
 
+    // Texto limpio sin cajas <span> con bordes ni paddings que desalineen html2canvas en WhatsApp
     function formatResultValue(val) {
       const str = String(val || '');
-      if (str.includes('*')) return `<span style="font-weight:900;color:#be123c;background:#fff1f2;padding:1px 4px;border-radius:4px;border:1px solid #fda4af;">${str} <span style="font-size:8px;text-transform:uppercase;">[CONTROLADO]</span></span>`;
+      if (str.includes('*')) return `<strong style="font-weight:900;color:#be123c;">${str} [CONTROLADO]</strong>`;
       return str;
+    }
+
+    // Funciones auxiliares para guardar y leer la procedencia (EXAMEN DE ADESCA vs EXAMEN PARTICULAR)
+    // sin alterar en absoluto la boleta impresa ni necesitar nuevas columnas en Supabase
+    function extractOriginAndCleanContact(contactStr, savedObj) {
+      if (savedObj && savedObj.originType) {
+        const cleanC = (contactStr || '').split('|').map(s => s.trim()).filter(s => s !== 'EXAMEN PARTICULAR' && s !== 'EXAMEN DE ADESCA').join(' | ');
+        return { origin: savedObj.originType, cleanContact: cleanC };
+      }
+      const raw = contactStr || '';
+      if (raw.includes('EXAMEN PARTICULAR')) {
+        const cleanC = raw.split('|').map(s => s.trim()).filter(s => s !== 'EXAMEN PARTICULAR' && s !== 'EXAMEN DE ADESCA').join(' | ');
+        return { origin: 'EXAMEN PARTICULAR', cleanContact: cleanC };
+      }
+      const cleanC = raw.split('|').map(s => s.trim()).filter(s => s !== 'EXAMEN PARTICULAR' && s !== 'EXAMEN DE ADESCA').join(' | ');
+      return { origin: 'EXAMEN DE ADESCA', cleanContact: cleanC };
     }
 
     const SUPABASE_URL = "https://cdacldhkhfmlmwbizinu.supabase.co";
@@ -990,7 +1051,6 @@
       return { key, label: `📅 ${longDate}`, isToday: false };
     }
 
-    // NUMERACIÓN POR DÍA: CADA FECHA EMPIEZA EN #1 HASTA LOS QUE LLEGUEN ESE DÍA
     async function fetchStaffData() {
       if (!currentSession) return;
       const { data: exams } = await supabaseClient.from('examenes_adesca').select('*').order('created_at', { ascending: true });
@@ -1058,7 +1118,6 @@
         return;
       }
 
-      // Agrupar visualmente por día mostrando en cada día del #1 en adelante (o en orden de llegada)
       const groupsMap = new Map();
       filtered.forEach(item => {
         const info = item.dayKey ? { key: item.dayKey, label: item.dayHeaderLabel, isToday: item.isTodayRecord } : getDayKeyAndLabel(item.created_at);
@@ -1070,7 +1129,6 @@
 
       let htmlOut = '';
       groupsMap.forEach((group) => {
-        // Ordenar dentro de cada día desde el #1 hacia arriba (1, 2, 3...) para que se vea claro del 1 hasta donde lleguen
         const sortedDayItems = group.items.slice().sort((a, b) => (a.dailyNumber || 1) - (b.dailyNumber || 1));
 
         htmlOut += `
@@ -1093,8 +1151,13 @@
           const pageCount = savedObj?.pages?.length || (savedObj ? 1 : 0);
           const dateBadge = savedObj?.examDate || formatShortDate(item.created_at);
 
+          const { origin, cleanContact } = extractOriginAndCleanContact(item.patient_email, savedObj);
+          const originBadge = origin === 'EXAMEN PARTICULAR'
+            ? `<span class="text-[10.5px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300 px-2.5 py-0.5 rounded-full">👤 EXAMEN PARTICULAR</span>`
+            : `<span class="text-[10.5px] font-extrabold bg-blue-100 text-[#163a70] border border-blue-300 px-2.5 py-0.5 rounded-full">🏥 EXAMEN DE ADESCA</span>`;
+
           if (isDoc) {
-            return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-blue-50/40 border-b border-slate-100"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${statusTag}</div><h4 class="font-extrabold text-slate-900 mt-1 text-base">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-semibold">Estudio(s): ${item.exam_type}</p></div></div><div>${pageCount > 0 ? `<button type="button" onclick="openExamEditor('${item.id}')" class="w-full sm:w-auto bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow">👁️ Ver Resultados (${pageCount})</button>` : `<span class="text-xs text-slate-400 italic">Pendiente de digitación</span>`}</div></div>`;
+            return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-blue-50/40 border-b border-slate-100"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${originBadge}${statusTag}</div><h4 class="font-extrabold text-slate-900 mt-1 text-base">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-semibold">Estudio(s): ${item.exam_type}</p></div></div><div>${pageCount > 0 ? `<button type="button" onclick="openExamEditor('${item.id}')" class="w-full sm:w-auto bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow">👁️ Ver Resultados (${pageCount})</button>` : `<span class="text-xs text-slate-400 italic">Pendiente de digitación</span>`}</div></div>`;
           }
 
           let actionBtns = '';
@@ -1103,7 +1166,7 @@
             else if (item.status === 'ready' || item.status === 'requested') actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'delivered')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Entregado</button>`;
           }
 
-          return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 border-b border-slate-100"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl ${group.isToday ? 'bg-[#163a70]' : 'bg-slate-600'} text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${statusTag}${pageCount > 0 ? `<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 ${pageCount} Pág.</span>` : ''}${item.isImportedJson ? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">📂 JSON</span>` : ''}</div><h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ${item.patient_email}` : ''}</p></div></div><div class="flex flex-wrap items-center gap-1.5"><button type="button" onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">${pageCount > 0 ? '🖨️ Abrir / Imprimir / PDF' : '📝 Redactar Exámenes'}</button>${actionBtns}${!item.isImportedJson ? `<button type="button" onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>` : ''}</div></div>`;
+          return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 border-b border-slate-100"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl ${group.isToday ? 'bg-[#163a70]' : 'bg-slate-600'} text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${originBadge}${statusTag}${pageCount > 0 ? `<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 ${pageCount} Pág.</span>` : ''}${item.isImportedJson ? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">📂 JSON</span>` : ''}</div><h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-medium">${item.exam_type} ${cleanContact ? `• ${cleanContact}` : ''}</p></div></div><div class="flex flex-wrap items-center gap-1.5"><button type="button" onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">${pageCount > 0 ? '🖨️ Abrir / Imprimir / PDF' : '📝 Redactar Exámenes'}</button>${actionBtns}${!item.isImportedJson ? `<button type="button" onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>` : ''}</div></div>`;
         }).join('');
       });
 
@@ -1226,7 +1289,7 @@
             <thead>
               <tr>
                 <th style="width:10%;text-align:center;">RANK</th>
-                <th style="width:60%;">ESTUDIO / EXAMEN ESPECÍFFICO</th>
+                <th style="width:60%;">ESTUDIO / EXAMEN ESPECÍFICO</th>
                 <th style="width:15%;text-align:center;">CANTIDAD</th>
                 <th style="width:15%;text-align:center;">% DEL TOTAL</th>
               </tr>
@@ -1349,6 +1412,7 @@
       const age = document.getElementById('quick-patient-age').value.replace(/[<>"'`;]/g, '').trim().toUpperCase();
       const email = document.getElementById('quick-patient-email').value.trim();
       const phone = document.getElementById('quick-patient-phone').value.trim();
+      const originType = document.getElementById('quick-origin-type').value;
       const selExam = document.getElementById('quick-exam-select').value;
       const customExam = document.getElementById('quick-exam-custom').value.replace(/[<>"'`;]/g, '').trim().toUpperCase();
       const exam = selExam === 'OTRO' ? (customExam || 'EXAMEN DE LABORATORIO') : selExam;
@@ -1358,8 +1422,13 @@
       btn.textContent = 'Subiendo...'; btn.disabled = true;
       try {
         await supabaseClient.from('examenes_adesca').insert([{
-          code: 'AD-' + Math.floor(100 + Math.random() * 900), patient_name: name, patient_age: age,
-          patient_email: [email, phone].filter(Boolean).join(' | '), exam_type: exam, status: status, updated_at: getCurrentTime()
+          code: 'AD-' + Math.floor(100 + Math.random() * 900),
+          patient_name: name,
+          patient_age: age,
+          patient_email: [email, phone, originType].filter(Boolean).join(' | '),
+          exam_type: exam,
+          status: status,
+          updated_at: getCurrentTime()
         }]);
         document.getElementById('quick-patient-name').value = '';
         document.getElementById('quick-patient-age').value = '';
@@ -1456,6 +1525,7 @@
       const mobTabs = document.getElementById('mobile-editor-tabs-bar');
       const btnAddTop = document.getElementById('btn-add-exam-page-top');
       const toolbar = document.getElementById('editor-action-toolbar');
+      const modalOriginBadge = document.getElementById('modal-origin-badge');
 
       if (isDoc) {
         document.getElementById('modal-header-title').textContent = 'Visor Médico de Resultados — Dra. Sandoval';
@@ -1477,13 +1547,26 @@
       if (recordId) {
         const rec = getActiveSourceList().find(r => r.id === recordId);
         if (rec) {
+          const saved = decompressExamData(rec.exam_data_compressed);
+          const { origin, cleanContact } = extractOriginAndCleanContact(rec.patient_email, saved);
+
           document.getElementById('ed-patient-name').value = rec.patient_name || '';
           document.getElementById('ed-patient-age').value = rec.patient_age || '';
-          const parts = (rec.patient_email || '').split('|').map(s => s.trim());
+          document.getElementById('ed-origin-type').value = origin;
+          const parts = cleanContact.split('|').map(s => s.trim()).filter(Boolean);
           document.getElementById('ed-patient-email').value = parts.find(p => p.includes('@')) || '';
           document.getElementById('ed-patient-phone').value = parts.find(p => !p.includes('@')) || '';
           document.getElementById('ed-status').value = rec.status || 'ready';
-          const saved = decompressExamData(rec.exam_data_compressed);
+
+          modalOriginBadge.classList.remove('hidden');
+          if (origin === 'EXAMEN PARTICULAR') {
+            modalOriginBadge.textContent = '👤 EXAMEN PARTICULAR';
+            modalOriginBadge.className = 'px-3 py-1 rounded-full text-xs font-black bg-purple-200 text-purple-950 shadow-sm';
+          } else {
+            modalOriginBadge.textContent = '🏥 EXAMEN DE ADESCA';
+            modalOriginBadge.className = 'px-3 py-1 rounded-full text-xs font-black bg-emerald-300 text-emerald-950 shadow-sm';
+          }
+
           if (saved) {
             document.getElementById('ed-exam-date').value = saved.examDate || getFormattedTodayUpper();
             if (saved.patientPhone) document.getElementById('ed-patient-phone').value = saved.patientPhone;
@@ -1499,10 +1582,12 @@
           }
         }
       } else {
+        modalOriginBadge.classList.add('hidden');
         document.getElementById('ed-patient-name').value = '';
         document.getElementById('ed-patient-age').value = '';
         document.getElementById('ed-patient-email').value = '';
         document.getElementById('ed-patient-phone').value = '';
+        document.getElementById('ed-origin-type').value = 'EXAMEN DE ADESCA';
         document.getElementById('ed-status').value = 'ready';
       }
       document.getElementById('ed-exam-date').value = getFormattedTodayUpper();
@@ -1601,17 +1686,17 @@
       const prof = getCurrentProfile();
       const activeStampKey = (prof && prof.role === 'licenciado') ? prof.stampKey : currentRecordStampOwner;
 
-      const headerHTML = `<div style="width:100%;"><div style="border-bottom:2px solid #1b3b6f;padding-bottom:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><div style="flex-shrink:0;"><img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:52px;width:auto;display:block;" /></div><div style="text-align:center;flex:1;"><h1 style="font-size:15.5px;font-weight:900;color:#1b3b6f;margin:0;line-height:1.15;">LABORATORIO CLINICO “ADESCAS”</h1><p style="font-size:10px;font-weight:700;color:#1e293b;margin:1px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p><p style="font-size:9.5px;color:#334155;margin:1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p><p style="font-size:10px;font-weight:800;color:#0f172a;margin:1px 0 0 0;">Tel: 2413-4125      WhatsApp: 7895-5220</p></div></div><table class="print-table" style="margin-bottom:6px;"><tr><td style="width:52%;"><strong>NOMBRE:</strong> ${rawName}</td><td style="width:20%;"><strong>EDAD:</strong> ${age}</td><td style="width:28%;"><strong>FECHA:</strong> ${date}</td></tr></table></div>`;
+      const headerHTML = `<div style="width:100%;"><div style="border-bottom:2px solid #1b3b6f;padding-bottom:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><div style="flex-shrink:0;"><img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:52px;width:auto;display:block;" /></div><div style="text-align:center;flex:1;"><h1 style="font-size:15.5px;font-weight:900;color:#1b3b6f;margin:0;line-height:1.2;">LABORATORIO CLINICO “ADESCAS”</h1><p style="font-size:10px;font-weight:700;color:#1e293b;margin:2px 0 0 0;line-height:1.2;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p><p style="font-size:9.5px;color:#334155;margin:1px 0 0 0;line-height:1.2;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p><p style="font-size:10px;font-weight:800;color:#0f172a;margin:1px 0 0 0;line-height:1.2;">Tel: 2413-4125      WhatsApp: 7895-5220</p></div></div><table class="print-table" style="margin-bottom:6px;"><tr><td style="width:52%;"><strong>NOMBRE:</strong> ${rawName}</td><td style="width:20%;"><strong>EDAD:</strong> ${age}</td><td style="width:28%;"><strong>FECHA:</strong> ${date}</td></tr></table></div>`;
 
       let bodyHTML = '';
       if (tpl.layout === 'ego') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">EXAMEN GENERAL DE ORINA</h2><table class="print-table"><thead><tr><th colspan="2">EXAMEN FISICO - QUIMICO</th><th colspan="2">EXAMEN MICROSCOPICO</th></tr></thead><tbody><tr><td><strong>COLOR:</strong></td><td>${formatResultValue(f.color)}</td><td><strong>LEUCOCITOS:</strong></td><td>${formatResultValue(f.leucocitos)}</td></tr><tr><td><strong>ASPECTO:</strong></td><td>${formatResultValue(f.aspecto)}</td><td><strong>HEMATIES:</strong></td><td>${formatResultValue(f.hematies)}</td></tr><tr><td><strong>PH:</strong></td><td>${formatResultValue(f.ph)}</td><td><strong>CELULAS EPITELIALES:</strong></td><td>${formatResultValue(f.epiteliales)}</td></tr><tr><td><strong>DENSIDAD:</strong></td><td>${formatResultValue(f.densidad)}</td><td><strong>BACTERIAS:</strong></td><td>${formatResultValue(f.bacterias)}</td></tr><tr><td><strong>GLUCOSA:</strong></td><td>${formatResultValue(f.glucosa)}</td><td><strong>CILINDROS:</strong></td><td>${formatResultValue(f.cilindros)}</td></tr><tr><td><strong>PROTEINAS:</strong></td><td>${formatResultValue(f.proteinas)}</td><td><strong>CRISTALES:</strong></td><td>${formatResultValue(f.cristales)}</td></tr><tr><td><strong>NITRITOS:</strong></td><td>${formatResultValue(f.nitritos)}</td><td><strong>LEVADURAS:</strong></td><td>${formatResultValue(f.levaduras)}</td></tr><tr><td><strong>SANGRE OCULTA:</strong></td><td>${formatResultValue(f.sangre_oculta)}</td><td><strong>FILAMENTOS MUCOIDE:</strong></td><td>${formatResultValue(f.mucoide)}</td></tr><tr><td><strong>CUERPOS CETONICOS:</strong></td><td>${formatResultValue(f.cetonas)}</td><td><strong>PARASITOS:</strong></td><td>${formatResultValue(f.parasitos)}</td></tr><tr><td><strong>UROBILINOGENO:</strong></td><td>${formatResultValue(f.urobilinogeno)}</td><td colspan="2" rowspan="3" style="vertical-align:top;"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</td></tr><tr><td><strong>BILIRRUBINA:</strong></td><td>${formatResultValue(f.bilirrubina)}</td></tr><tr><td><strong>ESTERASA LEUCOCITARIA:</strong></td><td>${formatResultValue(f.esterasa)}</td></tr></tbody></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 5px 0;text-decoration:underline;line-height:1.25;">EXAMEN GENERAL DE ORINA</h2><table class="print-table"><thead><tr><th colspan="2">EXAMEN FISICO - QUIMICO</th><th colspan="2">EXAMEN MICROSCOPICO</th></tr></thead><tbody><tr><td><strong>COLOR:</strong></td><td>${formatResultValue(f.color)}</td><td><strong>LEUCOCITOS:</strong></td><td>${formatResultValue(f.leucocitos)}</td></tr><tr><td><strong>ASPECTO:</strong></td><td>${formatResultValue(f.aspecto)}</td><td><strong>HEMATIES:</strong></td><td>${formatResultValue(f.hematies)}</td></tr><tr><td><strong>PH:</strong></td><td>${formatResultValue(f.ph)}</td><td><strong>CELULAS EPITELIALES:</strong></td><td>${formatResultValue(f.epiteliales)}</td></tr><tr><td><strong>DENSIDAD:</strong></td><td>${formatResultValue(f.densidad)}</td><td><strong>BACTERIAS:</strong></td><td>${formatResultValue(f.bacterias)}</td></tr><tr><td><strong>GLUCOSA:</strong></td><td>${formatResultValue(f.glucosa)}</td><td><strong>CILINDROS:</strong></td><td>${formatResultValue(f.cilindros)}</td></tr><tr><td><strong>PROTEINAS:</strong></td><td>${formatResultValue(f.proteinas)}</td><td><strong>CRISTALES:</strong></td><td>${formatResultValue(f.cristales)}</td></tr><tr><td><strong>NITRITOS:</strong></td><td>${formatResultValue(f.nitritos)}</td><td><strong>LEVADURAS:</strong></td><td>${formatResultValue(f.levaduras)}</td></tr><tr><td><strong>SANGRE OCULTA:</strong></td><td>${formatResultValue(f.sangre_oculta)}</td><td><strong>FILAMENTOS MUCOIDE:</strong></td><td>${formatResultValue(f.mucoide)}</td></tr><tr><td><strong>CUERPOS CETONICOS:</strong></td><td>${formatResultValue(f.cetonas)}</td><td><strong>PARASITOS:</strong></td><td>${formatResultValue(f.parasitos)}</td></tr><tr><td><strong>UROBILINOGENO:</strong></td><td>${formatResultValue(f.urobilinogeno)}</td><td colspan="2" rowspan="3" style="vertical-align:top;"><strong>OBSERVACIONES:</strong> ${formatResultValue(obs)}</td></tr><tr><td><strong>BILIRRUBINA:</strong></td><td>${formatResultValue(f.bilirrubina)}</td></tr><tr><td><strong>ESTERASA LEUCOCITARIA:</strong></td><td>${formatResultValue(f.esterasa)}</td></tr></tbody></table>`;
       } else if (tpl.layout === 'egh') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">EXAMEN GENERAL DE HECES</h2><table class="print-table" style="margin-bottom:5px;"><tbody><tr><td><strong>COLOR:</strong> ${formatResultValue(f.color)}</td><td><strong>LEVADURAS:</strong> ${formatResultValue(f.levaduras)}</td></tr><tr><td><strong>CONSISTENCIA:</strong> ${formatResultValue(f.consistencia)}</td><td><strong>LEUCOCITOS:</strong> ${formatResultValue(f.leucocitos)}</td></tr><tr><td><strong>MUCUS:</strong> ${formatResultValue(f.mucus)}</td><td><strong>HEMATIES:</strong> ${formatResultValue(f.hematies)}</td></tr><tr><td><strong>RESTOS ALIMENTICIOS:</strong> ${formatResultValue(f.restos)}</td><td><strong>FLORA BACTERIANA BACILAR:</strong> ${formatResultValue(f.flora)}</td></tr><tr><td><strong>GLOBULOS DE GRASA:</strong> ${formatResultValue(f.grasa)}</td><td></td></tr></tbody></table><table class="print-table"><thead><tr><th>PROTOZOARIO</th><th>METAZOARIOS</th></tr></thead><tbody><tr><td><strong>QUISTES:</strong> ${formatResultValue(f.quistes)}</td><td><strong>HUEVOS:</strong> ${formatResultValue(f.huevos)}</td></tr><tr><td><strong>ACTIVOS:</strong> ${formatResultValue(f.activos)}</td><td><strong>LARVAS:</strong> ${formatResultValue(f.larvas)}</td></tr></tbody></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 5px 0;text-decoration:underline;line-height:1.25;">EXAMEN GENERAL DE HECES</h2><table class="print-table" style="margin-bottom:5px;"><tbody><tr><td><strong>COLOR:</strong> ${formatResultValue(f.color)}</td><td><strong>LEVADURAS:</strong> ${formatResultValue(f.levaduras)}</td></tr><tr><td><strong>CONSISTENCIA:</strong> ${formatResultValue(f.consistencia)}</td><td><strong>LEUCOCITOS:</strong> ${formatResultValue(f.leucocitos)}</td></tr><tr><td><strong>MUCUS:</strong> ${formatResultValue(f.mucus)}</td><td><strong>HEMATIES:</strong> ${formatResultValue(f.hematies)}</td></tr><tr><td><strong>RESTOS ALIMENTICIOS:</strong> ${formatResultValue(f.restos)}</td><td><strong>FLORA BACTERIANA BACILAR:</strong> ${formatResultValue(f.flora)}</td></tr><tr><td><strong>GLOBULOS DE GRASA:</strong> ${formatResultValue(f.grasa)}</td><td></td></tr></tbody></table><table class="print-table"><thead><tr><th>PROTOZOARIO</th><th>METAZOARIOS</th></tr></thead><tbody><tr><td><strong>QUISTES:</strong> ${formatResultValue(f.quistes)}</td><td><strong>HUEVOS:</strong> ${formatResultValue(f.huevos)}</td></tr><tr><td><strong>ACTIVOS:</strong> ${formatResultValue(f.activos)}</td><td><strong>LARVAS:</strong> ${formatResultValue(f.larvas)}</td></tr></tbody></table>`;
       } else if (tpl.layout === 'hemograma') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">HEMOGRAMA</h2><table class="print-table"><tbody><tr><td><strong>GLOBULOS ROJOS</strong></td><td>${formatResultValue(f.gr)}</td><td><strong>GLOBULOS BLANCOS</strong></td><td>${formatResultValue(f.gb)}</td></tr><tr><td><strong>HEMOGLOBINA</strong></td><td>${formatResultValue(f.hb)}</td><td><strong>NEUTROFILOS TOTALES</strong></td><td>${formatResultValue(f.neut_tot)}</td></tr><tr><td><strong>HEMATOCRITO</strong></td><td>${formatResultValue(f.hto)}</td><td><strong>NEUTROFILOS EN BANDA</strong></td><td>${formatResultValue(f.neut_banda)}</td></tr><tr><td><strong>VGM</strong></td><td>${formatResultValue(f.vgm)}</td><td><strong>NEUTROFILOS SEGMENTADOS</strong></td><td>${formatResultValue(f.neut_seg)}</td></tr><tr><td><strong>HGM</strong></td><td>${formatResultValue(f.hgm)}</td><td><strong>LINFOCITOS</strong></td><td>${formatResultValue(f.linfocitos)}</td></tr><tr><td><strong>CHCM</strong></td><td>${formatResultValue(f.chcm)}</td><td><strong>BASOFILOS</strong></td><td>${formatResultValue(f.basofilos)}</td></tr><tr><td><strong>PLAQUETAS</strong></td><td>${formatResultValue(f.plaquetas)}</td><td><strong>MONOCITOS</strong></td><td>${formatResultValue(f.monocitos)}</td></tr><tr><td></td><td></td><td><strong>EOSINOFILOS</strong></td><td>${formatResultValue(f.eosinofilos)}</td></tr></tbody></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 5px 0;text-decoration:underline;line-height:1.25;">HEMOGRAMA</h2><table class="print-table"><tbody><tr><td><strong>GLOBULOS ROJOS</strong></td><td>${formatResultValue(f.gr)}</td><td><strong>GLOBULOS BLANCOS</strong></td><td>${formatResultValue(f.gb)}</td></tr><tr><td><strong>HEMOGLOBINA</strong></td><td>${formatResultValue(f.hb)}</td><td><strong>NEUTROFILOS TOTALES</strong></td><td>${formatResultValue(f.neut_tot)}</td></tr><tr><td><strong>HEMATOCRITO</strong></td><td>${formatResultValue(f.hto)}</td><td><strong>NEUTROFILOS EN BANDA</strong></td><td>${formatResultValue(f.neut_banda)}</td></tr><tr><td><strong>VGM</strong></td><td>${formatResultValue(f.vgm)}</td><td><strong>NEUTROFILOS SEGMENTADOS</strong></td><td>${formatResultValue(f.neut_seg)}</td></tr><tr><td><strong>HGM</strong></td><td>${formatResultValue(f.hgm)}</td><td><strong>LINFOCITOS</strong></td><td>${formatResultValue(f.linfocitos)}</td></tr><tr><td><strong>CHCM</strong></td><td>${formatResultValue(f.chcm)}</td><td><strong>BASOFILOS</strong></td><td>${formatResultValue(f.basofilos)}</td></tr><tr><td><strong>PLAQUETAS</strong></td><td>${formatResultValue(f.plaquetas)}</td><td><strong>MONOCITOS</strong></td><td>${formatResultValue(f.monocitos)}</td></tr><tr><td></td><td></td><td><strong>EOSINOFILOS</strong></td><td>${formatResultValue(f.eosinofilos)}</td></tr></tbody></table>`;
       } else if (tpl.layout === 'quimica') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">QUIMICA SANGUINEA</h2><table class="print-table"><thead><tr><th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th><th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th></tr></thead><tbody><tr><td><strong>GLUCOSA</strong></td><td>${formatResultValue(f.glucosa)}</td><td>60 - 110 mg/dl</td><td><strong>TGO</strong></td><td>${formatResultValue(f.tgo)}</td><td>HASTA 35 U/L</td></tr><tr><td><strong>COLESTEROL</strong></td><td>${formatResultValue(f.colesterol)}</td><td>HASTA 200 mg/dl</td><td><strong>TGP</strong></td><td>${formatResultValue(f.tgp)}</td><td>HASTA 45 U/L</td></tr><tr><td><strong>TRIGLICERIDOS</strong></td><td>${formatResultValue(f.trigliceridos)}</td><td>HASTA 150 mg/dl</td><td><strong>HDL</strong></td><td>${formatResultValue(f.hdl)}</td><td>35 - 55 mg/dl</td></tr><tr><td><strong>ACIDO URICO</strong></td><td>${formatResultValue(f.acido_urico)}</td><td>2.1 - 6.0 mg/dl</td><td><strong>LDL</strong></td><td>${formatResultValue(f.ldl)}</td><td>HASTA 150 mg/dl</td></tr><tr><td><strong>CREATININA</strong></td><td>${formatResultValue(f.creatinina)}</td><td>0.6 – 1.4 mg/dl</td><td><strong>NITROGENO UREICO</strong></td><td>${formatResultValue(f.bun)}</td><td>7.0 – 20 mg/dl</td></tr></tbody></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 5px 0;text-decoration:underline;line-height:1.25;">QUIMICA SANGUINEA</h2><table class="print-table"><thead><tr><th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th><th>EXAMENES QUIMICOS</th><th>RESULTADO</th><th>VALOR NORMAL</th></tr></thead><tbody><tr><td><strong>GLUCOSA</strong></td><td>${formatResultValue(f.glucosa)}</td><td>60 - 110 mg/dl</td><td><strong>TGO</strong></td><td>${formatResultValue(f.tgo)}</td><td>HASTA 35 U/L</td></tr><tr><td><strong>COLESTEROL</strong></td><td>${formatResultValue(f.colesterol)}</td><td>HASTA 200 mg/dl</td><td><strong>TGP</strong></td><td>${formatResultValue(f.tgp)}</td><td>HASTA 45 U/L</td></tr><tr><td><strong>TRIGLICERIDOS</strong></td><td>${formatResultValue(f.trigliceridos)}</td><td>HASTA 150 mg/dl</td><td><strong>HDL</strong></td><td>${formatResultValue(f.hdl)}</td><td>35 - 55 mg/dl</td></tr><tr><td><strong>ACIDO URICO</strong></td><td>${formatResultValue(f.acido_urico)}</td><td>2.1 - 6.0 mg/dl</td><td><strong>LDL</strong></td><td>${formatResultValue(f.ldl)}</td><td>HASTA 150 mg/dl</td></tr><tr><td><strong>CREATININA</strong></td><td>${formatResultValue(f.creatinina)}</td><td>0.6 – 1.4 mg/dl</td><td><strong>NITROGENO UREICO</strong></td><td>${formatResultValue(f.bun)}</td><td>7.0 – 20 mg/dl</td></tr></tbody></table>`;
       } else if (tpl.layout === 'antibiograma') {
         let rowsHtml = '';
         for (let i = 1; i <= 10; i++) {
@@ -1621,17 +1706,17 @@
         }
         bodyHTML = `<table class="print-table" style="margin-bottom:5px;"><tr><td><strong>MUESTRA:</strong> ${f.muestra}</td><td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)}  |  <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td></tr><tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr></table><table class="print-table"><thead><tr><th>ANTIBIOTICO</th><th style="text-align:center;">SENSIBLE</th><th style="text-align:center;">INTERMEDIO</th><th style="text-align:center;">RESISTENTE</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
       } else if (tpl.layout === 'frotis') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">FROTIS DE SANGRE PERIFERICA</h2><div style="border:1.5px solid #0f172a;padding:10px;font-size:11.5px;line-height:1.5;"><p><strong>LINEA ROJA:</strong> ${formatResultValue(f.roja)}</p><p><strong>LINEA BLANCA:</strong> ${formatResultValue(f.blanca)}</p><p><strong>LINEA PLAQUETARIA:</strong> ${formatResultValue(f.plaquetaria)}</p></div>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 6px 0;text-decoration:underline;line-height:1.25;">FROTIS DE SANGRE PERIFERICA</h2><table class="print-table"><tr><td><strong>LINEA ROJA:</strong> ${formatResultValue(f.roja)}</td></tr><tr><td><strong>LINEA BLANCA:</strong> ${formatResultValue(f.blanca)}</td></tr><tr><td><strong>LINEA PLAQUETARIA:</strong> ${formatResultValue(f.plaquetaria)}</td></tr></table>`;
       } else if (tpl.layout === 'hcg_cuant') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2><p style="font-size:11.5px;margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra}   |   <strong>RESULTADO:</strong> <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></p><table class="print-table"><tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr><tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr><tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr><tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr><tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr><tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 5px 0;text-decoration:underline;line-height:1.25;">MISCELANEOS — HCG BETA CUANTIFICADA</h2><p style="font-size:11.5px;margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra}   |   <strong>RESULTADO:</strong> <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></p><table class="print-table"><tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr><tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr><tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr><tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr><tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr><tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr></table>`;
       } else if (tpl.layout === 'espermograma_oms') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MACROSCOPICOS</th><th>RESULTADO</th><th>REFERENCIA</th><th>MOVILIDAD / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr></thead><tbody><tr><td>COLOR / ASPECTO</td><td>${f.color} / ${f.aspecto}</td><td>BLANQ / OPAL</td><td>PROGRESIVA (PR) / (NP)</td><td>${f.mov_pr} / ${f.mov_np}</td><td>PR ≥ 32%</td></tr><tr><td>VOLUMEN / pH</td><td>${f.volumen} / ${f.ph}</td><td>≥1.5ml / ≥7.2</td><td>MOVILIDAD TOTAL / INMOV.</td><td>${f.mov_tot} / ${f.inmoviles}</td><td>≥ 40%</td></tr><tr><td>LICUEF. / VISCOS.</td><td>${f.licuefaccion} / ${f.viscosidad}</td><td>NORMAL</td><td>VIVOS / MUERTOS</td><td>${f.vivos} / ${f.muertos}</td><td>≥ 58%</td></tr></tbody></table><div style="border:1.4px solid #0f172a;padding:6px;font-size:10.5px;display:grid;grid-template-columns:1fr 1fr;gap:6px;"><div><p><strong>MILLONES x ml:</strong> ${f.millones_ml} (Total: ${f.total_eyaculado})</p><p><strong>MORFOLOGIA NORMAL / ANORMAL:</strong> ${f.morf_normal} / ${f.morf_anormal}</p></div><div><p><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>HEMATIES:</strong> ${f.hematies}</p><p><strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>BACTERIAS:</strong> ${f.bacterias}</p></div></div>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 4px 0;text-decoration:underline;line-height:1.25;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MACROSCOPICOS</th><th>RESULTADO</th><th>REFERENCIA</th><th>MOVILIDAD / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr></thead><tbody><tr><td>COLOR / ASPECTO</td><td>${f.color} / ${f.aspecto}</td><td>BLANQ / OPAL</td><td>PROGRESIVA (PR) / (NP)</td><td>${f.mov_pr} / ${f.mov_np}</td><td>PR ≥ 32%</td></tr><tr><td>VOLUMEN / pH</td><td>${f.volumen} / ${f.ph}</td><td>≥1.5ml / ≥7.2</td><td>MOVILIDAD TOTAL / INMOV.</td><td>${f.mov_tot} / ${f.inmoviles}</td><td>≥ 40%</td></tr><tr><td>LICUEF. / VISCOS.</td><td>${f.licuefaccion} / ${f.viscosidad}</td><td>NORMAL</td><td>VIVOS / MUERTOS</td><td>${f.vivos} / ${f.muertos}</td><td>≥ 58%</td></tr></tbody></table><table class="print-table"><tr><td><strong>MILLONES x ml:</strong> ${f.millones_ml} (Total: ${f.total_eyaculado})</td><td><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>HEMATIES:</strong> ${f.hematies}</td></tr><tr><td><strong>MORFOLOGIA NORMAL / ANORMAL:</strong> ${f.morf_normal} / ${f.morf_anormal}</td><td><strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>BACTERIAS:</strong> ${f.bacterias}</td></tr></table>`;
       } else if (tpl.layout === 'espermograma_3h') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MOVILIDAD (1H / 2H / 3H)</th><th>A LA HORA</th><th>A LAS 2 HORAS</th><th>A LAS 3 HORAS</th></tr></thead><tbody><tr><td>RAPIDOS / LENTOS</td><td>${f.rap_1h} / ${f.len_1h}</td><td>${f.rap_2h} / ${f.len_2h}</td><td>${f.rap_3h} / ${f.len_3h}</td></tr><tr><td>ERRATICOS / MUERTOS</td><td>${f.err_1h} / ${f.mue_1h}</td><td>${f.err_2h} / ${f.mue_2h}</td><td>${f.err_3h} / ${f.mue_3h}</td></tr><tr><td>MORFOLOGIA (NORM / ANORM)</td><td>${f.nor_1h} / ${f.ano_1h}</td><td>${f.nor_2h} / ${f.ano_2h}</td><td>${f.nor_3h} / ${f.ano_3h}</td></tr></tbody></table><p style="font-size:10.5px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 4px 0;text-decoration:underline;line-height:1.25;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MOVILIDAD (1H / 2H / 3H)</th><th>A LA HORA</th><th>A LAS 2 HORAS</th><th>A LAS 3 HORAS</th></tr></thead><tbody><tr><td>RAPIDOS / LENTOS</td><td>${f.rap_1h} / ${f.len_1h}</td><td>${f.rap_2h} / ${f.len_2h}</td><td>${f.rap_3h} / ${f.len_3h}</td></tr><tr><td>ERRATICOS / MUERTOS</td><td>${f.err_1h} / ${f.mue_1h}</td><td>${f.err_2h} / ${f.mue_2h}</td><td>${f.err_3h} / ${f.mue_3h}</td></tr><tr><td>MORFOLOGIA (NORM / ANORM)</td><td>${f.nor_1h} / ${f.ano_1h}</td><td>${f.nor_2h} / ${f.ano_2h}</td><td>${f.nor_3h} / ${f.ano_3h}</td></tr></tbody></table><p style="font-size:10.5px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
       } else if (tpl.layout === 'misc_muestra') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">${tpl.title}</h2><table class="print-table"><tr><td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td><td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr><tr><td colspan="2" style="padding:8px;font-size:12.5px;"><strong>RESULTADO:</strong>   <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></td></tr></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 6px 0;text-decoration:underline;line-height:1.25;">${tpl.title}</h2><table class="print-table"><tr><td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td><td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr><tr><td colspan="2" style="font-size:12px;"><strong>RESULTADO:</strong>   <strong style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</strong></td></tr></table>`;
       } else {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">${examTitle}</h2>${f.subtitleMuestra ? `<p style="font-size:10.5px;font-weight:bold;margin-bottom:4px;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}<table class="print-table"><thead><tr><th style="width:38%;">EXAMENES</th><th style="width:27%;">RESULTADO</th><th style="width:35%;">VALOR NORMAL</th></tr></thead><tbody>${(f.rows || []).map(r => `<tr><td><strong>${r.exam}</strong></td><td style="font-weight:800;color:#163a70;">${formatResultValue(r.result)}</td><td style="white-space:pre-line;">${r.ref}</td></tr>`).join('')}</tbody></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin:0 0 5px 0;text-decoration:underline;line-height:1.25;">${examTitle}</h2>${f.subtitleMuestra ? `<p style="font-size:10.5px;font-weight:bold;margin:0 0 4px 0;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}<table class="print-table"><thead><tr><th style="width:38%;">EXAMENES</th><th style="width:27%;">RESULTADO</th><th style="width:35%;">VALOR NORMAL</th></tr></thead><tbody>${(f.rows || []).map(r => `<tr><td><strong>${r.exam}</strong></td><td style="font-weight:800;color:#163a70;">${formatResultValue(r.result)}</td><td style="white-space:pre-line;">${r.ref}</td></tr>`).join('')}</tbody></table>`;
       }
 
       const stampsBlock = useDigitalStamp
@@ -1665,14 +1750,21 @@
       const age = document.getElementById('ed-patient-age').value.trim().toUpperCase();
       const email = document.getElementById('ed-patient-email').value.trim();
       const phone = document.getElementById('ed-patient-phone').value.trim();
+      const originType = document.getElementById('ed-origin-type').value;
       const status = document.getElementById('ed-status').value;
       const combinedTitle = getCombinedExamsTitle();
       const btn = document.getElementById('btn-save-exam');
       btn.textContent = 'Guardando...'; btn.disabled = true;
       try {
         currentRecordStampOwner = prof.stampKey;
-        const compressedPayload = compressExamData({ examDate: document.getElementById('ed-exam-date').value, patientPhone: phone, stampOwner: currentRecordStampOwner, pages: examPages });
-        const contactInfo = [email, phone].filter(Boolean).join(' | ');
+        const compressedPayload = compressExamData({
+          examDate: document.getElementById('ed-exam-date').value,
+          patientPhone: phone,
+          originType: originType,
+          stampOwner: currentRecordStampOwner,
+          pages: examPages
+        });
+        const contactInfo = [email, phone, originType].filter(Boolean).join(' | ');
         if (editingRecordId) {
           await supabaseClient.from('examenes_adesca').update({ patient_name: name, patient_age: age, patient_email: contactInfo, exam_type: combinedTitle, status, exam_data_compressed: compressedPayload, updated_at: getCurrentTime() }).eq('id', editingRecordId);
         } else if (importedJsonRecords === null) {
@@ -1706,7 +1798,9 @@
       const cleanFileName = `Resultados_ADESCAS_${name.replace(/\s+/g, '_')}.pdf`;
       lastGeneratedPdfName = cleanFileName;
 
+      // La clase html2canvas-stage corrige la línea base (baseline) para que ningún texto se baje de su fila en WhatsApp
       const tempStage = document.createElement('div');
+      tempStage.className = "html2canvas-stage";
       tempStage.style.cssText = "position:fixed;top:0;left:0;width:820px;padding:16px;background:#ffffff;z-index:99999;pointer-events:none;";
       tempStage.innerHTML = buildAllPagesHTML(true);
       document.body.appendChild(tempStage);
