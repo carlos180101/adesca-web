@@ -177,28 +177,28 @@
                 <select id="quick-exam-select" onchange="toggleQuickCustomExam()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white">
                   <option value="EXAMEN GENERAL DE ORINA">EXAMEN GENERAL DE ORINA (EGO)</option>
                   <option value="EXAMEN GENERAL DE HECES">EXAMEN GENERAL DE HECES (EGH)</option>
-                  <option value="HEMOGRAMA COMPLETO">HEMOGRAMA COMPLETO</option>
+                  <option value="HEMOGRAMA">HEMOGRAMA COMPLETO</option>
                   <option value="QUIMICA SANGUINEA">QUÍMICA SANGUÍNEA</option>
                   <option value="PERFIL LIPIDICO">PERFIL LIPÍDICO</option>
-                  <option value="PERFIL TIROIDEO (T3, T4, TSH)">PERFIL TIROIDEO (T3, T4, TSH)</option>
+                  <option value="PERFIL TIROIDEO">PERFIL TIROIDEO (T3, T4, TSH)</option>
                   <option value="HEMOGLOBINA GLICOSILADA">HEMOGLOBINA GLICOSILADA (HbA1c)</option>
                   <option value="PRUEBA DE EMBARAZO">PRUEBA DE EMBARAZO</option>
                   <option value="HCG BETA CUANTIFICADA">HCG BETA CUANTIFICADA</option>
                   <option value="UROCULTIVO Y ANTIBIOGRAMA">UROCULTIVO Y ANTIBIOGRAMA</option>
                   <option value="COPROCULTIVO">COPROCULTIVO</option>
                   <option value="CULTIVO DE SECRECION">CULTIVO DE SECRECIÓN</option>
-                  <option value="ESPERMOGRAMA COMPLETO">ESPERMOGRAMA COMPLETO</option>
+                  <option value="ESPERMOGRAMA">ESPERMOGRAMA COMPLETO</option>
                   <option value="HELICOBACTER PYLORI">HELICOBACTER PYLORI</option>
                   <option value="ANTIGENO PROSTATICO (PSA)">ANTÍGENO PROSTÁTICO (PSA)</option>
-                  <option value="TIEMPOS DE COAGULACION (TP, TTP, INR)">TIEMPOS DE COAGULACIÓN (TP, TTP, INR)</option>
-                  <option value="ELECTROLITOS (SODIO, POTASIO, CALCIO, MAGNESIO)">ELECTROLITOS</option>
+                  <option value="COAGULACION">TIEMPOS DE COAGULACIÓN (TP, TTP, INR)</option>
+                  <option value="ELECTROLITOS">ELECTROLITOS</option>
                   <option value="ANTIGENOS FEBRILES">ANTÍGENOS FEBRILES</option>
                   <option value="DROGAS DE ABUSO">DROGAS DE ABUSO</option>
                   <option value="TIPEO SANGUINEO">TIPEO SANGUÍNEO</option>
                   <option value="V.I.H. / R.P.R.">V.I.H. / R.P.R.</option>
-                  <option value="DENGUE (NS1, IgG, IgM)">DENGUE (NS1, IgG, IgM)</option>
-                  <option value="TOLERANCIA A LA GLUCOSA / CURVA INSULINA">TOLERANCIA A LA GLUCOSA / INSULINA</option>
-                  <option value="DEPURACION DE CREATININA / FILTRADO GLOMERULAR">DEPURACIÓN DE CREATININA / FILTRADO</option>
+                  <option value="DENGUE">DENGUE (NS1, IgG, IgM)</option>
+                  <option value="TOLERANCIA A LA GLUCOSA 3 HORAS">TOLERANCIA A LA GLUCOSA / INSULINA</option>
+                  <option value="DEPURACION DE CREATININA">DEPURACIÓN DE CREATININA / FILTRADO</option>
                   <option value="OTRO">✍️ OTRO (Escribir manualmente...)</option>
                 </select>
                 <input id="quick-exam-custom" type="text" placeholder="Escriba el nombre del examen..." class="hidden mt-2 w-full px-3 py-2 rounded-xl border-2 border-[#163a70] text-sm font-bold uppercase" />
@@ -248,17 +248,20 @@
     </div>
   </main>
 
-  <!-- MODAL DE ESTADÍSTICAS E IMPRESIÓN DE REPORTE DEL LABORATORIO -->
+  <!-- MODAL DE ESTADÍSTICAS GERENCIALES (SIN LISTA DE NOMBRES, SOLO CONTEO POR ÁREA Y EXAMEN) -->
   <div id="stats-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm overflow-y-auto p-3 sm:p-6 no-print">
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4">
       <div class="bg-[#163a70] text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 class="text-base font-extrabold">📊 Estadísticas y Control de Exámenes — Laboratorio Clínico "ADESCAS"</h3>
-          <p class="text-xs text-blue-200">Resumen por estado, conteo por tipo de estudio y listado imprimible</p>
+          <h3 class="text-base font-extrabold">📊 Estadísticas de Exámenes Realizados — Laboratorio Clínico "ADESCAS"</h3>
+          <p class="text-xs text-blue-200">Conteo individual de cada examen por área clínica, pacientes atendidos y estudio más solicitado</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="exportStatsToCSV()" class="bg-blue-500 hover:bg-blue-600 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow">
+            📥 Exportar Excel (.CSV)
+          </button>
           <button type="button" onclick="printStatsReport()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow">
-            🖨️ Imprimir / Guardar PDF de Estadísticas
+            🖨️ Imprimir Estadísticas
           </button>
           <button type="button" onclick="closeStatsModal()" class="bg-white/15 hover:bg-white/25 text-white px-3 py-2 rounded-xl text-xs font-bold">✕ Cerrar</button>
         </div>
@@ -467,13 +470,15 @@
 
   <script>
     const STAFF_PROFILES = {
-      "carloschafoya17@gmail.com": { uid: "admin-carlos", role: "licenciado", displayName: "Admin. Carlos Alvanez (ADESCAS)", jvplc: "5080", stampKey: "pineda", imgFile: "/sello-pineda.png" },
+      "carloschafoya17@adesca.com": { uid: "6f0cb000-69ab-4b04-8723-9cd09511484a", role: "licenciado", displayName: "Admin. Carlos Alvanez (ADESCAS)", jvplc: "5080", stampKey: "pineda", imgFile: "/sello-pineda.png" },
+      "carloschafoya17@gmail.com": { uid: "6f0cb000-69ab-4b04-8723-9cd09511484a", role: "licenciado", displayName: "Admin. Carlos Alvanez (ADESCAS)", jvplc: "5080", stampKey: "pineda", imgFile: "/sello-pineda.png" },
       "licpineda@adesca.com": { uid: "1936629c-26ab-430d-b967-9f4199e0a809", role: "licenciado", displayName: "Lic. Ernesto Alexander Pineda Recinos", jvplc: "5080", stampKey: "pineda", imgFile: "/sello-pineda.png" },
       "lickarla@adesca.com": { uid: "69857d16-e89e-4c68-8938-176874dec676", role: "licenciado", displayName: "Licda. Karla Johanna Quintanilla Aguilar", jvplc: "7307", stampKey: "karla", imgFile: "/sello-karla.png" },
       "liccalderon@adesca.com": { uid: "65dc0b32-0b72-4237-9f0d-5b0b6fb7cf32", role: "licenciado", displayName: "Licda. Verónica Vanessa Calderón Erazo", jvplc: "1432", stampKey: "calderon", imgFile: "/sello-calderon.png" },
       "docsandoval@adesca.com": { uid: "5323d092-67c4-4490-83bf-e19ef94fee16", role: "doctora", displayName: "Dra. Sandoval (Consulta Médica)", jvplc: "", stampKey: "none", imgFile: "" }
     };
     const ALLOWED_UIDS = {
+      "6f0cb000-69ab-4b04-8723-9cd09511484a": STAFF_PROFILES["carloschafoya17@adesca.com"],
       "1936629c-26ab-430d-b967-9f4199e0a809": STAFF_PROFILES["licpineda@adesca.com"],
       "69857d16-e89e-4c68-8938-176874dec676": STAFF_PROFILES["lickarla@adesca.com"],
       "65dc0b32-0b72-4237-9f0d-5b0b6fb7cf32": STAFF_PROFILES["liccalderon@adesca.com"],
@@ -482,10 +487,10 @@
 
     function getCurrentProfile() {
       if (!currentSession || !currentSession.user) return null;
-      const email = (currentSession.user.email || '').trim().toLowerCase();
-      if (STAFF_PROFILES[email]) return STAFF_PROFILES[email];
       const uid = currentSession.user.id || '';
-      return ALLOWED_UIDS[uid] || null;
+      if (ALLOWED_UIDS[uid]) return ALLOWED_UIDS[uid];
+      const email = (currentSession.user.email || '').trim().toLowerCase();
+      return STAFF_PROFILES[email] || null;
     }
     function isDoctorReadOnly() {
       const p = getCurrentProfile();
@@ -679,6 +684,7 @@
     let currentSession = null, allRecords = [], importedJsonRecords = null, editingRecordId = null;
     let examPages = [], activePageIndex = 0, currentRecordStampOwner = "pineda";
     let lastGeneratedPdfBlob = null, lastGeneratedPdfName = "Resultados_ADESCAS.pdf";
+    let lastComputedStats = null;
 
     const LAST_ACTIVITY_KEY = 'adesca_last_active_ts';
     const INACTIVITY_LIMIT_MS = 20 * 60 * 1000;
@@ -716,38 +722,38 @@
     }
 
     const EXAM_TEMPLATES = {
-      ego: { name: "1. Examen General de Orina (EGO)", title: "EXAMEN GENERAL DE ORINA", layout: "ego", defaults: { color: "AMARILLO", aspecto: "LIMPIDO", ph: "6.0", densidad: "1020", glucosa: "NEGATIVO", proteinas: "NEGATIVO", nitritos: "NEGATIVO", sangre_oculta: "NEGATIVO", cetonas: "NEGATIVO", urobilinogeno: "NEGATIVO", bilirrubina: "NEGATIVO", esterasa: "NEGATIVO", leucocitos: "0 - 1 X CAMPO", hematies: "0 X CAMPO", epiteliales: "ESCASAS", bacterias: "ESCASAS", cilindros: "NO SE OBSERVAN", cristales: "NO SE OBSERVAN", levaduras: "NO SE OBSERVAN", mucoide: "NO SE OBSERVAN", parasitos: "NO SE OBSERVAN" } },
-      egh: { name: "2. Examen General de Heces (EGH)", title: "EXAMEN GENERAL DE HECES", layout: "egh", defaults: { color: "CAFE", consistencia: "PASTOSA", mucus: "NEGATIVO", restos: "MODERADOS", grasa: "ESCASOS", levaduras: "ESCASO", leucocitos: "0 X CAMPO", hematies: "0 X CAMPO", flora: "MODERADA", quistes: "NO SE OBSERVAN", activos: "NO SE OBSERVAN", huevos: "NO SE OBSERVAN", larvas: "NO SE OBSERVAN" } },
-      hemograma: { name: "3. Hemograma Completo", title: "HEMOGRAMA", layout: "hemograma", defaults: { gr: "4,500,000 Xmm3", hb: "13.5 gr/dl", hto: "41 %", vgm: "90.0", hgm: "30.0", chcm: "33.0", plaquetas: "250,000 Xmm3", gb: "6,500 Xmm3", neut_tot: "", neut_banda: "", neut_seg: "55%", linfocitos: "38%", basofilos: "0%", monocitos: "5%", eosinofilos: "2%" } },
-      leucograma: { name: "4. Leucograma", title: "LEUCOGRAMA", layout: "table", rows: [ { exam: "GLOBULOS BLANCOS", result: "13,600 Xmm3", ref: "5,000 – 10,000 Xmm3" }, { exam: "NEUTROFILOS TOTALES", result: "", ref: "" }, { exam: "NEUTROFILOS EN BANDA", result: "", ref: "" }, { exam: "NEUTROFILOS SEGMENTADOS", result: "66%", ref: "45 – 70%" }, { exam: "LINFOCITOS", result: "32%", ref: "20 – 45%" }, { exam: "BASOFILOS", result: "0%", ref: "0 – 1%" }, { exam: "MONOCITOS", result: "1%", ref: "2 – 8%" }, { exam: "EOSINOFILOS", result: "1%", ref: "1 – 5%" } ] },
-      hto_hb: { name: "5. Hematología (Hematocrito y Hemoglobina)", title: "HEMATOLOGIA", layout: "table", rows: [ { exam: "HEMATOCRITO", result: "45%", ref: "37 – 50%" }, { exam: "HEMOGLOBINA", result: "14.8 gr/dl", ref: "12.0 – 16.0 gr/dl" } ] },
-      frotis: { name: "6. Frotis de Sangre Periférica", title: "FROTIS DE SANGRE PERIFERICA", layout: "frotis", defaults: { roja: "NORMOCITICA NORMOCROMICA", blanca: "SE OBSERVAN CELULAS DE MORFOLOGIA NORMAL", plaquetaria: "NORMAL EN NUMERO, FORMA Y TAMAÑO." } },
-      quimica: { name: "7. Química Sanguínea (Panel 2 Columnas)", title: "QUIMICA SANGUINEA", layout: "quimica", defaults: { glucosa: "95.0 mg/dl", colesterol: "180.0 mg/dl", trigliceridos: "140.0 mg/dl", acido_urico: "5.2 mg/dl", creatinina: "0.9 mg/dl", tgo: "___ U/L", tgp: "___ U/L", hdl: "––", ldl: "––", bun: "___ mg/dl" } },
-      urocultivo_antibiograma: { name: "8. Urocultivo / Cultivo con Antibiograma", title: "CULTIVO Y ANTIBIOGRAMA", layout: "antibiograma", defaults: { muestra: "ORINA", examen_realizado: "UROCULTIVO", resultado_aislamiento: "SE AISLA Escherichia coli", recuento: "100,000 UFC/ml DE ORINA.", ab1_name: "CEFEPIME", ab1_val: "S", ab2_name: "AMOXICILINA/AC. CLAVULANICO", ab2_val: "S", ab3_name: "AZTREONAN", ab3_val: "S", ab4_name: "CEFOTAXIME", ab4_val: "S", ab5_name: "PIPERACILINA/TAZOBACTAN", ab5_val: "S", ab6_name: "TRIMETROPRIM/SULFAMETOXAZOLE", ab6_val: "R", ab7_name: "FOSFOMICINA", ab7_val: "S", ab8_name: "CIPROFLOXACINA", ab8_val: "S", ab9_name: "LEVOFLOXACINA", ab9_val: "S", ab10_name: "GENTAMICINA", ab10_val: "S" } },
-      cultivo_negativo: { name: "9. Urocultivo / Coprocultivo / Faríngeo (Negativo)", title: "MISCELANEO", layout: "misc_muestra", defaults: { muestra: "ORINA", examen_realizado: "UROCULTIVO", resultado: "NEGATIVO 0 UFC/ml DE ORINA" } },
-      espermograma_oms: { name: "10. Espermograma Completo (OMS)", title: "ESPERMOGRAMA", layout: "espermograma_oms", defaults: { muestra: "SEMEN", abstinencia: "4 DIAS", hora_col: "7:46 A.M", hora_ex: "8:10 A.M", color: "BLANQUECINO", aspecto: "OPALESCENTE", volumen: "2.0 ml", ph: "7.8", licuefaccion: "NORMAL", viscosidad: "NORMAL", mov_pr: "42%", mov_np: "24%", mov_tot: "66%", inmoviles: "34%", vivos: "70%", muertos: "30%", millones_ml: "17,000,000", total_eyaculado: "34,000,000", morf_normal: "68%", morf_anormal: "32%", def_cabeza: "15%", def_pieza: "10%", def_flagelo: "7%", leucocitos: "2 – 3 X CAMPO", hematies: "0 – 1 X CAMPO", epiteliales: "ESCASAS", redondas: "ESCASO", bacterias: "NO SE OBSERVAN", debris: "ESCASAS" } },
-      espermograma_3h: { name: "11. Espermograma Cinético (1ra, 2da y 3ra Hora)", title: "ESPERMOGRAMA (1, 2 Y 3 HORAS)", layout: "espermograma_3h", defaults: { olor: "SUIS GENERIS", color: "BLANQUECINO", muestra: "LIQUIDO SEMINAL", hora_col: "10:00 A.M", viscosidad: "NORMAL", licuefaccion: "COMPLETA", hora_ex: "10:25 A.M", volumen: "2.5 ML", ph: "8.0", rap_1h: "80%", rap_2h: "70%", rap_3h: "60%", len_1h: "5%", len_2h: "10%", len_3h: "15%", err_1h: "5%", err_2h: "10%", err_3h: "10%", mue_1h: "10%", mue_2h: "10%", mue_3h: "15%", nor_1h: "90%", nor_2h: "85%", nor_3h: "85%", ano_1h: "10%", ano_2h: "15%", ano_3h: "15%", leucocitos: "2 – 4 X CAMPO", epiteliales: "ESCASAS", hematies: "0 – 1 X CAMPO", bacterias: "NO SE OBSERVAN", recuento: "95,000,000 XCC" } },
-      drogas_10: { name: "12. Drogas de Abuso en Orina (10 Drogas)", title: "MISCELANEOS — DROGAS DE ABUSO", layout: "table", subtitle_muestra: "ORINA", rows: [ { exam: "Cocaína (COC)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Marihuana (THC)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Anfetamina (AMP)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Barbitúricos (BAR)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Benzodiacepina (BZD)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Metanfetamina (MET)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Morfina (MOR)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Metadona (MTD)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Fenciclidina (PCP)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Antidepresivos (TCA)", result: "NEGATIVO", ref: "NEGATIVO" } ] },
-      drogas_2: { name: "13. Drogas de Abuso (Marihuana THC y Cocaína COC)", title: "MISCELANEOS — DROGAS DE ABUSO", layout: "table", subtitle_muestra: "ORINA", rows: [ { exam: "MARIHUANA (THC)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "COCAINA (COC)", result: "NEGATIVO", ref: "NEGATIVO" } ] },
-      febriles: { name: "14. Antígenos Febriles", title: "MISCELANEOS — ANTIGENOS FEBRILES", layout: "table", subtitle_muestra: "SUERO", rows: [ { exam: "TIFICO “O”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "TIFICO “H”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "PARATIFICO “A”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "PARATIFICO “B”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "BRUCELLA ABORTUS", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "PROTEUS OX-19", result: "NEGATIVO", ref: "NEGATIVO" } ] },
-      hcg_cuant: { name: "15. HCG Beta Cuantificada (Con Tabla Semanas)", title: "MISCELANEOS — HCG BETA CUANTIFICADA", layout: "hcg_cuant", defaults: { muestra: "SANGRE", resultado: "1,083.0 mIU/mL" } },
-      tolerancia_glucosa: { name: "16. Tolerancia a la Glucosa 3 Horas", title: "TOLERANCIA A LA GLUCOSA 3 HORAS", layout: "table", subtitle_muestra: "SANGRE Y ORINA", rows: [ { exam: "GLUCOSA EN AYUNAS (SANGRE)", result: "95.3 mg/dl", ref: "ORINA: NEGATIVO" }, { exam: "1° HORA (SANGRE)", result: "140.0 mg/dl", ref: "ORINA: NEGATIVO" }, { exam: "2° HORA (SANGRE)", result: "115.0 mg/dl", ref: "ORINA: NEGATIVO" }, { exam: "3° HORA (SANGRE)", result: "90.0 mg/dl", ref: "ORINA: NEGATIVO" } ] },
-      curva_insulina: { name: "17. Insulina Curva 3 Horas", title: "INSULINA CURVA 3 HORAS", layout: "table", subtitle_muestra: "SANGRE", rows: [ { exam: "INSULINA EN AYUNAS", result: "12.0 µUI/ml", ref: "2 – 25 µUI/ml" }, { exam: "INSULINA EN 1 HORA", result: "53.8 µUI/ml", ref: "45 – 280 µUI/ml" }, { exam: "INSULINA EN 2 HORAS", result: "16.1 µUI/ml", ref: "15.0 – 18 µUI/ml" }, { exam: "INSULINA EN 3 HORAS", result: "20.0 µUI/ml", ref: "MENOR DE 30 µUI/ml" } ] },
-      depuracion_creat: { name: "18. Depuración de Creatinina 24 Horas", title: "DEPURACION DE CREATININA", layout: "table", subtitle_muestra: "SUERO Y ORINA", rows: [ { exam: "CREATININA EN SUERO", result: "1.18 mg/dl", ref: "0.6 – 1.4 mg/dl" }, { exam: "CREATININA EN ORINA", result: "51.0 mg/dl", ref: "8.0 – 20 mg/dl" }, { exam: "DEPURACION DE CREATININA", result: "43.52 mg/24horas", ref: "25 – 132 mg/24horas" }, { exam: "VOLUMEN URINARIO", result: "1,450 ml", ref: "24 HORAS" } ] },
-      filtrado_glomerular: { name: "19. Filtrado Glomerular + Creatinina", title: "FILTRADO GLOMERULAR", layout: "table", subtitle_muestra: "SANGRE", rows: [ { exam: "FILTRADO GLOMERULAR", result: "85.0 ml/min", ref: "70 a 130 ml/min" }, { exam: "PESO DEL PACIENTE", result: "75.0 KILOGRAMOS", ref: "" }, { exam: "CREATININA EN SANGRE", result: "0.9 mg/dl", ref: "0.6 – 1.4 mg/dl" } ] },
-      tiroideo: { name: "20. Perfil Tiroideo (T3, T4, TSH)", title: "PERFIL TIROIDEO", layout: "table", rows: [ { exam: "T3", result: "1.25 ng/ml", ref: "0.8 – 2.0 ng/ml" }, { exam: "T4", result: "10.3 ug/dl", ref: "5.1 – 14.1 ug/dl" }, { exam: "TSH", result: "2.7 µUI/ml", ref: "0.2 – 4.20 µUI/ml" } ] },
-      coagulacion_tp_ttp: { name: "21. Tiempos de Coagulación (TP, INR, TTP)", title: "COAGULACION", layout: "table", rows: [ { exam: "TIEMPO DE PROTOMBINA (TP)", result: "13.5 SEGUNDOS", ref: "12.0 – 16.0 SEGUNDOS" }, { exam: "INR", result: "1.05", ref: "0.85 – 1.30" }, { exam: "TIEMPO DE TROMBOPLASTINA (TTP)", result: "30.0 SEGUNDOS", ref: "24 – 36 SEGUNDOS" } ] },
-      bilirrubinas: { name: "22. Bilirrubinas (Total, Directa, Indirecta)", title: "MISCELANEOS — BILIRRUBINAS", layout: "table", rows: [ { exam: "BILIRRUBINA TOTAL", result: "0.34 mg/dl", ref: "EN ADULTOS HASTA 1.1 mg/dl" }, { exam: "BILIRRUBINA DIRECTA", result: "0.19 mg/dl", ref: "HASTA 0.25 mg/dl" }, { exam: "BILIRRUBINA INDIRECTA", result: "0.15 mg/dl", ref: "HASTA 0.8 mg/dl" } ] },
-      proteinas_fracc: { name: "23. Proteínas Totales y Fraccionadas", title: "PROTEINAS FRACCIONADAS", layout: "table", rows: [ { exam: "PROTEINAS TOTALES", result: "7.58 g/dl", ref: "ADULTOS 6.4 – 8.3 g/dl" }, { exam: "ALBUMINA", result: "4.11 g/dl", ref: "ADULTOS 3.97 – 4.95 g/dl" }, { exam: "GLOBULINA", result: "3.47 g/dl", ref: "2.6 – 3.1 g/dl" }, { exam: "RELACION A/G", result: "1.18", ref: "1.1 – 3.1" } ] },
-      electrolitos: { name: "24. Electrolitos (Sodio, Potasio, Calcio, Magnesio)", title: "MISCELANEOS — ELECTROLITOS", layout: "table", rows: [ { exam: "SODIO", result: "138.1 mmol/L", ref: "135 – 155 mmol/L" }, { exam: "POTASIO", result: "4.2 mmol/L", ref: "3.5 – 5.5 mmol/L" }, { exam: "CALCIO SERICO", result: "9.0 mg/dl", ref: "8.5 – 10.5 mg/dl" }, { exam: "MAGNESIO", result: "1.8 mEq/L", ref: "1.6 – 2.1 mEq/L" } ] },
-      lipidico_hdl_ldl: { name: "25. Colesterol, Triglicéridos, HDL y LDL", title: "PERFIL LIPIDICO", layout: "table", rows: [ { exam: "COLESTEROL TOTAL", result: "175.0 mg/dl", ref: "HASTA 200 mg/dl" }, { exam: "TRIGLICERIDOS", result: "145.0 mg/dl", ref: "HASTA 150 mg/dl" }, { exam: "COLESTEROL HDL", result: "55.0 mg/dl", ref: "HOMBRE: 35–45 / MUJER: 45–55 mg/dl" }, { exam: "COLESTEROL LDL", result: "110.0 mg/dl", ref: "HASTA 150 mg/dl" } ] },
-      lupico: { name: "26. Anticoagulante Lúpico (LA1, LA2, Radio)", title: "MISCELANEOS — ANTICOAGULANTE LUPICO", layout: "table", subtitle_muestra: "PLASMA CON CITRATO", rows: [ { exam: "LA 1", result: "40.6 SEGUNDOS", ref: "31 – 44 SEGUNDOS" }, { exam: "LA 2", result: "35.7 SEGUNDOS", ref: "30 – 38 SEGUNDOS" }, { exam: "RADIO LA 1 – LA 2", result: "1.1", ref: "0.8 – 1.2" } ] },
-      dengue_panel: { name: "27. Dengue (NS1, IgG, IgM)", title: "MISCELANEO — DENGUE", layout: "table", subtitle_muestra: "SANGRE", rows: [ { exam: "NS1", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "IgG", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "IgM", result: "NEGATIVO", ref: "NEGATIVO" } ] },
-      tipeo: { name: "28. Tipeo Sanguíneo (Grupo y Factor Rh)", title: "TIPEO SANGUINEO", layout: "misc_muestra", defaults: { muestra: "SANGRE", examen_realizado: "TIPEO SANGUINEO", resultado: "GRUPO “O” FACTOR Rh “POSITIVO”." } },
-      embarazo: { name: "29. Prueba de Embarazo en Sangre", title: "MISCELANEO", layout: "misc_muestra", defaults: { muestra: "SANGRE", examen_realizado: "PRUEBA DE EMBARAZO", resultado: "NEGATIVO A LA FECHA." } },
-      vih: { name: "30. V.I.H. / P.R.S (RPR Sífilis)", title: "MISCELANEOS", layout: "misc_muestra", defaults: { muestra: "SANGRE", examen_realizado: "V.I.H.", resultado: "NO REACTIVO." } },
-      heces_misc: { name: "31. Heces: H. Pylori / Sangre Oculta / PAM", title: "MISCELANEOS", layout: "misc_muestra", defaults: { muestra: "HECES", examen_realizado: "Helicobacter pylori", resultado: "NEGATIVO." } },
-      misc_tabla_libre: { name: "32. Misceláneos de Tabla (PSA, HbA1c, Ferritina, Hormonas, etc.)", title: "MISCELANEOS", layout: "table", rows: [ { exam: "HEMOGLOBINA GLICOSILADA", result: "6.1 %", ref: "4.2 – 6.2 %" } ] }
+      ego: { name: "1. Examen General de Orina (EGO)", title: "EXAMEN GENERAL DE ORINA", area: "UROANÁLISIS Y COPROLOGÍA", layout: "ego", defaults: { color: "AMARILLO", aspecto: "LIMPIDO", ph: "6.0", densidad: "1020", glucosa: "NEGATIVO", proteinas: "NEGATIVO", nitritos: "NEGATIVO", sangre_oculta: "NEGATIVO", cetonas: "NEGATIVO", urobilinogeno: "NEGATIVO", bilirrubina: "NEGATIVO", esterasa: "NEGATIVO", leucocitos: "0 - 1 X CAMPO", hematies: "0 X CAMPO", epiteliales: "ESCASAS", bacterias: "ESCASAS", cilindros: "NO SE OBSERVAN", cristales: "NO SE OBSERVAN", levaduras: "NO SE OBSERVAN", mucoide: "NO SE OBSERVAN", parasitos: "NO SE OBSERVAN" } },
+      egh: { name: "2. Examen General de Heces (EGH)", title: "EXAMEN GENERAL DE HECES", area: "UROANÁLISIS Y COPROLOGÍA", layout: "egh", defaults: { color: "CAFE", consistencia: "PASTOSA", mucus: "NEGATIVO", restos: "MODERADOS", grasa: "ESCASOS", levaduras: "ESCASO", leucocitos: "0 X CAMPO", hematies: "0 X CAMPO", flora: "MODERADA", quistes: "NO SE OBSERVAN", activos: "NO SE OBSERVAN", huevos: "NO SE OBSERVAN", larvas: "NO SE OBSERVAN" } },
+      hemograma: { name: "3. Hemograma Completo", title: "HEMOGRAMA", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "hemograma", defaults: { gr: "4,500,000 Xmm3", hb: "13.5 gr/dl", hto: "41 %", vgm: "90.0", hgm: "30.0", chcm: "33.0", plaquetas: "250,000 Xmm3", gb: "6,500 Xmm3", neut_tot: "", neut_banda: "", neut_seg: "55%", linfocitos: "38%", basofilos: "0%", monocitos: "5%", eosinofilos: "2%" } },
+      leucograma: { name: "4. Leucograma", title: "LEUCOGRAMA", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "table", rows: [ { exam: "GLOBULOS BLANCOS", result: "13,600 Xmm3", ref: "5,000 – 10,000 Xmm3" }, { exam: "NEUTROFILOS TOTALES", result: "", ref: "" }, { exam: "NEUTROFILOS EN BANDA", result: "", ref: "" }, { exam: "NEUTROFILOS SEGMENTADOS", result: "66%", ref: "45 – 70%" }, { exam: "LINFOCITOS", result: "32%", ref: "20 – 45%" }, { exam: "BASOFILOS", result: "0%", ref: "0 – 1%" }, { exam: "MONOCITOS", result: "1%", ref: "2 – 8%" }, { exam: "EOSINOFILOS", result: "1%", ref: "1 – 5%" } ] },
+      hto_hb: { name: "5. Hematología (Hematocrito y Hemoglobina)", title: "HEMATOLOGIA", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "table", rows: [ { exam: "HEMATOCRITO", result: "45%", ref: "37 – 50%" }, { exam: "HEMOGLOBINA", result: "14.8 gr/dl", ref: "12.0 – 16.0 gr/dl" } ] },
+      frotis: { name: "6. Frotis de Sangre Periférica", title: "FROTIS DE SANGRE PERIFERICA", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "frotis", defaults: { roja: "NORMOCITICA NORMOCROMICA", blanca: "SE OBSERVAN CELULAS DE MORFOLOGIA NORMAL", plaquetaria: "NORMAL EN NUMERO, FORMA Y TAMAÑO." } },
+      quimica: { name: "7. Química Sanguínea (Panel 2 Columnas)", title: "QUIMICA SANGUINEA", area: "QUÍMICA SANGUÍNEA", layout: "quimica", defaults: { glucosa: "95.0 mg/dl", colesterol: "180.0 mg/dl", trigliceridos: "140.0 mg/dl", acido_urico: "5.2 mg/dl", creatinina: "0.9 mg/dl", tgo: "___ U/L", tgp: "___ U/L", hdl: "––", ldl: "––", bun: "___ mg/dl" } },
+      urocultivo_antibiograma: { name: "8. Urocultivo / Cultivo con Antibiograma", title: "UROCULTIVO Y ANTIBIOGRAMA", area: "BACTERIOLOGÍA Y CULTIVOS", layout: "antibiograma", defaults: { muestra: "ORINA", examen_realizado: "UROCULTIVO", resultado_aislamiento: "SE AISLA Escherichia coli", recuento: "100,000 UFC/ml DE ORINA.", ab1_name: "CEFEPIME", ab1_val: "S", ab2_name: "AMOXICILINA/AC. CLAVULANICO", ab2_val: "S", ab3_name: "AZTREONAN", ab3_val: "S", ab4_name: "CEFOTAXIME", ab4_val: "S", ab5_name: "PIPERACILINA/TAZOBACTAN", ab5_val: "S", ab6_name: "TRIMETROPRIM/SULFAMETOXAZOLE", ab6_val: "R", ab7_name: "FOSFOMICINA", ab7_val: "S", ab8_name: "CIPROFLOXACINA", ab8_val: "S", ab9_name: "LEVOFLOXACINA", ab9_val: "S", ab10_name: "GENTAMICINA", ab10_val: "S" } },
+      cultivo_negativo: { name: "9. Urocultivo / Coprocultivo / Faríngeo (Negativo)", title: "CULTIVO BACTERIOLOGICO", area: "BACTERIOLOGÍA Y CULTIVOS", layout: "misc_muestra", defaults: { muestra: "ORINA", examen_realizado: "UROCULTIVO", resultado: "NEGATIVO 0 UFC/ml DE ORINA" } },
+      espermograma_oms: { name: "10. Espermograma Completo (OMS)", title: "ESPERMOGRAMA", area: "UROANÁLISIS Y COPROLOGÍA", layout: "espermograma_oms", defaults: { muestra: "SEMEN", abstinencia: "4 DIAS", hora_col: "7:46 A.M", hora_ex: "8:10 A.M", color: "BLANQUECINO", aspecto: "OPALESCENTE", volumen: "2.0 ml", ph: "7.8", licuefaccion: "NORMAL", viscosidad: "NORMAL", mov_pr: "42%", mov_np: "24%", mov_tot: "66%", inmoviles: "34%", vivos: "70%", muertos: "30%", millones_ml: "17,000,000", total_eyaculado: "34,000,000", morf_normal: "68%", morf_anormal: "32%", def_cabeza: "15%", def_pieza: "10%", def_flagelo: "7%", leucocitos: "2 – 3 X CAMPO", hematies: "0 – 1 X CAMPO", epiteliales: "ESCASAS", redondas: "ESCASO", bacterias: "NO SE OBSERVAN", debris: "ESCASAS" } },
+      espermograma_3h: { name: "11. Espermograma Cinético (1ra, 2da y 3ra Hora)", title: "ESPERMOGRAMA", area: "UROANÁLISIS Y COPROLOGÍA", layout: "espermograma_3h", defaults: { olor: "SUIS GENERIS", color: "BLANQUECINO", muestra: "LIQUIDO SEMINAL", hora_col: "10:00 A.M", viscosidad: "NORMAL", licuefaccion: "COMPLETA", hora_ex: "10:25 A.M", volumen: "2.5 ML", ph: "8.0", rap_1h: "80%", rap_2h: "70%", rap_3h: "60%", len_1h: "5%", len_2h: "10%", len_3h: "15%", err_1h: "5%", err_2h: "10%", err_3h: "10%", mue_1h: "10%", mue_2h: "10%", mue_3h: "15%", nor_1h: "90%", nor_2h: "85%", nor_3h: "85%", ano_1h: "10%", ano_2h: "15%", ano_3h: "15%", leucocitos: "2 – 4 X CAMPO", epiteliales: "ESCASAS", hematies: "0 – 1 X CAMPO", bacterias: "NO SE OBSERVAN", recuento: "95,000,000 XCC" } },
+      drogas_10: { name: "12. Drogas de Abuso en Orina (10 Drogas)", title: "DROGAS DE ABUSO", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "table", subtitle_muestra: "ORINA", rows: [ { exam: "Cocaína (COC)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Marihuana (THC)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Anfetamina (AMP)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Barbitúricos (BAR)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Benzodiacepina (BZD)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Metanfetamina (MET)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Morfina (MOR)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Metadona (MTD)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Fenciclidina (PCP)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "Antidepresivos (TCA)", result: "NEGATIVO", ref: "NEGATIVO" } ] },
+      drogas_2: { name: "13. Drogas de Abuso (Marihuana THC y Cocaína COC)", title: "DROGAS DE ABUSO", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "table", subtitle_muestra: "ORINA", rows: [ { exam: "MARIHUANA (THC)", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "COCAINA (COC)", result: "NEGATIVO", ref: "NEGATIVO" } ] },
+      febriles: { name: "14. Antígenos Febriles", title: "ANTIGENOS FEBRILES", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "table", subtitle_muestra: "SUERO", rows: [ { exam: "TIFICO “O”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "TIFICO “H”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "PARATIFICO “A”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "PARATIFICO “B”", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "BRUCELLA ABORTUS", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "PROTEUS OX-19", result: "NEGATIVO", ref: "NEGATIVO" } ] },
+      hcg_cuant: { name: "15. HCG Beta Cuantificada (Con Tabla Semanas)", title: "HCG BETA CUANTIFICADA", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "hcg_cuant", defaults: { muestra: "SANGRE", resultado: "1,083.0 mIU/mL" } },
+      tolerancia_glucosa: { name: "16. Tolerancia a la Glucosa 3 Horas", title: "TOLERANCIA A LA GLUCOSA 3 HORAS", area: "QUÍMICA SANGUÍNEA", layout: "table", subtitle_muestra: "SANGRE Y ORINA", rows: [ { exam: "GLUCOSA EN AYUNAS (SANGRE)", result: "95.3 mg/dl", ref: "ORINA: NEGATIVO" }, { exam: "1° HORA (SANGRE)", result: "140.0 mg/dl", ref: "ORINA: NEGATIVO" }, { exam: "2° HORA (SANGRE)", result: "115.0 mg/dl", ref: "ORINA: NEGATIVO" }, { exam: "3° HORA (SANGRE)", result: "90.0 mg/dl", ref: "ORINA: NEGATIVO" } ] },
+      curva_insulina: { name: "17. Insulina Curva 3 Horas", title: "INSULINA CURVA 3 HORAS", area: "QUÍMICA SANGUÍNEA", layout: "table", subtitle_muestra: "SANGRE", rows: [ { exam: "INSULINA EN AYUNAS", result: "12.0 µUI/ml", ref: "2 – 25 µUI/ml" }, { exam: "INSULINA EN 1 HORA", result: "53.8 µUI/ml", ref: "45 – 280 µUI/ml" }, { exam: "INSULINA EN 2 HORAS", result: "16.1 µUI/ml", ref: "15.0 – 18 µUI/ml" }, { exam: "INSULINA EN 3 HORAS", result: "20.0 µUI/ml", ref: "MENOR DE 30 µUI/ml" } ] },
+      depuracion_creat: { name: "18. Depuración de Creatinina 24 Horas", title: "DEPURACION DE CREATININA", area: "QUÍMICA SANGUÍNEA", layout: "table", subtitle_muestra: "SUERO Y ORINA", rows: [ { exam: "CREATININA EN SUERO", result: "1.18 mg/dl", ref: "0.6 – 1.4 mg/dl" }, { exam: "CREATININA EN ORINA", result: "51.0 mg/dl", ref: "8.0 – 20 mg/dl" }, { exam: "DEPURACION DE CREATININA", result: "43.52 mg/24horas", ref: "25 – 132 mg/24horas" }, { exam: "VOLUMEN URINARIO", result: "1,450 ml", ref: "24 HORAS" } ] },
+      filtrado_glomerular: { name: "19. Filtrado Glomerular + Creatinina", title: "FILTRADO GLOMERULAR", area: "QUÍMICA SANGUÍNEA", layout: "table", subtitle_muestra: "SANGRE", rows: [ { exam: "FILTRADO GLOMERULAR", result: "85.0 ml/min", ref: "70 a 130 ml/min" }, { exam: "PESO DEL PACIENTE", result: "75.0 KILOGRAMOS", ref: "" }, { exam: "CREATININA EN SANGRE", result: "0.9 mg/dl", ref: "0.6 – 1.4 mg/dl" } ] },
+      tiroideo: { name: "20. Perfil Tiroideo (T3, T4, TSH)", title: "PERFIL TIROIDEO", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "table", rows: [ { exam: "T3", result: "1.25 ng/ml", ref: "0.8 – 2.0 ng/ml" }, { exam: "T4", result: "10.3 ug/dl", ref: "5.1 – 14.1 ug/dl" }, { exam: "TSH", result: "2.7 µUI/ml", ref: "0.2 – 4.20 µUI/ml" } ] },
+      coagulacion_tp_ttp: { name: "21. Tiempos de Coagulación (TP, INR, TTP)", title: "COAGULACION", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "table", rows: [ { exam: "TIEMPO DE PROTOMBINA (TP)", result: "13.5 SEGUNDOS", ref: "12.0 – 16.0 SEGUNDOS" }, { exam: "INR", result: "1.05", ref: "0.85 – 1.30" }, { exam: "TIEMPO DE TROMBOPLASTINA (TTP)", result: "30.0 SEGUNDOS", ref: "24 – 36 SEGUNDOS" } ] },
+      bilirrubinas: { name: "22. Bilirrubinas (Total, Directa, Indirecta)", title: "BILIRRUBINAS", area: "QUÍMICA SANGUÍNEA", layout: "table", rows: [ { exam: "BILIRRUBINA TOTAL", result: "0.34 mg/dl", ref: "EN ADULTOS HASTA 1.1 mg/dl" }, { exam: "BILIRRUBINA DIRECTA", result: "0.19 mg/dl", ref: "HASTA 0.25 mg/dl" }, { exam: "BILIRRUBINA INDIRECTA", result: "0.15 mg/dl", ref: "HASTA 0.8 mg/dl" } ] },
+      proteinas_fracc: { name: "23. Proteínas Totales y Fraccionadas", title: "PROTEINAS FRACCIONADAS", area: "QUÍMICA SANGUÍNEA", layout: "table", rows: [ { exam: "PROTEINAS TOTALES", result: "7.58 g/dl", ref: "ADULTOS 6.4 – 8.3 g/dl" }, { exam: "ALBUMINA", result: "4.11 g/dl", ref: "ADULTOS 3.97 – 4.95 g/dl" }, { exam: "GLOBULINA", result: "3.47 g/dl", ref: "2.6 – 3.1 g/dl" }, { exam: "RELACION A/G", result: "1.18", ref: "1.1 – 3.1" } ] },
+      electrolitos: { name: "24. Electrolitos (Sodio, Potasio, Calcio, Magnesio)", title: "ELECTROLITOS", area: "QUÍMICA SANGUÍNEA", layout: "table", rows: [ { exam: "SODIO", result: "138.1 mmol/L", ref: "135 – 155 mmol/L" }, { exam: "POTASIO", result: "4.2 mmol/L", ref: "3.5 – 5.5 mmol/L" }, { exam: "CALCIO SERICO", result: "9.0 mg/dl", ref: "8.5 – 10.5 mg/dl" }, { exam: "MAGNESIO", result: "1.8 mEq/L", ref: "1.6 – 2.1 mEq/L" } ] },
+      lipidico_hdl_ldl: { name: "25. Colesterol, Triglicéridos, HDL y LDL", title: "PERFIL LIPIDICO", area: "QUÍMICA SANGUÍNEA", layout: "table", rows: [ { exam: "COLESTEROL TOTAL", result: "175.0 mg/dl", ref: "HASTA 200 mg/dl" }, { exam: "TRIGLICERIDOS", result: "145.0 mg/dl", ref: "HASTA 150 mg/dl" }, { exam: "COLESTEROL HDL", result: "55.0 mg/dl", ref: "HOMBRE: 35–45 / MUJER: 45–55 mg/dl" }, { exam: "COLESTEROL LDL", result: "110.0 mg/dl", ref: "HASTA 150 mg/dl" } ] },
+      lupico: { name: "26. Anticoagulante Lúpico (LA1, LA2, Radio)", title: "ANTICOAGULANTE LUPICO", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "table", subtitle_muestra: "PLASMA CON CITRATO", rows: [ { exam: "LA 1", result: "40.6 SEGUNDOS", ref: "31 – 44 SEGUNDOS" }, { exam: "LA 2", result: "35.7 SEGUNDOS", ref: "30 – 38 SEGUNDOS" }, { exam: "RADIO LA 1 – LA 2", result: "1.1", ref: "0.8 – 1.2" } ] },
+      dengue_panel: { name: "27. Dengue (NS1, IgG, IgM)", title: "DENGUE", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "table", subtitle_muestra: "SANGRE", rows: [ { exam: "NS1", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "IgG", result: "NEGATIVO", ref: "NEGATIVO" }, { exam: "IgM", result: "NEGATIVO", ref: "NEGATIVO" } ] },
+      tipeo: { name: "28. Tipeo Sanguíneo (Grupo y Factor Rh)", title: "TIPEO SANGUINEO", area: "HEMATOLOGÍA Y COAGULACIÓN", layout: "misc_muestra", defaults: { muestra: "SANGRE", examen_realizado: "TIPEO SANGUINEO", resultado: "GRUPO “O” FACTOR Rh “POSITIVO”." } },
+      embarazo: { name: "29. Prueba de Embarazo en Sangre", title: "PRUEBA DE EMBARAZO", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "misc_muestra", defaults: { muestra: "SANGRE", examen_realizado: "PRUEBA DE EMBARAZO", resultado: "NEGATIVO A LA FECHA." } },
+      vih: { name: "30. V.I.H. / P.R.S (RPR Sífilis)", title: "V.I.H. / R.P.R.", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "misc_muestra", defaults: { muestra: "SANGRE", examen_realizado: "V.I.H.", resultado: "NO REACTIVO." } },
+      heces_misc: { name: "31. Heces: H. Pylori / Sangre Oculta / PAM", title: "HELICOBACTER PYLORI / COPROLOGIA ESPECIAL", area: "UROANÁLISIS Y COPROLOGÍA", layout: "misc_muestra", defaults: { muestra: "HECES", examen_realizado: "Helicobacter pylori", resultado: "NEGATIVO." } },
+      misc_tabla_libre: { name: "32. Misceláneos de Tabla (PSA, HbA1c, Ferritina, Hormonas, etc.)", title: "MISCELANEOS", area: "INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS", layout: "table", rows: [ { exam: "HEMOGLOBINA GLICOSILADA", result: "6.1 %", ref: "4.2 – 6.2 %" } ] }
     };
 
     const MISC_PRESETS_CATALOG = [
@@ -973,7 +979,7 @@
       allRecords = numbered.reverse();
       const mbUsed = Math.max(0.01, (allRecords.length * 1.5) / 1024).toFixed(2);
       const spaceBadge = document.getElementById('db-space-estimate');
-      if (spaceBadge) spaceBadge.textContent = `${mbUsed} MB (${allRecords.length} ex.)`;
+      if (spaceBadge) spaceBadge.textContent = `${mbUsed} MB (${allRecords.length} pac.)`;
       renderStaffRecords();
       if (!isDoctorReadOnly()) {
         const { data: summaries } = await supabaseClient.from('cierres_adesca').select('*').order('created_at', { ascending: false }).limit(8);
@@ -1048,64 +1054,146 @@
       }).join('');
     }
 
-    // MÓDULO DE ESTADÍSTICAS E IMPRESIÓN PARA TODOS LOS LICENCIADOS Y ADMINISTRACIÓN
+    // ============================================================================
+    // MÓDULO DE ESTADÍSTICAS EXACTAS (DESGLOSA TODAS LAS PÁGINAS DE CADA PACIENTE,
+    // AGRUPA POR ÁREA CLÍNICA, MUESTRA EL EXAMEN MÁS REALIZADO Y ELIMINA LISTA DE NOMBRES)
+    // ============================================================================
+    function classifyExamAreaAndName(rawTitle, templateKey = '') {
+      if (templateKey && EXAM_TEMPLATES[templateKey]) {
+        const tpl = EXAM_TEMPLATES[templateKey];
+        let cleanTitle = (rawTitle || tpl.title).toUpperCase().replace(/\(\+\d+\s*MÁS\)/g, '').trim();
+        if (cleanTitle === 'MISCELANEO' || cleanTitle === 'MISCELANEOS') {
+          cleanTitle = tpl.title === 'MISCELANEO' || tpl.title === 'MISCELANEOS' ? 'MISCELÁNEOS Y PRUEBAS ESPECIALES' : tpl.title;
+        }
+        return { area: tpl.area || 'INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS', name: cleanTitle };
+      }
+
+      let t = (rawTitle || 'OTRO').toUpperCase().replace(/\(\+\d+\s*MÁS\)/g, '').trim();
+      if (t === 'MISCELANEO' || t === 'MISCELANEOS') t = 'MISCELÁNEOS Y PRUEBAS ESPECIALES';
+
+      if (t.includes('ORINA') || t.includes('HECES') || t.includes('ESPERMOGRAMA') || t.includes('COPROLOGIA')) {
+        return { area: 'UROANÁLISIS Y COPROLOGÍA', name: t };
+      }
+      if (t.includes('HEMOGRAMA') || t.includes('LEUCOGRAMA') || t.includes('HEMATOLOGIA') || t.includes('FROTIS') || t.includes('COAGULACION') || t.includes('PROTOMBINA') || t.includes('TIPEO') || t.includes('LUPICO') || t.includes('PLAQUETAS') || t.includes('RETICULOCITOS')) {
+        return { area: 'HEMATOLOGÍA Y COAGULACIÓN', name: t };
+      }
+      if (t.includes('QUIMICA') || t.includes('GLUCOSA') || t.includes('COLESTEROL') || t.includes('TRIGLICERIDOS') || t.includes('LIPIDICO') || t.includes('CREATININA') || t.includes('FILTRADO') || t.includes('ACIDO URICO') || t.includes('BILIRRUBINA') || t.includes('PROTEINAS') || t.includes('ALBUMINA') || t.includes('ELECTROLITOS') || t.includes('SODIO') || t.includes('POTASIO') || t.includes('CALCIO') || t.includes('MAGNESIO') || t.includes('TGO') || t.includes('TGP') || t.includes('FOSFATASA') || t.includes('AMILASA') || t.includes('LIPASA') || t.includes('LDH') || t.includes('CPK') || t.includes('INSULINA') || t.includes('GLICOSILADA')) {
+        return { area: 'QUÍMICA SANGUÍNEA', name: t };
+      }
+      if (t.includes('CULTIVO') || t.includes('UROCULTIVO') || t.includes('COPROCULTIVO') || t.includes('ANTIBIOGRAMA') || t.includes('BACILOSCOPIA') || t.includes('SECRECION')) {
+        return { area: 'BACTERIOLOGÍA Y CULTIVOS', name: t };
+      }
+      return { area: 'INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS', name: t };
+    }
+
     function openStatsModal() {
       const records = filterRecordsByDateAndQuery();
-      const total = records.length;
-      const ready = records.filter(r => r.status === 'ready' || r.status === 'requested').length;
-      const delivered = records.filter(r => r.status === 'delivered').length;
-      const processing = records.filter(r => r.status === 'processing').length;
+      const totalPatients = records.length;
+      let totalExamsDone = 0;
 
-      const byType = {};
+      const areaCounts = {
+        'QUÍMICA SANGUÍNEA': 0,
+        'HEMATOLOGÍA Y COAGULACIÓN': 0,
+        'UROANÁLISIS Y COPROLOGÍA': 0,
+        'BACTERIOLOGÍA Y CULTIVOS': 0,
+        'INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS': 0
+      };
+      const examCounts = {};
+
       records.forEach(r => {
-        const t = (r.exam_type || 'OTRO').toUpperCase();
-        byType[t] = (byType[t] || 0) + 1;
+        const saved = decompressExamData(r.exam_data_compressed);
+        if (saved && Array.isArray(saved.pages) && saved.pages.length > 0) {
+          saved.pages.forEach(p => {
+            totalExamsDone++;
+            const tpl = EXAM_TEMPLATES[p.templateKey];
+            let specificTitle = p.formState?.customTitle || (tpl ? tpl.title : r.exam_type);
+            if ((specificTitle === 'MISCELANEOS' || specificTitle === 'MISCELANEO') && Array.isArray(p.formState?.rows) && p.formState.rows.length === 1) {
+              specificTitle = p.formState.rows[0].exam || specificTitle;
+            } else if ((specificTitle === 'MISCELANEOS' || specificTitle === 'MISCELANEO') && p.formState?.examen_realizado) {
+              specificTitle = p.formState.examen_realizado;
+            }
+            const info = classifyExamAreaAndName(specificTitle, p.templateKey);
+            areaCounts[info.area] = (areaCounts[info.area] || 0) + 1;
+            examCounts[info.name] = (examCounts[info.name] || 0) + 1;
+          });
+        } else {
+          totalExamsDone++;
+          const info = classifyExamAreaAndName(r.exam_type, saved?.templateKey || '');
+          areaCounts[info.area] = (areaCounts[info.area] || 0) + 1;
+          examCounts[info.name] = (examCounts[info.name] || 0) + 1;
+        }
       });
-      const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+
+      const sortedExams = Object.entries(examCounts).sort((a, b) => b[1] - a[1]);
+      const sortedAreas = Object.entries(areaCounts).sort((a, b) => b[1] - a[1]);
+
+      const topExamName = sortedExams.length > 0 ? `${sortedExams[0][0]} (${sortedExams[0][1]})` : 'N/A';
+      const topAreaName = (sortedAreas.length > 0 && sortedAreas[0][1] > 0) ? `${sortedAreas[0][0]} (${sortedAreas[0][1]})` : 'N/A';
+
+      lastComputedStats = { totalPatients, totalExamsDone, topExamName, topAreaName, sortedAreas, sortedExams };
       const prof = getCurrentProfile();
 
       const statsHtml = `
-        <div class="exam-sheet-page" style="padding:16px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;">
-          <div style="border-bottom:2px solid #1b3b6f;padding-bottom:8px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+        <div class="exam-sheet-page" style="padding:18px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;">
+          <div style="border-bottom:2px solid #1b3b6f;padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
             <img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:50px;width:auto;" />
             <div style="text-align:right;">
-              <h2 style="font-size:15px;font-weight:900;color:#1b3b6f;margin:0;">REPORTE DE ESTADÍSTICAS Y CONTROL DIARIO</h2>
-              <p style="font-size:10px;color:#475569;margin:2px 0 0 0;">Generado por: <strong>${prof ? prof.displayName : 'Personal Autorizado'}</strong> • Fecha: <strong>${getFormattedTodayUpper()}</strong></p>
+              <h2 style="font-size:15px;font-weight:900;color:#1b3b6f;margin:0;">REPORTE ESTADÍSTICO DE EXÁMENES REALIZADOS</h2>
+              <p style="font-size:10px;color:#475569;margin:2px 0 0 0;">Emitido por: <strong>${prof ? prof.displayName : 'Personal Autorizado'}</strong> • Fecha: <strong>${getFormattedTodayUpper()}</strong></p>
             </div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
-              <div class="text-[10px] font-bold uppercase text-blue-800">Total Pacientes</div>
-              <div class="text-2xl font-black text-[#163a70]">${total}</div>
+              <div class="text-[10px] font-bold uppercase text-blue-800">Pacientes Recibidos</div>
+              <div class="text-2xl font-black text-[#163a70]">${totalPatients}</div>
             </div>
             <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-              <div class="text-[10px] font-bold uppercase text-emerald-800">Listos</div>
-              <div class="text-2xl font-black text-emerald-700">${ready}</div>
+              <div class="text-[10px] font-bold uppercase text-emerald-800">Total Exámenes Hechos</div>
+              <div class="text-2xl font-black text-emerald-700">${totalExamsDone}</div>
             </div>
-            <div class="p-3 rounded-xl bg-slate-100 border border-slate-300 text-center">
-              <div class="text-[10px] font-bold uppercase text-slate-700">Entregados</div>
-              <div class="text-2xl font-black text-slate-800">${delivered}</div>
+            <div class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-center">
+              <div class="text-[10px] font-bold uppercase text-indigo-800">Examen Más Realizado</div>
+              <div class="text-xs font-black text-indigo-950 mt-1 leading-tight">${topExamName}</div>
             </div>
             <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
-              <div class="text-[10px] font-bold uppercase text-amber-800">En Proceso</div>
-              <div class="text-2xl font-black text-amber-700">${processing}</div>
+              <div class="text-[10px] font-bold uppercase text-amber-900">Área de Mayor Demanda</div>
+              <div class="text-xs font-black text-amber-950 mt-1 leading-tight">${topAreaName}</div>
             </div>
           </div>
 
-          <h4 style="font-size:11px;font-weight:900;color:#163a70;margin-bottom:6px;text-transform:uppercase;">Desglose por Tipo de Estudio Realizado</h4>
-          <table class="print-table" style="margin-bottom:14px;">
-            <thead><tr><th style="width:75%;">ESTUDIO / EXAMEN</th><th style="width:25%;text-align:center;">CANTIDAD</th></tr></thead>
+          <h4 style="font-size:11.5px;font-weight:900;color:#163a70;margin-bottom:6px;text-transform:uppercase;">1. Resumen por Área Clínica de Laboratorio</h4>
+          <table class="print-table" style="margin-bottom:16px;">
+            <thead>
+              <tr>
+                <th style="width:65%;">ÁREA CLÍNICA</th>
+                <th style="width:18%;text-align:center;">EXÁMENES HECHOS</th>
+                <th style="width:17%;text-align:center;">PORCENTAJE (%)</th>
+              </tr>
+            </thead>
             <tbody>
-              ${sortedTypes.length > 0 ? sortedTypes.map(([k, count]) => `<tr><td><strong>${k}</strong></td><td style="text-align:center;font-weight:900;">${count}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center;">Sin registros</td></tr>'}
+              ${sortedAreas.map(([area, count]) => {
+                const pct = totalExamsDone > 0 ? ((count / totalExamsDone) * 100).toFixed(1) + '%' : '0%';
+                return `<tr><td><strong>${area}</strong></td><td style="text-align:center;font-weight:900;color:#163a70;">${count}</td><td style="text-align:center;font-weight:700;">${pct}</td></tr>`;
+              }).join('')}
             </tbody>
           </table>
 
-          <h4 style="font-size:11px;font-weight:900;color:#163a70;margin-bottom:6px;text-transform:uppercase;">Listado Nominal de Pacientes (${total})</h4>
+          <h4 style="font-size:11.5px;font-weight:900;color:#163a70;margin-bottom:6px;text-transform:uppercase;">2. Desglose Individual por Tipo de Examen Realizado (${totalExamsDone} Estudios)</h4>
           <table class="print-table">
-            <thead><tr><th style="width:8%;">N°</th><th style="width:14%;">ORDEN</th><th style="width:36%;">PACIENTE</th><th style="width:12%;">EDAD</th><th style="width:30%;">EXAMEN</th></tr></thead>
+            <thead>
+              <tr>
+                <th style="width:10%;text-align:center;">RANK</th>
+                <th style="width:60%;">ESTUDIO / EXAMEN ESPECÍFICO</th>
+                <th style="width:15%;text-align:center;">CANTIDAD</th>
+                <th style="width:15%;text-align:center;">% DEL TOTAL</th>
+              </tr>
+            </thead>
             <tbody>
-              ${records.length > 0 ? records.slice().reverse().map(r => `<tr><td style="text-align:center;font-weight:bold;">${r.dailyNumber}</td><td>${r.code}</td><td><strong>${r.patient_name}</strong></td><td>${r.patient_age || '-'}</td><td>${r.exam_type}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;">Sin pacientes en el filtro actual</td></tr>'}
+              ${sortedExams.length > 0 ? sortedExams.map(([examName, count], idx) => {
+                const pct = totalExamsDone > 0 ? ((count / totalExamsDone) * 100).toFixed(1) + '%' : '0%';
+                return `<tr><td style="text-align:center;font-weight:bold;">#${idx + 1}</td><td><strong>${examName}</strong></td><td style="text-align:center;font-weight:900;color:#163a70;">${count}</td><td style="text-align:center;">${pct}</td></tr>`;
+              }).join('') : '<tr><td colspan="4" style="text-align:center;">Sin exámenes registrados en este periodo</td></tr>'}
             </tbody>
           </table>
         </div>`;
@@ -1123,6 +1211,32 @@
       printArea.className = 'hidden print:block full-page-print';
       printArea.innerHTML = document.getElementById('stats-printable-body').innerHTML;
       window.print();
+    }
+
+    function exportStatsToCSV() {
+      if (!lastComputedStats) return;
+      const s = lastComputedStats;
+      const rows = [
+        ["LABORATORIO CLINICO ADESCAS - REPORTE DE ESTADISTICAS"],
+        ["Fecha de Emision", getFormattedTodayUpper()],
+        ["Total Pacientes Recibidos", s.totalPatients],
+        ["Total Examenes Realizados", s.totalExamsDone],
+        ["Examen Mas Realizado", s.topExamName],
+        [],
+        ["RESUMEN POR AREA CLINICA", "CANTIDAD"],
+        ...s.sortedAreas.map(([a, c]) => [a, c]),
+        [],
+        ["DESGLOSE POR EXAMEN ESPECIFICO", "CANTIDAD"],
+        ...s.sortedExams.map(([e, c]) => [e, c])
+      ];
+      const csvContent = "\uFEFF" + rows.map(r => r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Estadisticas_ADESCAS_${getFormattedTodayUpper().replace(/\//g, '-')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     function downloadFilteredBackup() {
@@ -1430,7 +1544,7 @@
       const prof = getCurrentProfile();
       const activeStampKey = (prof && prof.role === 'licenciado') ? prof.stampKey : currentRecordStampOwner;
 
-      const headerHTML = `<div style="width:100%;"><div style="border-bottom:2px solid #1b3b6f;padding-bottom:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><div style="flex-shrink:0;"><img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:52px;width:auto;display:block;" /></div><div style="text-align:center;flex:1;"><h1 style="font-size:15.5px;font-weight:900;color:#1b3b6f;margin:0;line-height:1.15;">LABORATORIO CLINICO “ADESCAS”</h1><p style="font-size:10px;font-weight:700;color:#1e293b;margin:1px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p><p style="font-size:9.5px;color:#334155;margin:1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p><p style="font-size:10px;font-weight:800;color:#0f172a;margin:1px 0 0 0;">Tel: 2413-4125 &nbsp;&nbsp;&nbsp;&nbsp; WhatsApp: 7895-5220</p></div></div><table class="print-table" style="margin-bottom:6px;"><tr><td style="width:52%;"><strong>NOMBRE:</strong> ${rawName}</td><td style="width:20%;"><strong>EDAD:</strong> ${age}</td><td style="width:28%;"><strong>FECHA:</strong> ${date}</td></tr></table></div>`;
+      const headerHTML = `<div style="width:100%;"><div style="border-bottom:2px solid #1b3b6f;padding-bottom:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><div style="flex-shrink:0;"><img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:52px;width:auto;display:block;" /></div><div style="text-align:center;flex:1;"><h1 style="font-size:15.5px;font-weight:900;color:#1b3b6f;margin:0;line-height:1.15;">LABORATORIO CLINICO “ADESCAS”</h1><p style="font-size:10px;font-weight:700;color:#1e293b;margin:1px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p><p style="font-size:9.5px;color:#334155;margin:1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p><p style="font-size:10px;font-weight:800;color:#0f172a;margin:1px 0 0 0;">Tel: 2413-4125      WhatsApp: 7895-5220</p></div></div><table class="print-table" style="margin-bottom:6px;"><tr><td style="width:52%;"><strong>NOMBRE:</strong> ${rawName}</td><td style="width:20%;"><strong>EDAD:</strong> ${age}</td><td style="width:28%;"><strong>FECHA:</strong> ${date}</td></tr></table></div>`;
 
       let bodyHTML = '';
       if (tpl.layout === 'ego') {
@@ -1448,17 +1562,17 @@
           const abVal = (f[`ab${i}_val`] || '').toUpperCase().trim();
           if (abName) rowsHtml += `<tr><td><strong>${abName}</strong></td><td style="text-align:center;font-weight:900;">${abVal === 'S' ? 'X' : ''}</td><td style="text-align:center;font-weight:900;">${abVal === 'I' ? 'X' : ''}</td><td style="text-align:center;font-weight:900;">${abVal === 'R' ? 'X' : ''}</td></tr>`;
         }
-        bodyHTML = `<table class="print-table" style="margin-bottom:5px;"><tr><td><strong>MUESTRA:</strong> ${f.muestra}</td><td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)} &nbsp;|&nbsp; <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td></tr><tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr></table><table class="print-table"><thead><tr><th>ANTIBIOTICO</th><th style="text-align:center;">SENSIBLE</th><th style="text-align:center;">INTERMEDIO</th><th style="text-align:center;">RESISTENTE</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
+        bodyHTML = `<table class="print-table" style="margin-bottom:5px;"><tr><td><strong>MUESTRA:</strong> ${f.muestra}</td><td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)}  |  <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td></tr><tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr></table><table class="print-table"><thead><tr><th>ANTIBIOTICO</th><th style="text-align:center;">SENSIBLE</th><th style="text-align:center;">INTERMEDIO</th><th style="text-align:center;">RESISTENTE</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
       } else if (tpl.layout === 'frotis') {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">FROTIS DE SANGRE PERIFERICA</h2><div style="border:1.5px solid #0f172a;padding:10px;font-size:11.5px;line-height:1.5;"><p><strong>LINEA ROJA:</strong> ${formatResultValue(f.roja)}</p><p><strong>LINEA BLANCA:</strong> ${formatResultValue(f.blanca)}</p><p><strong>LINEA PLAQUETARIA:</strong> ${formatResultValue(f.plaquetaria)}</p></div>`;
       } else if (tpl.layout === 'hcg_cuant') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2><p style="font-size:11.5px;margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>RESULTADO:</strong> <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></p><table class="print-table"><tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr><tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr><tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr><tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr><tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr><tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2><p style="font-size:11.5px;margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra}   |   <strong>RESULTADO:</strong> <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></p><table class="print-table"><tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr><tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr><tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr><tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr><tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr><tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr></table>`;
       } else if (tpl.layout === 'espermograma_oms') {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MACROSCOPICOS</th><th>RESULTADO</th><th>REFERENCIA</th><th>MOVILIDAD / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr></thead><tbody><tr><td>COLOR / ASPECTO</td><td>${f.color} / ${f.aspecto}</td><td>BLANQ / OPAL</td><td>PROGRESIVA (PR) / (NP)</td><td>${f.mov_pr} / ${f.mov_np}</td><td>PR ≥ 32%</td></tr><tr><td>VOLUMEN / pH</td><td>${f.volumen} / ${f.ph}</td><td>≥1.5ml / ≥7.2</td><td>MOVILIDAD TOTAL / INMOV.</td><td>${f.mov_tot} / ${f.inmoviles}</td><td>≥ 40%</td></tr><tr><td>LICUEF. / VISCOS.</td><td>${f.licuefaccion} / ${f.viscosidad}</td><td>NORMAL</td><td>VIVOS / MUERTOS</td><td>${f.vivos} / ${f.muertos}</td><td>≥ 58%</td></tr></tbody></table><div style="border:1.4px solid #0f172a;padding:6px;font-size:10.5px;display:grid;grid-template-columns:1fr 1fr;gap:6px;"><div><p><strong>MILLONES x ml:</strong> ${f.millones_ml} (Total: ${f.total_eyaculado})</p><p><strong>MORFOLOGIA NORMAL / ANORMAL:</strong> ${f.morf_normal} / ${f.morf_anormal}</p></div><div><p><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>HEMATIES:</strong> ${f.hematies}</p><p><strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>BACTERIAS:</strong> ${f.bacterias}</p></div></div>`;
       } else if (tpl.layout === 'espermograma_3h') {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MOVILIDAD (1H / 2H / 3H)</th><th>A LA HORA</th><th>A LAS 2 HORAS</th><th>A LAS 3 HORAS</th></tr></thead><tbody><tr><td>RAPIDOS / LENTOS</td><td>${f.rap_1h} / ${f.len_1h}</td><td>${f.rap_2h} / ${f.len_2h}</td><td>${f.rap_3h} / ${f.len_3h}</td></tr><tr><td>ERRATICOS / MUERTOS</td><td>${f.err_1h} / ${f.mue_1h}</td><td>${f.err_2h} / ${f.mue_2h}</td><td>${f.err_3h} / ${f.mue_3h}</td></tr><tr><td>MORFOLOGIA (NORM / ANORM)</td><td>${f.nor_1h} / ${f.ano_1h}</td><td>${f.nor_2h} / ${f.ano_2h}</td><td>${f.nor_3h} / ${f.ano_3h}</td></tr></tbody></table><p style="font-size:10.5px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
       } else if (tpl.layout === 'misc_muestra') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">${tpl.title}</h2><table class="print-table"><tr><td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td><td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr><tr><td colspan="2" style="padding:8px;font-size:12.5px;"><strong>RESULTADO:</strong> &nbsp; <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></td></tr></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">${tpl.title}</h2><table class="print-table"><tr><td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td><td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr><tr><td colspan="2" style="padding:8px;font-size:12.5px;"><strong>RESULTADO:</strong>   <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></td></tr></table>`;
       } else {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">${examTitle}</h2>${f.subtitleMuestra ? `<p style="font-size:10.5px;font-weight:bold;margin-bottom:4px;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}<table class="print-table"><thead><tr><th style="width:38%;">EXAMENES</th><th style="width:27%;">RESULTADO</th><th style="width:35%;">VALOR NORMAL</th></tr></thead><tbody>${(f.rows || []).map(r => `<tr><td><strong>${r.exam}</strong></td><td style="font-weight:800;color:#163a70;">${formatResultValue(r.result)}</td><td style="white-space:pre-line;">${r.ref}</td></tr>`).join('')}</tbody></table>`;
       }
