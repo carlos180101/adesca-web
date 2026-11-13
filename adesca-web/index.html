@@ -44,7 +44,6 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
-  <!-- HEADER -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
     <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between">
       <div onclick="switchView('patient')" class="cursor-pointer flex items-center gap-2.5">
@@ -61,12 +60,10 @@
     </div>
   </header>
 
-  <!-- MODAL VERIFICADOR QR -->
   <div id="qr-verification-modal" class="hidden fixed inset-0 z-[70] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div id="qr-verification-card" class="max-w-md w-full bg-white rounded-2xl shadow-2xl border-2 p-6 text-center space-y-4"></div>
   </div>
 
-  <!-- VISTA 1: PACIENTES -->
   <main id="view-patient" class="flex-1 max-w-3xl w-full mx-auto px-4 py-8 sm:py-10 no-print">
     <div class="text-center mb-7">
       <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-[#163a70] px-3.5 py-1.5 rounded-full text-xs font-bold mb-3">
@@ -90,7 +87,6 @@
     <div id="patient-results" class="space-y-4"></div>
   </main>
 
-  <!-- VISTA 2: PERSONAL (LICENCIADOS Y DOCTORA) -->
   <main id="view-staff" class="hidden flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-5 no-print">
     <div id="staff-login-box" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 mt-4">
       <div class="text-center mb-6">
@@ -117,9 +113,12 @@
         <div class="flex flex-wrap items-center gap-2">
           <span id="staff-role-badge" class="text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">👨‍⚕️ Sesión Activa</span>
           <span id="inactivity-countdown" class="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg">⏱️ Auto-cierre: 20:00</span>
-          <span class="text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg">💾 Uso exámenes: <span id="db-space-estimate">0.01 MB</span> / 473 MB libres</span>
+          <span class="text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg">💾 Uso: <span id="db-space-estimate">0.01 MB</span> / 473 MB</span>
         </div>
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <button type="button" onclick="openStatsModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm flex items-center gap-1">
+            📊 Ver e Imprimir Estadísticas
+          </button>
           <div id="staff-only-actions" class="flex flex-wrap items-center gap-2 flex-1 sm:flex-initial">
             <button type="button" onclick="openExamEditor(null)" class="bg-[#163a70] hover:bg-[#102a52] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm">📝 + Redactar Exámenes</button>
             <button type="button" onclick="downloadFilteredBackup()" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-2.5 rounded-xl">📥 Descargar JSON</button>
@@ -134,13 +133,13 @@
       </div>
 
       <div id="json-imported-banner" class="hidden bg-emerald-600 text-white rounded-2xl p-3.5 shadow-md flex flex-wrap items-center justify-between gap-2">
-        <div class="text-xs"><strong>📂 Modo Archivo JSON Cargado:</strong> Viendo <span id="json-imported-count" class="font-black underline">0</span> exámenes recuperados del archivo JSON (no gastan base de datos). Puede abrirlos y volverlos a imprimir o bajar en PDF.</div>
+        <div class="text-xs"><strong>📂 Modo Archivo JSON Cargado:</strong> Viendo <span id="json-imported-count" class="font-black underline">0</span> exámenes recuperados del archivo JSON. Puede abrirlos, ver estadísticas y volverlos a imprimir o bajar en PDF.</div>
         <button type="button" onclick="clearImportedJsonRecords()" class="bg-white text-emerald-900 font-extrabold text-xs px-3 py-1.5 rounded-lg shadow">✕ Volver a la Base en Vivo</button>
       </div>
 
       <div id="doctor-welcome-banner" class="hidden bg-blue-50 border-2 border-[#163a70] rounded-2xl p-4">
         <h3 class="text-sm font-extrabold text-[#163a70]">👩‍⚕️ Modo Consulta Médica — Dra. Sandoval (Solo Lectura)</h3>
-        <p class="text-xs text-slate-600">Puede filtrar por fecha (Hoy, Últimos 7 días, Este Mes) o buscar al paciente por nombre y presionar <strong>"👁️ Ver Resultados del Examen"</strong>.</p>
+        <p class="text-xs text-slate-600">Puede filtrar por fecha o buscar al paciente por nombre y presionar <strong>"👁️ Ver Resultados del Examen"</strong>.</p>
       </div>
 
       <div id="window-alert" class="hidden bg-rose-600 text-white rounded-2xl p-4 shadow-lg flex items-center justify-between">
@@ -248,6 +247,25 @@
       </div>
     </div>
   </main>
+
+  <!-- MODAL DE ESTADÍSTICAS E IMPRESIÓN DE REPORTE DEL LABORATORIO -->
+  <div id="stats-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm overflow-y-auto p-3 sm:p-6 no-print">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4">
+      <div class="bg-[#163a70] text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="text-base font-extrabold">📊 Estadísticas y Control de Exámenes — Laboratorio Clínico "ADESCAS"</h3>
+          <p class="text-xs text-blue-200">Resumen por estado, conteo por tipo de estudio y listado imprimible</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="printStatsReport()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow">
+            🖨️ Imprimir / Guardar PDF de Estadísticas
+          </button>
+          <button type="button" onclick="closeStatsModal()" class="bg-white/15 hover:bg-white/25 text-white px-3 py-2 rounded-xl text-xs font-bold">✕ Cerrar</button>
+        </div>
+      </div>
+      <div id="stats-printable-body" class="p-6 space-y-5"></div>
+    </div>
+  </div>
 
   <!-- MODAL LIMPIAR BASE -->
   <div id="clean-security-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
@@ -448,8 +466,8 @@
   <div id="print-area" class="hidden print:block half-page-print"></div>
 
   <script>
-    // PERFILES AUTORIZADOS POR EMAIL Y UID EXACTO DE SUPABASE
     const STAFF_PROFILES = {
+      "carloschafoya17@gmail.com": { uid: "admin-carlos", role: "licenciado", displayName: "Admin. Carlos Alvanez (ADESCAS)", jvplc: "5080", stampKey: "pineda", imgFile: "/sello-pineda.png" },
       "licpineda@adesca.com": { uid: "1936629c-26ab-430d-b967-9f4199e0a809", role: "licenciado", displayName: "Lic. Ernesto Alexander Pineda Recinos", jvplc: "5080", stampKey: "pineda", imgFile: "/sello-pineda.png" },
       "lickarla@adesca.com": { uid: "69857d16-e89e-4c68-8938-176874dec676", role: "licenciado", displayName: "Licda. Karla Johanna Quintanilla Aguilar", jvplc: "7307", stampKey: "karla", imgFile: "/sello-karla.png" },
       "liccalderon@adesca.com": { uid: "65dc0b32-0b72-4237-9f0d-5b0b6fb7cf32", role: "licenciado", displayName: "Licda. Verónica Vanessa Calderón Erazo", jvplc: "1432", stampKey: "calderon", imgFile: "/sello-calderon.png" },
@@ -464,10 +482,10 @@
 
     function getCurrentProfile() {
       if (!currentSession || !currentSession.user) return null;
-      const uid = currentSession.user.id || '';
-      if (ALLOWED_UIDS[uid]) return ALLOWED_UIDS[uid];
       const email = (currentSession.user.email || '').trim().toLowerCase();
-      return STAFF_PROFILES[email] || null;
+      if (STAFF_PROFILES[email]) return STAFF_PROFILES[email];
+      const uid = currentSession.user.id || '';
+      return ALLOWED_UIDS[uid] || null;
     }
     function isDoctorReadOnly() {
       const p = getCurrentProfile();
@@ -513,7 +531,6 @@
       return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(s.trim())));
     }
 
-    // LOGO CON VIEWBOX 490PX PARA QUE "Laboratorio Clínico" JAMÁS SE CORTE EN LA "o"
     const LOGO_MICRO_URI = svgToDataUri(`
       <svg xmlns="http://www.w3.org/2000/svg" width="245" height="86" viewBox="0 0 495 175">
         <path d="M 65,138 A 48,48 0 0,1 65,45" fill="none" stroke="#1b3b6f" stroke-width="24" stroke-linecap="round"/>
@@ -682,6 +699,7 @@
         localStorage.removeItem(LAST_ACTIVITY_KEY);
         closeExamEditor();
         closeCleanDayModal();
+        closeStatsModal();
         await handleLogout();
       }
     }
@@ -1030,6 +1048,83 @@
       }).join('');
     }
 
+    // MÓDULO DE ESTADÍSTICAS E IMPRESIÓN PARA TODOS LOS LICENCIADOS Y ADMINISTRACIÓN
+    function openStatsModal() {
+      const records = filterRecordsByDateAndQuery();
+      const total = records.length;
+      const ready = records.filter(r => r.status === 'ready' || r.status === 'requested').length;
+      const delivered = records.filter(r => r.status === 'delivered').length;
+      const processing = records.filter(r => r.status === 'processing').length;
+
+      const byType = {};
+      records.forEach(r => {
+        const t = (r.exam_type || 'OTRO').toUpperCase();
+        byType[t] = (byType[t] || 0) + 1;
+      });
+      const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+      const prof = getCurrentProfile();
+
+      const statsHtml = `
+        <div class="exam-sheet-page" style="padding:16px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;">
+          <div style="border-bottom:2px solid #1b3b6f;padding-bottom:8px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+            <img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:50px;width:auto;" />
+            <div style="text-align:right;">
+              <h2 style="font-size:15px;font-weight:900;color:#1b3b6f;margin:0;">REPORTE DE ESTADÍSTICAS Y CONTROL DIARIO</h2>
+              <p style="font-size:10px;color:#475569;margin:2px 0 0 0;">Generado por: <strong>${prof ? prof.displayName : 'Personal Autorizado'}</strong> • Fecha: <strong>${getFormattedTodayUpper()}</strong></p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
+              <div class="text-[10px] font-bold uppercase text-blue-800">Total Pacientes</div>
+              <div class="text-2xl font-black text-[#163a70]">${total}</div>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+              <div class="text-[10px] font-bold uppercase text-emerald-800">Listos</div>
+              <div class="text-2xl font-black text-emerald-700">${ready}</div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-100 border border-slate-300 text-center">
+              <div class="text-[10px] font-bold uppercase text-slate-700">Entregados</div>
+              <div class="text-2xl font-black text-slate-800">${delivered}</div>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
+              <div class="text-[10px] font-bold uppercase text-amber-800">En Proceso</div>
+              <div class="text-2xl font-black text-amber-700">${processing}</div>
+            </div>
+          </div>
+
+          <h4 style="font-size:11px;font-weight:900;color:#163a70;margin-bottom:6px;text-transform:uppercase;">Desglose por Tipo de Estudio Realizado</h4>
+          <table class="print-table" style="margin-bottom:14px;">
+            <thead><tr><th style="width:75%;">ESTUDIO / EXAMEN</th><th style="width:25%;text-align:center;">CANTIDAD</th></tr></thead>
+            <tbody>
+              ${sortedTypes.length > 0 ? sortedTypes.map(([k, count]) => `<tr><td><strong>${k}</strong></td><td style="text-align:center;font-weight:900;">${count}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center;">Sin registros</td></tr>'}
+            </tbody>
+          </table>
+
+          <h4 style="font-size:11px;font-weight:900;color:#163a70;margin-bottom:6px;text-transform:uppercase;">Listado Nominal de Pacientes (${total})</h4>
+          <table class="print-table">
+            <thead><tr><th style="width:8%;">N°</th><th style="width:14%;">ORDEN</th><th style="width:36%;">PACIENTE</th><th style="width:12%;">EDAD</th><th style="width:30%;">EXAMEN</th></tr></thead>
+            <tbody>
+              ${records.length > 0 ? records.slice().reverse().map(r => `<tr><td style="text-align:center;font-weight:bold;">${r.dailyNumber}</td><td>${r.code}</td><td><strong>${r.patient_name}</strong></td><td>${r.patient_age || '-'}</td><td>${r.exam_type}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;">Sin pacientes en el filtro actual</td></tr>'}
+            </tbody>
+          </table>
+        </div>`;
+
+      document.getElementById('stats-printable-body').innerHTML = statsHtml;
+      document.getElementById('stats-modal').classList.remove('hidden');
+    }
+
+    function closeStatsModal() {
+      document.getElementById('stats-modal').classList.add('hidden');
+    }
+
+    function printStatsReport() {
+      const printArea = document.getElementById('print-area');
+      printArea.className = 'hidden print:block full-page-print';
+      printArea.innerHTML = document.getElementById('stats-printable-body').innerHTML;
+      window.print();
+    }
+
     function downloadFilteredBackup() {
       const listToExport = filterRecordsByDateAndQuery();
       if (listToExport.length === 0) { alert('No hay exámenes en la vista actual para descargar.'); return; }
@@ -1317,7 +1412,6 @@
       renderDynamicFields(); updateLivePreview();
     }
 
-    // RENDERIZADO DE BOLETAS OFICIALES (LOGO COMPLETO + QR GRANDE 78px + SELLO CON ENTER)
     function buildSinglePageHTML(pageObj, pageIndex, totalPages, forceDigitalStamp = null) {
       const rawName = (document.getElementById('ed-patient-name').value || '______________________').toUpperCase();
       const age = (document.getElementById('ed-patient-age').value || '____').toUpperCase();
@@ -1336,7 +1430,7 @@
       const prof = getCurrentProfile();
       const activeStampKey = (prof && prof.role === 'licenciado') ? prof.stampKey : currentRecordStampOwner;
 
-      const headerHTML = `<div style="width:100%;"><div style="border-bottom:2px solid #1b3b6f;padding-bottom:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><div style="flex-shrink:0;"><img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:52px;width:auto;display:block;" /></div><div style="text-align:center;flex:1;"><h1 style="font-size:15.5px;font-weight:900;color:#1b3b6f;margin:0;line-height:1.15;">LABORATORIO CLINICO “ADESCAS”</h1><p style="font-size:10px;font-weight:700;color:#1e293b;margin:1px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p><p style="font-size:9.5px;color:#334155;margin:1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p><p style="font-size:10px;font-weight:800;color:#0f172a;margin:1px 0 0 0;">Tel: 2413-4125      WhatsApp: 7895-5220</p></div></div><table class="print-table" style="margin-bottom:6px;"><tr><td style="width:52%;"><strong>NOMBRE:</strong> ${rawName}</td><td style="width:20%;"><strong>EDAD:</strong> ${age}</td><td style="width:28%;"><strong>FECHA:</strong> ${date}</td></tr></table></div>`;
+      const headerHTML = `<div style="width:100%;"><div style="border-bottom:2px solid #1b3b6f;padding-bottom:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><div style="flex-shrink:0;"><img src="${LOGO_MICRO_URI}" alt="ADESCAS" style="height:52px;width:auto;display:block;" /></div><div style="text-align:center;flex:1;"><h1 style="font-size:15.5px;font-weight:900;color:#1b3b6f;margin:0;line-height:1.15;">LABORATORIO CLINICO “ADESCAS”</h1><p style="font-size:10px;font-weight:700;color:#1e293b;margin:1px 0 0 0;">2da. Avenida norte número 2-8, Barrio El Calvario, Ahuachapán</p><p style="font-size:9.5px;color:#334155;margin:1px 0 0 0;">Lunes a viernes de 6:30 AM a 5:00 PM Y sábado de 6:30 AM a 12:30 PM.</p><p style="font-size:10px;font-weight:800;color:#0f172a;margin:1px 0 0 0;">Tel: 2413-4125 &nbsp;&nbsp;&nbsp;&nbsp; WhatsApp: 7895-5220</p></div></div><table class="print-table" style="margin-bottom:6px;"><tr><td style="width:52%;"><strong>NOMBRE:</strong> ${rawName}</td><td style="width:20%;"><strong>EDAD:</strong> ${age}</td><td style="width:28%;"><strong>FECHA:</strong> ${date}</td></tr></table></div>`;
 
       let bodyHTML = '';
       if (tpl.layout === 'ego') {
@@ -1354,17 +1448,17 @@
           const abVal = (f[`ab${i}_val`] || '').toUpperCase().trim();
           if (abName) rowsHtml += `<tr><td><strong>${abName}</strong></td><td style="text-align:center;font-weight:900;">${abVal === 'S' ? 'X' : ''}</td><td style="text-align:center;font-weight:900;">${abVal === 'I' ? 'X' : ''}</td><td style="text-align:center;font-weight:900;">${abVal === 'R' ? 'X' : ''}</td></tr>`;
         }
-        bodyHTML = `<table class="print-table" style="margin-bottom:5px;"><tr><td><strong>MUESTRA:</strong> ${f.muestra}</td><td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)}  |  <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td></tr><tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr></table><table class="print-table"><thead><tr><th>ANTIBIOTICO</th><th style="text-align:center;">SENSIBLE</th><th style="text-align:center;">INTERMEDIO</th><th style="text-align:center;">RESISTENTE</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
+        bodyHTML = `<table class="print-table" style="margin-bottom:5px;"><tr><td><strong>MUESTRA:</strong> ${f.muestra}</td><td><strong>RESULTADO:</strong> ${formatResultValue(f.resultado_aislamiento)} &nbsp;|&nbsp; <strong>RECUENTO:</strong> ${formatResultValue(f.recuento)}</td></tr><tr><td colspan="2"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr></table><table class="print-table"><thead><tr><th>ANTIBIOTICO</th><th style="text-align:center;">SENSIBLE</th><th style="text-align:center;">INTERMEDIO</th><th style="text-align:center;">RESISTENTE</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
       } else if (tpl.layout === 'frotis') {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">FROTIS DE SANGRE PERIFERICA</h2><div style="border:1.5px solid #0f172a;padding:10px;font-size:11.5px;line-height:1.5;"><p><strong>LINEA ROJA:</strong> ${formatResultValue(f.roja)}</p><p><strong>LINEA BLANCA:</strong> ${formatResultValue(f.blanca)}</p><p><strong>LINEA PLAQUETARIA:</strong> ${formatResultValue(f.plaquetaria)}</p></div>`;
       } else if (tpl.layout === 'hcg_cuant') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2><p style="font-size:11.5px;margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra}   |   <strong>RESULTADO:</strong> <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></p><table class="print-table"><tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr><tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr><tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr><tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr><tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr><tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">MISCELANEOS — HCG BETA CUANTIFICADA</h2><p style="font-size:11.5px;margin-bottom:5px;"><strong>MUESTRA:</strong> ${f.muestra} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>RESULTADO:</strong> <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></p><table class="print-table"><tr><td>MUJER NO EMBARAZADA: MENOR 5 mIU/mL</td><td>7 – 8 SEMANAS: 7,650 – 229,000 mIU/mL</td></tr><tr><td>3 SEMANAS DE EMBARAZO: 5 – 50 mIU/mL</td><td>9 – 12 SEMANAS: 25,700 – 288,000 mIU/mL</td></tr><tr><td>4 SEMANAS: 5 – 426 mIU/mL</td><td>13 – 16 SEMANAS: 13,300 – 254,000 mIU/mL</td></tr><tr><td>5 SEMANAS: 18 – 7,340 mIU/mL</td><td>17 – 24 SEMANAS: 4,060 – 165,400 mIU/mL</td></tr><tr><td>6 SEMANAS: 1,080 – 56,500 mIU/mL</td><td>25 – 40 SEMANAS: 3,640 – 117,000 mIU/mL</td></tr><tr><td colspan="2">HOMBRES: MENOR DE 5 mIU/mL</td></tr></table>`;
       } else if (tpl.layout === 'espermograma_oms') {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>MUESTRA:</strong> ${f.muestra} | <strong>ABSTINENCIA:</strong> ${f.abstinencia} | <strong>COLECCION:</strong> ${f.hora_col} | <strong>EXAMINADO:</strong> ${f.hora_ex}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MACROSCOPICOS</th><th>RESULTADO</th><th>REFERENCIA</th><th>MOVILIDAD / VITALIDAD</th><th>RESULTADO</th><th>REF.</th></tr></thead><tbody><tr><td>COLOR / ASPECTO</td><td>${f.color} / ${f.aspecto}</td><td>BLANQ / OPAL</td><td>PROGRESIVA (PR) / (NP)</td><td>${f.mov_pr} / ${f.mov_np}</td><td>PR ≥ 32%</td></tr><tr><td>VOLUMEN / pH</td><td>${f.volumen} / ${f.ph}</td><td>≥1.5ml / ≥7.2</td><td>MOVILIDAD TOTAL / INMOV.</td><td>${f.mov_tot} / ${f.inmoviles}</td><td>≥ 40%</td></tr><tr><td>LICUEF. / VISCOS.</td><td>${f.licuefaccion} / ${f.viscosidad}</td><td>NORMAL</td><td>VIVOS / MUERTOS</td><td>${f.vivos} / ${f.muertos}</td><td>≥ 58%</td></tr></tbody></table><div style="border:1.4px solid #0f172a;padding:6px;font-size:10.5px;display:grid;grid-template-columns:1fr 1fr;gap:6px;"><div><p><strong>MILLONES x ml:</strong> ${f.millones_ml} (Total: ${f.total_eyaculado})</p><p><strong>MORFOLOGIA NORMAL / ANORMAL:</strong> ${f.morf_normal} / ${f.morf_anormal}</p></div><div><p><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>HEMATIES:</strong> ${f.hematies}</p><p><strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>BACTERIAS:</strong> ${f.bacterias}</p></div></div>`;
       } else if (tpl.layout === 'espermograma_3h') {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">ESPERMOGRAMA</h2><p style="font-size:10.5px;margin-bottom:4px;"><strong>OLOR:</strong> ${f.olor} | <strong>COLOR:</strong> ${f.color} | <strong>MUESTRA:</strong> ${f.muestra} | <strong>VOLUMEN:</strong> ${f.volumen} | <strong>PH:</strong> ${f.ph}</p><table class="print-table" style="margin-bottom:5px;"><thead><tr><th>MOVILIDAD (1H / 2H / 3H)</th><th>A LA HORA</th><th>A LAS 2 HORAS</th><th>A LAS 3 HORAS</th></tr></thead><tbody><tr><td>RAPIDOS / LENTOS</td><td>${f.rap_1h} / ${f.len_1h}</td><td>${f.rap_2h} / ${f.len_2h}</td><td>${f.rap_3h} / ${f.len_3h}</td></tr><tr><td>ERRATICOS / MUERTOS</td><td>${f.err_1h} / ${f.mue_1h}</td><td>${f.err_2h} / ${f.mue_2h}</td><td>${f.err_3h} / ${f.mue_3h}</td></tr><tr><td>MORFOLOGIA (NORM / ANORM)</td><td>${f.nor_1h} / ${f.ano_1h}</td><td>${f.nor_2h} / ${f.ano_2h}</td><td>${f.nor_3h} / ${f.ano_3h}</td></tr></tbody></table><p style="font-size:10.5px;"><strong>LEUCOCITOS:</strong> ${f.leucocitos} | <strong>EPITELIALES:</strong> ${f.epiteliales} | <strong>HEMATIES:</strong> ${f.hematies} | <strong>RECUENTO:</strong> <strong>${formatResultValue(f.recuento)}</strong></p>`;
       } else if (tpl.layout === 'misc_muestra') {
-        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">${tpl.title}</h2><table class="print-table"><tr><td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td><td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr><tr><td colspan="2" style="padding:8px;font-size:12.5px;"><strong>RESULTADO:</strong>   <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></td></tr></table>`;
+        bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:6px;text-decoration:underline;">${tpl.title}</h2><table class="print-table"><tr><td style="width:35%;"><strong>MUESTRA:</strong> ${f.muestra}</td><td style="width:65%;"><strong>EXAMEN REALIZADO:</strong> ${f.examen_realizado}</td></tr><tr><td colspan="2" style="padding:8px;font-size:12.5px;"><strong>RESULTADO:</strong> &nbsp; <span style="font-weight:900;color:#163a70;">${formatResultValue(f.resultado)}</span></td></tr></table>`;
       } else {
         bodyHTML = `<h2 style="text-align:center;font-weight:900;font-size:12px;color:#163a70;margin-bottom:4px;text-decoration:underline;">${examTitle}</h2>${f.subtitleMuestra ? `<p style="font-size:10.5px;font-weight:bold;margin-bottom:4px;">MUESTRA: ${f.subtitleMuestra}</p>` : ''}<table class="print-table"><thead><tr><th style="width:38%;">EXAMENES</th><th style="width:27%;">RESULTADO</th><th style="width:35%;">VALOR NORMAL</th></tr></thead><tbody>${(f.rows || []).map(r => `<tr><td><strong>${r.exam}</strong></td><td style="font-weight:800;color:#163a70;">${formatResultValue(r.result)}</td><td style="white-space:pre-line;">${r.ref}</td></tr>`).join('')}</tbody></table>`;
       }
@@ -1435,7 +1529,6 @@
       window.print();
     }
 
-    // GENERADOR PDF: EN MODO "half" COLOCA 1 EXAMEN EN LA MITAD SUPERIOR DE CADA PÁGINA CARTA
     async function generatePerfectPDFAndClipboard(name) {
       document.getElementById('toggle-digital-stamp').checked = true;
       updateLivePreview();
