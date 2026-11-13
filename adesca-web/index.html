@@ -139,7 +139,7 @@
 
       <div id="doctor-welcome-banner" class="hidden bg-blue-50 border-2 border-[#163a70] rounded-2xl p-4">
         <h3 class="text-sm font-extrabold text-[#163a70]">👩‍⚕️ Modo Consulta Médica — Dra. Sandoval (Solo Lectura)</h3>
-        <p class="text-xs text-slate-600">Puede filtrar por fecha o buscar al paciente por nombre y presionar <strong>"👁️ Ver Resultados del Examen"</strong>.</p>
+        <p class="text-xs text-slate-600">Puede ver los pacientes separados por día (iniciando desde el #1 en cada fecha) o buscar al paciente por nombre.</p>
       </div>
 
       <div id="window-alert" class="hidden bg-rose-600 text-white rounded-2xl p-4 shadow-lg flex items-center justify-between">
@@ -224,20 +224,20 @@
             <div class="p-4 border-b border-slate-200 space-y-3">
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <div>
-                  <h3 class="font-extrabold text-sm text-[#163a70]">Pacientes y Exámenes Guardados (Con Fecha y Orden)</h3>
-                  <p class="text-[11px] text-slate-400">1 mes completo ocupa menos de 2 MB de sus 500 MB gratuitos</p>
+                  <h3 class="font-extrabold text-sm text-[#163a70]">Pacientes Organizados por Día (Cada Día Inicia desde el #1)</h3>
+                  <p class="text-[11px] text-slate-400">Los de hoy van del #1 en adelante, los de mañana inician del #1 en adelante y cada fecha tiene su propio bloque</p>
                 </div>
                 <button type="button" onclick="fetchStaffData()" class="text-xs font-bold text-[#163a70] hover:underline px-2">↻ Actualizar</button>
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <select id="staff-date-range" onchange="renderStaffRecords()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-[#163a70] bg-slate-50">
-                  <option value="all">📅 Todos los Guardados (Mes / Semana)</option>
-                  <option value="today">📍 Solo Hoy</option>
-                  <option value="7days">🗓️ Últimos 7 Días (1 Semana)</option>
-                  <option value="30days">📆 Últimos 30 Días (1 Mes)</option>
+                  <option value="all" selected>📅 Ver Por Días (Hoy arriba desde el #1 + Días anteriores separados)</option>
+                  <option value="today">📍 Solo Hoy (Desde el #1)</option>
+                  <option value="7days">🗓️ Últimos 7 Días (Separados por día)</option>
+                  <option value="30days">📆 Últimos 30 Días (Separados por día)</option>
                 </select>
                 <input id="staff-exact-date" type="date" onchange="renderStaffRecords()" class="px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs text-slate-700" />
-                <button type="button" onclick="document.getElementById('staff-exact-date').value=''; renderStaffRecords();" class="text-[11px] text-slate-500 hover:text-slate-800 underline">Todas las fechas</button>
+                <button type="button" onclick="document.getElementById('staff-exact-date').value=''; document.getElementById('staff-date-range').value='all'; renderStaffRecords();" class="text-[11px] text-slate-500 hover:text-slate-800 underline">Ver todos</button>
                 <input id="staff-filter-input" oninput="renderStaffRecords()" type="text" placeholder="🔍 Buscar por nombre, orden o #..." class="flex-1 min-w-[160px] px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold" />
               </div>
             </div>
@@ -248,7 +248,7 @@
     </div>
   </main>
 
-  <!-- MODAL DE ESTADÍSTICAS GERENCIALES (SIN LISTA DE NOMBRES, SOLO CONTEO POR ÁREA Y EXAMEN) -->
+  <!-- MODAL DE ESTADÍSTICAS GERENCIALES -->
   <div id="stats-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm overflow-y-auto p-3 sm:p-6 no-print">
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-4">
       <div class="bg-[#163a70] text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
@@ -972,10 +972,40 @@
       } catch (e) { return null; }
     }
 
+    function getDayKeyAndLabel(isoStr) {
+      const d = isoStr ? new Date(isoStr) : new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const key = `${y}-${m}-${day}`;
+
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const yest = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const yestKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`;
+
+      const longDate = d.toLocaleDateString('es-SV', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
+      if (key === todayKey) return { key, label: `📅 HOY — ${longDate}`, isToday: true };
+      if (key === yestKey) return { key, label: `📅 AYER — ${longDate}`, isToday: false };
+      return { key, label: `📅 ${longDate}`, isToday: false };
+    }
+
+    // NUMERACIÓN POR DÍA: CADA FECHA EMPIEZA EN #1 HASTA LOS QUE LLEGUEN ESE DÍA
     async function fetchStaffData() {
       if (!currentSession) return;
       const { data: exams } = await supabaseClient.from('examenes_adesca').select('*').order('created_at', { ascending: true });
-      const numbered = (exams || []).map((item, idx) => ({ ...item, dailyNumber: idx + 1 }));
+      const countsByDay = {};
+      const numbered = (exams || []).map((item) => {
+        const info = getDayKeyAndLabel(item.created_at);
+        countsByDay[info.key] = (countsByDay[info.key] || 0) + 1;
+        return {
+          ...item,
+          dayKey: info.key,
+          dayHeaderLabel: info.label,
+          isTodayRecord: info.isToday,
+          dailyNumber: countsByDay[info.key]
+        };
+      });
       allRecords = numbered.reverse();
       const mbUsed = Math.max(0.01, (allRecords.length * 1.5) / 1024).toFixed(2);
       const spaceBadge = document.getElementById('db-space-estimate');
@@ -1024,40 +1054,62 @@
       const filtered = filterRecordsByDateAndQuery();
       const list = document.getElementById('staff-records-list');
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No se encontraron exámenes en este rango de fechas o con ese filtro.</div>`;
+        list.innerHTML = `<div class="p-8 text-center text-sm text-slate-400">No hay pacientes registrados en esta fecha aún.</div>`;
         return;
       }
 
-      list.innerHTML = filtered.map(item => {
-        let statusTag = item.status === 'ready'
-          ? `<span class="text-[11px] font-extrabold bg-emerald-500 text-white px-2.5 py-0.5 rounded-full">EXAMEN LISTO</span>`
-          : (item.status === 'requested'
-            ? `<span class="text-[11px] font-extrabold bg-rose-600 text-white px-2.5 py-0.5 rounded-full animate-pulse">EN VENTANILLA</span>`
-            : (item.status === 'processing'
-              ? `<span class="text-[11px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">EN PROCESO</span>`
-              : `<span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">ENTREGADO (${item.delivered_at || ''})</span>`));
-        const savedObj = decompressExamData(item.exam_data_compressed);
-        const pageCount = savedObj?.pages?.length || (savedObj ? 1 : 0);
-        const dateBadge = savedObj?.examDate || formatShortDate(item.created_at);
-
-        if (isDoc) {
-          return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-blue-50/40"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${statusTag}</div><h4 class="font-extrabold text-slate-900 mt-1 text-base">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-semibold">Estudio(s): ${item.exam_type}</p></div></div><div>${pageCount > 0 ? `<button type="button" onclick="openExamEditor('${item.id}')" class="w-full sm:w-auto bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow">👁️ Ver Resultados (${pageCount})</button>` : `<span class="text-xs text-slate-400 italic">Pendiente de digitación</span>`}</div></div>`;
+      // Agrupar visualmente por día mostrando en cada día del #1 en adelante (o en orden de llegada)
+      const groupsMap = new Map();
+      filtered.forEach(item => {
+        const info = item.dayKey ? { key: item.dayKey, label: item.dayHeaderLabel, isToday: item.isTodayRecord } : getDayKeyAndLabel(item.created_at);
+        if (!groupsMap.has(info.key)) {
+          groupsMap.set(info.key, { label: info.label, isToday: info.isToday, items: [] });
         }
+        groupsMap.get(info.key).items.push(item);
+      });
 
-        let actionBtns = '';
-        if (!item.isImportedJson) {
-          if (item.status === 'processing') actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Poner Listo</button>`;
-          else if (item.status === 'ready' || item.status === 'requested') actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'delivered')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Entregado</button>`;
-        }
+      let htmlOut = '';
+      groupsMap.forEach((group) => {
+        // Ordenar dentro de cada día desde el #1 hacia arriba (1, 2, 3...) para que se vea claro del 1 hasta donde lleguen
+        const sortedDayItems = group.items.slice().sort((a, b) => (a.dailyNumber || 1) - (b.dailyNumber || 1));
 
-        return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${statusTag}${pageCount > 0 ? `<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 ${pageCount} Pág.</span>` : ''}${item.isImportedJson ? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">📂 JSON</span>` : ''}</div><h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ${item.patient_email}` : ''}</p></div></div><div class="flex flex-wrap items-center gap-1.5"><button type="button" onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">${pageCount > 0 ? '🖨️ Abrir / Imprimir / PDF' : '📝 Redactar Exámenes'}</button>${actionBtns}${!item.isImportedJson ? `<button type="button" onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>` : ''}</div></div>`;
-      }).join('');
+        htmlOut += `
+          <div class="${group.isToday ? 'bg-[#163a70] text-white' : 'bg-slate-200 text-slate-800'} px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-extrabold tracking-wide">${group.label}</span>
+            <span class="text-[11px] font-black ${group.isToday ? 'bg-emerald-500 text-white' : 'bg-white text-slate-700'} px-2.5 py-0.5 rounded-full">
+              Pacientes del día: #1 al #${sortedDayItems.length}
+            </span>
+          </div>`;
+
+        htmlOut += sortedDayItems.map(item => {
+          let statusTag = item.status === 'ready'
+            ? `<span class="text-[11px] font-extrabold bg-emerald-500 text-white px-2.5 py-0.5 rounded-full">EXAMEN LISTO</span>`
+            : (item.status === 'requested'
+              ? `<span class="text-[11px] font-extrabold bg-rose-600 text-white px-2.5 py-0.5 rounded-full animate-pulse">EN VENTANILLA</span>`
+              : (item.status === 'processing'
+                ? `<span class="text-[11px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">EN PROCESO</span>`
+                : `<span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full">ENTREGADO (${item.delivered_at || ''})</span>`));
+          const savedObj = decompressExamData(item.exam_data_compressed);
+          const pageCount = savedObj?.pages?.length || (savedObj ? 1 : 0);
+          const dateBadge = savedObj?.examDate || formatShortDate(item.created_at);
+
+          if (isDoc) {
+            return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-blue-50/40 border-b border-slate-100"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl bg-[#163a70] text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${statusTag}</div><h4 class="font-extrabold text-slate-900 mt-1 text-base">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-semibold">Estudio(s): ${item.exam_type}</p></div></div><div>${pageCount > 0 ? `<button type="button" onclick="openExamEditor('${item.id}')" class="w-full sm:w-auto bg-[#163a70] hover:bg-[#102a52] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow">👁️ Ver Resultados (${pageCount})</button>` : `<span class="text-xs text-slate-400 italic">Pendiente de digitación</span>`}</div></div>`;
+          }
+
+          let actionBtns = '';
+          if (!item.isImportedJson) {
+            if (item.status === 'processing') actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'ready')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Poner Listo</button>`;
+            else if (item.status === 'ready' || item.status === 'requested') actionBtns += `<button type="button" onclick="updateStatus('${item.id}', 'delivered')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Entregado</button>`;
+          }
+
+          return `<div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 border-b border-slate-100"><div class="flex items-start gap-3"><div class="w-9 h-9 rounded-xl ${group.isToday ? 'bg-[#163a70]' : 'bg-slate-600'} text-white font-black text-xs flex items-center justify-center shrink-0">#${item.dailyNumber}</div><div><div class="flex flex-wrap items-center gap-2"><span class="text-xs font-mono font-bold bg-slate-100 px-2 py-0.5 rounded">${item.code}</span><span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">📅 ${dateBadge}</span>${statusTag}${pageCount > 0 ? `<span class="text-[10px] font-bold bg-blue-50 text-[#163a70] border border-blue-200 px-2 py-0.5 rounded">📄 ${pageCount} Pág.</span>` : ''}${item.isImportedJson ? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">📂 JSON</span>` : ''}</div><h4 class="font-extrabold text-slate-900 mt-1">${item.patient_name} ${item.patient_age ? `<span class="text-xs font-medium text-slate-500">(${item.patient_age})</span>` : ''}</h4><p class="text-xs text-slate-600 font-medium">${item.exam_type} ${item.patient_email ? `• ${item.patient_email}` : ''}</p></div></div><div class="flex flex-wrap items-center gap-1.5"><button type="button" onclick="openExamEditor('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-[#163a70] border border-blue-200 font-bold text-xs px-3 py-1.5 rounded-lg">${pageCount > 0 ? '🖨️ Abrir / Imprimir / PDF' : '📝 Redactar Exámenes'}</button>${actionBtns}${!item.isImportedJson ? `<button type="button" onclick="deleteRecord('${item.id}')" class="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-600 font-bold">🗑️</button>` : ''}</div></div>`;
+        }).join('');
+      });
+
+      list.innerHTML = htmlOut;
     }
 
-    // ============================================================================
-    // MÓDULO DE ESTADÍSTICAS EXACTAS (DESGLOSA TODAS LAS PÁGINAS DE CADA PACIENTE,
-    // AGRUPA POR ÁREA CLÍNICA, MUESTRA EL EXAMEN MÁS REALIZADO Y ELIMINA LISTA DE NOMBRES)
-    // ============================================================================
     function classifyExamAreaAndName(rawTitle, templateKey = '') {
       if (templateKey && EXAM_TEMPLATES[templateKey]) {
         const tpl = EXAM_TEMPLATES[templateKey];
@@ -1067,22 +1119,12 @@
         }
         return { area: tpl.area || 'INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS', name: cleanTitle };
       }
-
       let t = (rawTitle || 'OTRO').toUpperCase().replace(/\(\+\d+\s*MÁS\)/g, '').trim();
       if (t === 'MISCELANEO' || t === 'MISCELANEOS') t = 'MISCELÁNEOS Y PRUEBAS ESPECIALES';
-
-      if (t.includes('ORINA') || t.includes('HECES') || t.includes('ESPERMOGRAMA') || t.includes('COPROLOGIA')) {
-        return { area: 'UROANÁLISIS Y COPROLOGÍA', name: t };
-      }
-      if (t.includes('HEMOGRAMA') || t.includes('LEUCOGRAMA') || t.includes('HEMATOLOGIA') || t.includes('FROTIS') || t.includes('COAGULACION') || t.includes('PROTOMBINA') || t.includes('TIPEO') || t.includes('LUPICO') || t.includes('PLAQUETAS') || t.includes('RETICULOCITOS')) {
-        return { area: 'HEMATOLOGÍA Y COAGULACIÓN', name: t };
-      }
-      if (t.includes('QUIMICA') || t.includes('GLUCOSA') || t.includes('COLESTEROL') || t.includes('TRIGLICERIDOS') || t.includes('LIPIDICO') || t.includes('CREATININA') || t.includes('FILTRADO') || t.includes('ACIDO URICO') || t.includes('BILIRRUBINA') || t.includes('PROTEINAS') || t.includes('ALBUMINA') || t.includes('ELECTROLITOS') || t.includes('SODIO') || t.includes('POTASIO') || t.includes('CALCIO') || t.includes('MAGNESIO') || t.includes('TGO') || t.includes('TGP') || t.includes('FOSFATASA') || t.includes('AMILASA') || t.includes('LIPASA') || t.includes('LDH') || t.includes('CPK') || t.includes('INSULINA') || t.includes('GLICOSILADA')) {
-        return { area: 'QUÍMICA SANGUÍNEA', name: t };
-      }
-      if (t.includes('CULTIVO') || t.includes('UROCULTIVO') || t.includes('COPROCULTIVO') || t.includes('ANTIBIOGRAMA') || t.includes('BACILOSCOPIA') || t.includes('SECRECION')) {
-        return { area: 'BACTERIOLOGÍA Y CULTIVOS', name: t };
-      }
+      if (t.includes('ORINA') || t.includes('HECES') || t.includes('ESPERMOGRAMA') || t.includes('COPROLOGIA')) return { area: 'UROANÁLISIS Y COPROLOGÍA', name: t };
+      if (t.includes('HEMOGRAMA') || t.includes('LEUCOGRAMA') || t.includes('HEMATOLOGIA') || t.includes('FROTIS') || t.includes('COAGULACION') || t.includes('PROTOMBINA') || t.includes('TIPEO') || t.includes('LUPICO') || t.includes('PLAQUETAS') || t.includes('RETICULOCITOS')) return { area: 'HEMATOLOGÍA Y COAGULACIÓN', name: t };
+      if (t.includes('QUIMICA') || t.includes('GLUCOSA') || t.includes('COLESTEROL') || t.includes('TRIGLICERIDOS') || t.includes('LIPIDICO') || t.includes('CREATININA') || t.includes('FILTRADO') || t.includes('ACIDO URICO') || t.includes('BILIRRUBINA') || t.includes('PROTEINAS') || t.includes('ALBUMINA') || t.includes('ELECTROLITOS') || t.includes('SODIO') || t.includes('POTASIO') || t.includes('CALCIO') || t.includes('MAGNESIO') || t.includes('TGO') || t.includes('TGP') || t.includes('FOSFATASA') || t.includes('AMILASA') || t.includes('LIPASA') || t.includes('LDH') || t.includes('CPK') || t.includes('INSULINA') || t.includes('GLICOSILADA')) return { area: 'QUÍMICA SANGUÍNEA', name: t };
+      if (t.includes('CULTIVO') || t.includes('UROCULTIVO') || t.includes('COPROCULTIVO') || t.includes('ANTIBIOGRAMA') || t.includes('BACILOSCOPIA') || t.includes('SECRECION')) return { area: 'BACTERIOLOGÍA Y CULTIVOS', name: t };
       return { area: 'INMUNOLOGÍA, HORMONAS Y MISCELÁNEOS', name: t };
     }
 
@@ -1184,7 +1226,7 @@
             <thead>
               <tr>
                 <th style="width:10%;text-align:center;">RANK</th>
-                <th style="width:60%;">ESTUDIO / EXAMEN ESPECÍFICO</th>
+                <th style="width:60%;">ESTUDIO / EXAMEN ESPECÍFFICO</th>
                 <th style="width:15%;text-align:center;">CANTIDAD</th>
                 <th style="width:15%;text-align:center;">% DEL TOTAL</th>
               </tr>
@@ -1262,13 +1304,28 @@
         try {
           const parsed = JSON.parse(e.target.result);
           if (!Array.isArray(parsed)) { alert('El archivo JSON no tiene el formato de respaldo de ADESCAS.'); return; }
-          importedJsonRecords = parsed.map((item, idx) => ({
-            id: 'json-import-' + idx, dailyNumber: item.numero_dia || (idx + 1), code: item.codigo || ('AD-' + (100 + idx)),
-            patient_name: (item.paciente || 'PACIENTE').toUpperCase(), patient_age: item.edad || '',
-            patient_email: item.contacto || '', exam_type: item.examen || 'EXAMEN DE LABORATORIO',
-            status: item.estado || 'delivered', created_at: item.fecha_creacion || new Date().toISOString(),
-            exam_data_compressed: item.resultados ? compressExamData(item.resultados) : null, isImportedJson: true
-          }));
+          const countsByDay = {};
+          importedJsonRecords = parsed.map((item, idx) => {
+            const createdIso = item.fecha_creacion || new Date().toISOString();
+            const info = getDayKeyAndLabel(createdIso);
+            countsByDay[info.key] = (countsByDay[info.key] || 0) + 1;
+            return {
+              id: 'json-import-' + idx,
+              dayKey: info.key,
+              dayHeaderLabel: info.label,
+              isTodayRecord: info.isToday,
+              dailyNumber: item.numero_dia || countsByDay[info.key],
+              code: item.codigo || ('AD-' + (100 + idx)),
+              patient_name: (item.paciente || 'PACIENTE').toUpperCase(),
+              patient_age: item.edad || '',
+              patient_email: item.contacto || '',
+              exam_type: item.examen || 'EXAMEN DE LABORATORIO',
+              status: item.estado || 'delivered',
+              created_at: createdIso,
+              exam_data_compressed: item.resultados ? compressExamData(item.resultados) : null,
+              isImportedJson: true
+            };
+          });
           document.getElementById('json-imported-count').textContent = String(importedJsonRecords.length);
           document.getElementById('json-imported-banner').classList.remove('hidden');
           document.getElementById('staff-date-range').value = 'all';
